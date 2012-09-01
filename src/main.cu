@@ -27,13 +27,13 @@
 #include "functions.cu"
 
 #define DIM 800
-#define PARTICLES 62500
+#define PARTICLES 65530
 #define BOX_SIZE 10.0f
 #define TIME_STEP 1.0e-3
 #define GRAVITY 9.81f
 #define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 250
-#define Y_PARTICLES 250
+#define X_PARTICLES 260
+#define Y_PARTICLES 270
 
 #define log2( x ) log(x)/log(2)
 
@@ -54,8 +54,8 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 	partProps[0].boundaryDamping = BOUNDARYDAMPING;
 
 	// Bloco inicial de esferas
-	float corner1[2] = {0.1, 0.1};
-	float corner2[2] = {9.9, 9.9};
+	float corner1[2] = {0.5, 0.5};
+	float corner2[2] = {9.5, 9.5};
 	float sideLenght[2];
 
 	// Grid dimension
@@ -145,47 +145,47 @@ void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 		oldVel = partValues->vel2;
 		sortVel = partValues->vel1;
 	}
-	
-		// Define a celula de cada particula
-		calcHash(oldPos,
-				 partValues->particleIndex,
-				 partValues->particleHash,
-				 sisProps->numParticles);
 
-		// Ordena o grid pela posicao das particulas
-		sortParticles(partValues->particleHash,
-					  partValues->particleIndex,
-					  sisProps->numParticles);
+	// Define a celula de cada particula
+	calcHash(oldPos,
+			 partValues->particleIndex,
+			 partValues->particleHash,
+			 sisProps->numParticles);
 
-		// Encontra as particulas de inicializacao e de finalizacao
-		reorderDataAndFindCellStart(partValues->cellStart,
-									partValues->cellEnd,
-									sortPos,
-									sortVel,
-									partValues->particleHash,
-									partValues->particleIndex,
-									oldPos,
-									oldVel,
-									sisProps->numParticles,
-									sisProps->numCells);
+	// Ordena o grid pela posicao das particulas
+	sortParticles(partValues->particleHash,
+				  partValues->particleIndex,
+				  sisProps->numParticles);
 
-		// Detecta a colizao das particulas
-		collide(sortPos,
-				sortVel,
-				partValues->acc,
-				partValues->particleIndex,
-				partValues->cellStart,
-				partValues->cellEnd,
-				sisProps->numParticles,
-				sisProps->numCells);
+	// Encontra as particulas de inicializacao e de finalizacao
+	reorderDataAndFindCellStart(partValues->cellStart,
+								partValues->cellEnd,
+								sortPos,
+								sortVel,
+								partValues->particleHash,
+								partValues->particleIndex,
+								oldPos,
+								oldVel,
+								sisProps->numParticles,
+								sisProps->numCells);
 
-//		// Integracao no tempo (atualizacao das posicoes e velocidades)
-		integrateSystem(sortPos,
-			 	  		sortVel,
-			 	  		partValues->acc,
-			 	  		sisProps->numParticles);
+	// Detecta a colizao das particulas
+	collide(sortPos,
+			sortVel,
+			partValues->acc,
+			partValues->particleIndex,
+			partValues->cellStart,
+			partValues->cellEnd,
+			sisProps->numParticles,
+			sisProps->numCells);
 
-if (ticks % 20 == 1){
+	// Integracao no tempo (atualizacao das posicoes e velocidades)
+	integrateSystem(sortPos,
+		 	  		sortVel,
+		 	  		partValues->acc,
+		 	  		sisProps->numParticles);
+
+//	if (ticks % 5 == 1){
 		// Saida grarica quando necessario
 		plotParticles(pixels,
 					  sortPos,
@@ -194,8 +194,8 @@ if (ticks % 20 == 1){
 					  partProps->radius,
 					  DIM);
 
-//printf("Fim %d\n\n",ticks);
-}
+	//printf("Fim %d\n\n",ticks);
+//	}
 }
 
 void FinalizingSim( DataBlock *simBlock) {

@@ -129,29 +129,30 @@ void plotParticles(uchar4*	ptr,
 				   float 	radius,
 				   int 		DIM){
 
-	dim3 numBlocks(DIM/16,DIM/16);
-	dim3 numThreads(16,16);
+	uint numThreadst, numBlockst;
+	computeGridSize(DIM, 16, numBlockst, numThreadst);
+
+	dim3 numBlocks(numBlockst, numBlockst);
+	dim3 numThreads(numThreadst, numThreadst);
 	
 	plotBackgroundD<<<numBlocks,numThreads>>>(ptr);
 
-	uint dimx = ceil(DIM/cubeDimension.x*radius)*2;
-	uint dimy = ceil(DIM/cubeDimension.y*radius)*2;
+	int dimx = ceil(DIM/cubeDimension.x*radius)*2;
+	int dimy = ceil(DIM/cubeDimension.y*radius)*2;
 	float pixelRadius = DIM/cubeDimension.y*radius;
 	
-	uint numBlocksx, numBlocksy, numThreadsx, numThreadsy;
-	computeGridSize(dimx, 16, numBlocksx, numThreadsx);
-	computeGridSize(dimy, 16, numBlocksy, numThreadsy);
+	if (dimx < 2) dimx = 2;
+	if (dimy < 2) dimy = 2;
 	
-	dim3 numBlocks2(numBlocksx,numBlocksy);
-	dim3 numThreads2(numThreadsx,numThreadsy);
+	uint numThreads2, numBlocks2;
+	computeGridSize(numParticles, 1, numBlocks2, numThreads2);
 	
-	for (int i = 0; i<numParticles; i++){
-	
-		plotSpheresD<<<numBlocks2,numThreads2>>>(ptr,
-												 pos,
-												 i,
-												 pixelRadius,
-												 DIM);
-	}
+	// execute the kernel
+	plotSpheresD<<<numBlocks2,numThreads2>>>(ptr,
+											 pos,
+											 dimx,
+											 dimy,
+											 pixelRadius,
+											 DIM);
 
 }
