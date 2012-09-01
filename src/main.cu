@@ -1,14 +1,6 @@
-
 // Includes que eu acho que preciso
-//#include <algorithm>
-//#include <assert.h>
-//#include <cstdio>
-//#include <cstdlib>
 #include <math.h>
-//#include <memory.h>
 #include <stdio.h>
-//#include <stdlib.h>
-//#include <string.h>
 #include <iostream>
 
 // CUDA includes
@@ -35,19 +27,17 @@
 #include "functions.cu"
 
 #define DIM 800
-#define PARTICLES 20000
+#define PARTICLES 62500
 #define BOX_SIZE 10.0f
 #define TIME_STEP 1.0e-3
 #define GRAVITY 9.81f
 #define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 150
-#define Y_PARTICLES 140
+#define X_PARTICLES 250
+#define Y_PARTICLES 250
 
 #define log2( x ) log(x)/log(2)
 
 void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticleProperties *partProps ){
-	
-//	partProps = (ParticleProps*)malloc( sizeof(ParticleProps) * 1);
 
 	params->numParticles = PARTICLES;
 
@@ -57,7 +47,7 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 	
 	params->gravity = make_float2(0,-GRAVITY);
 		
-	partProps[0].radius = 20e-3f;
+	partProps[0].radius = 10e-3f;
 	partProps[0].mass = 1e-2;
 	partProps[0].collideStiffness = 1e3;
 	partProps[0].collideDamping = 0.1f;
@@ -195,6 +185,7 @@ void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 			 	  		partValues->acc,
 			 	  		sisProps->numParticles);
 
+if (ticks % 20 == 1){
 		// Saida grarica quando necessario
 		plotParticles(pixels,
 					  sortPos,
@@ -204,7 +195,7 @@ void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 					  DIM);
 
 //printf("Fim %d\n\n",ticks);
-
+}
 }
 
 void FinalizingSim( DataBlock *simBlock) {

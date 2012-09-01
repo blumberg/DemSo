@@ -9,4 +9,12 @@ $(EXECUTABLE): $(CUFILE) $(CUDEPS) $(CUHEADERS)
 	$(CC) $(CUFILE) -o $(EXECUTABLE) $(CUFLAGS) -include $(CUHEADERS)
 	
 clean:
+	ls src/*~ | xargs rm -f
+	ls includes/*~ | xargs rm -f
+	ls *~ | xargs rm -f
 	rm -f $(EXECUTABLE)
+	
+clean_tio:
+	ls src/*~ | xargs rm -f
+	ls includes/*~ | xargs rm -f
+	ls *~ | xargs rm -f

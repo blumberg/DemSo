@@ -31,8 +31,8 @@ __global__ void initializeParticlePositionD(float2 *pos,
 		comp[0] = corner2[0] - corner1[0];
 		comp[1] = corner2[1] - corner1[1];
     
-    	pos[particle].x = corner1[0] + comp[0]/(side[0]-1) * (x + curand_normal(&state)/50);
-    	pos[particle].y = corner1[1] + comp[1]/(side[1]-1) * (y + curand_normal(&state)/50);
+    	pos[particle].x = corner1[0] + comp[0]/(side[0]-1) * (x + (curand_normal(&state)-0.5f)/50);
+    	pos[particle].y = corner1[1] + comp[1]/(side[1]-1) * (y + (curand_normal(&state)-0.5f)/50);
     	vel[particle] = make_float2( 0 );
     	acc[particle] = make_float2( 0 );
     }
