@@ -18,10 +18,6 @@
 #include "thrust/iterator/zip_iterator.h"
 #include "thrust/sort.h"
 
-
-// Headers
-
-
 // Dependece files
 #include "particles_kernel.cu"
 #include "functions.cu"
