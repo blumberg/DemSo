@@ -18,22 +18,19 @@
 #include "thrust/iterator/zip_iterator.h"
 #include "thrust/sort.h"
 
-
-// Headers
-
-
 // Dependece files
 #include "particles_kernel.cu"
 #include "functions.cu"
 
 #define DIM 800
-#define PARTICLES 65530
+#define PARTICLES 90000
 #define BOX_SIZE 10.0f
 #define TIME_STEP 1.0e-3
 #define GRAVITY 9.81f
 #define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 260
-#define Y_PARTICLES 270
+#define X_PARTICLES 300
+#define Y_PARTICLES 300
+#define ALWAYS 1git 
 
 #define log2( x ) log(x)/log(2)
 
@@ -46,16 +43,25 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 	params->timeStep = TIME_STEP;
 	
 	params->gravity = make_float2(0,-GRAVITY);
+	
+	params->imageDIMx = DIM;
+	params->imageDIMy = DIM;
 		
-	partProps[0].radius = 10e-3f;
-	partProps[0].mass = 1e-2;
-	partProps[0].collideStiffness = 1e3;
-	partProps[0].collideDamping = 0.1f;
-	partProps[0].boundaryDamping = BOUNDARYDAMPING;
+	partProps->radius = 10e-3f;
+	partProps->mass = 1e-2;
+	partProps->collideStiffness = 1e3;
+	partProps->collideDamping = 0.1f;
+	partProps->boundaryDamping = BOUNDARYDAMPING;
+	
+	params->dimx = ceil(params->imageDIMx/params->cubeDimension.x*partProps->radius)*2;
+	if (params->dimx < 2) params->dimx = 2;
+	params->dimy = ceil(params->imageDIMy/params->cubeDimension.y*partProps->radius)*2;
+	if (params->dimy < 2) params->dimy = 2;
+	params->pRadius = params->imageDIMy/params->cubeDimension.y*partProps->radius;
 
 	// Bloco inicial de esferas
-	float corner1[2] = {0.5, 0.5};
-	float corner2[2] = {9.5, 9.5};
+	float corner1[2] = {0.1, 0.1};
+	float corner2[2] = {9.9, 9.9};
 	float sideLenght[2];
 
 	// Grid dimension
@@ -126,20 +132,18 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 
     SistemProperties *sisProps = &simBlock->sisProps;
-    ParticleProperties *partProps = &simBlock->partProps;
+//    ParticleProperties *partProps = &simBlock->partProps;
     ParticlesValues *partValues = &simBlock->partValues;
 
 	float2 *oldPos, *oldVel, *sortPos, *sortVel;
 
 	if ((ticks % 2))
 	{	
-//		printf("1");
 		oldPos = partValues->pos1;
 		sortPos = partValues->pos2;
 		oldVel = partValues->vel1;
 		sortVel = partValues->vel2;
 	} else {
-//		printf("0");
 		oldPos = partValues->pos2;
 		sortPos = partValues->pos1;
 		oldVel = partValues->vel2;
@@ -185,17 +189,20 @@ void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 		 	  		partValues->acc,
 		 	  		sisProps->numParticles);
 
-//	if (ticks % 5 == 1){
+#if !ALWAYS
+	if (ticks % 10 == 1){
+#endif
 		// Saida grarica quando necessario
 		plotParticles(pixels,
 					  sortPos,
 					  sisProps->numParticles,
-					  sisProps->cubeDimension,
-					  partProps->radius,
-					  DIM);
+					  sisProps->imageDIMx,
+					  sisProps->imageDIMy);
 
 	//printf("Fim %d\n\n",ticks);
-//	}
+#if !ALWAYS
+	}
+#endif
 }
 
 void FinalizingSim( DataBlock *simBlock) {

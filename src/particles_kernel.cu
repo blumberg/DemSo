@@ -283,11 +283,7 @@ void plotBackgroundD(uchar4 *ptr){
 
 __global__
 void plotSpheresD(uchar4*	ptr,
-				  float2* 	sortPos,
-				  int 		dimx,
-				  int 		dimy,
-				  float 	pRadius,
-				  int 		DIM)
+				  float2* 	sortPos)
 {
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
 	
@@ -297,21 +293,21 @@ void plotSpheresD(uchar4*	ptr,
 	
 		float2 pos = sortPos[index];
 	
-		int cPixelx = DIM/simPropD.cubeDimension.x*pos.x;
-		int cPixely = DIM/simPropD.cubeDimension.y*pos.y;
+		int cPixelx = simPropD.imageDIMx/simPropD.cubeDimension.x*pos.x;
+		int cPixely = simPropD.imageDIMy/simPropD.cubeDimension.y*pos.y;
 	
-		for (int x = -dimx/2; x < dimx/2; x++ ) {
-			for (int y = -dimy/2; y < dimy/2; y++) {
-				if (x*x + y*y < pRadius*pRadius) {
+		for (int x = -simPropD.dimx/2; x < simPropD.dimx/2; x++ ) {
+			for (int y = -simPropD.dimy/2; y < simPropD.dimy/2; y++) {
+				if (x*x + y*y < simPropD.pRadius*simPropD.pRadius) {
 			
 					uint gPixelx = cPixelx + x;
 					uint gPixely = cPixely + y;
 				
-					float fscale = sqrtf((pRadius*pRadius - x*x - y*y)/(pRadius*pRadius));
+					float fscale = sqrtf((simPropD.pRadius*simPropD.pRadius - x*x - y*y)/(simPropD.pRadius*simPropD.pRadius));
 				
-					uint pixel = gPixelx + gPixely*DIM;
+					uint pixel = gPixelx + gPixely*simPropD.imageDIMx;
 				
-					if (pixel >= DIM*DIM) pixel = DIM*DIM-1;
+					if (pixel >= simPropD.imageDIMx*simPropD.imageDIMy) pixel = simPropD.imageDIMx*simPropD.imageDIMy-1;
 					
 					ptr[pixel].x = 255.0f * fscale;
 					ptr[pixel].y = 255.0f * fscale;
