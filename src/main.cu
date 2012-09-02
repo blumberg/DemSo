@@ -30,7 +30,7 @@
 #define BOUNDARYDAMPING -0.5f
 #define X_PARTICLES 300
 #define Y_PARTICLES 300
-#define ALWAYS 1git 
+#define ALWAYS 1
 
 #define log2( x ) log(x)/log(2)
 
