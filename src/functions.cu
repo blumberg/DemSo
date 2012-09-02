@@ -136,13 +136,6 @@ void plotParticles(uchar4*	ptr,
 	dim3 numThreads(numThreadsx, numThreadsy);
 	
 	plotBackgroundD<<<numBlocks,numThreads>>>(ptr);
-
-//	int dimx = ceil(DIM/cubeDimension.x*radius)*2;
-//	int dimy = ceil(DIM/cubeDimension.y*radius)*2;
-//	float pixelRadius = DIM/cubeDimension.y*radius;
-	
-//	if (dimx < 2) dimx = 2;
-//	if (dimy < 2) dimy = 2;
 	
 	uint numThreads2, numBlocks2;
 	computeGridSize(numParticles, 256, numBlocks2, numThreads2);
