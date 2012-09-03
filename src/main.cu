@@ -47,7 +47,7 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 	params->imageDIMx = DIM;
 	params->imageDIMy = DIM;
 		
-	partProps->radius = 10e-3f;
+	partProps->radius = 20e-3f;
 	partProps->mass = 1e-2;
 	partProps->collideStiffness = 1e3;
 	partProps->collideDamping = 0.1f;
