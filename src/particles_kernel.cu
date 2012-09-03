@@ -283,61 +283,39 @@ void plotBackgroundD(uchar4 *ptr){
 
 __global__
 void plotSpheresD(uchar4*	ptr,
-				  float2* 	sortPos,
-				  int 		i,
-				  float 	pRadius,
-				  int 		DIM)
+				  float2* 	sortPos)
 {
-    int x = threadIdx.x + blockIdx.x * blockDim.x;
-    int y = threadIdx.y + blockIdx.y * blockDim.y;
+    uint index = blockIdx.x * blockDim.x + threadIdx.x;
 	
-	int halfSidex = blockDim.x*gridDim.x/2.0f;
-	int halfSidey = blockDim.y*gridDim.y/2.0f;
+	uint numParticles = simPropD.numParticles;
 	
-	float rx = x - halfSidex;
-	float ry = y - halfSidey;
+	if (index < numParticles) {
 	
-	if ((rx*rx + ry*ry) < (halfSidex*halfSidey)){
-		
-		float2 pos = sortPos[i];
-		
-		int cPixelx = DIM/simPropD.cubeDimension.x*pos.x;
-		int cPixely = DIM/simPropD.cubeDimension.y*pos.y;
+		float2 pos = sortPos[index];
 	
-		int gPixelx = cPixelx + x - blockDim.x*gridDim.x/2;
-		int gPixely = cPixely + y - blockDim.y*gridDim.y/2;
-		
-		float fscale = sqrtf((pRadius*pRadius - rx*rx - ry*ry)/(pRadius*pRadius));
-//		float fscale = 1.0f;
-		
-		uint pixel = gPixelx + gPixely*DIM;
-		
-		if (pixel >= DIM*DIM) pixel = DIM*DIM-1;
-		
-		ptr[pixel].x = 255.0f*fscale;
-		ptr[pixel].y = 255.0f*fscale;
-		ptr[pixel].z = 255.0f*fscale;
-		ptr[pixel].w = 255.0f*fscale;
+		int cPixelx = simPropD.imageDIMx/simPropD.cubeDimension.x*pos.x;
+		int cPixely = simPropD.imageDIMy/simPropD.cubeDimension.y*pos.y;
 	
-	}else{
-//		float2 pos = sortPos[i];
-//		
-//		uint cPixelx = DIM/simPropD.cubeDimension.x*pos.x;
-//		uint cPixely = DIM/simPropD.cubeDimension.y*pos.y;
-//	
-//		uint gPixelx = cPixelx + x + halfSidex;
-//		uint gPixely = cPixely + y + halfSidey;
-//		
-////		float fscale = sqrtf((pRadius*pRadius - rx*rx - ry*ry)/(pRadius*pRadius));
-//		float fscale = 1.0f;
-//		
-//		uint pixel = gPixelx + gPixely*DIM;
-//		
-//		if (pixel >= DIM*DIM) pixel = DIM*DIM-1;
-//		
-//		ptr[DIM*DIM-pixel-1].x = 0.0f*fscale;
-//		ptr[DIM*DIM-pixel-1].y = 0.0f*fscale;
-//		ptr[DIM*DIM-pixel-1].z = 255.0f*fscale;
-//		ptr[DIM*DIM-pixel-1].w = 255.0f*fscale;
+		for (int x = -simPropD.dimx/2; x < simPropD.dimx/2; x++ ) {
+			for (int y = -simPropD.dimy/2; y < simPropD.dimy/2; y++) {
+				if (x*x + y*y < simPropD.pRadius*simPropD.pRadius) {
+			
+					uint gPixelx = cPixelx + x;
+					uint gPixely = cPixely + y;
+				
+					float fscale = sqrtf((simPropD.pRadius*simPropD.pRadius - x*x - y*y)/(simPropD.pRadius*simPropD.pRadius));
+				
+					uint pixel = gPixelx + gPixely*simPropD.imageDIMx;
+				
+					if (pixel >= simPropD.imageDIMx*simPropD.imageDIMy) pixel = simPropD.imageDIMx*simPropD.imageDIMy-1;
+					
+					ptr[pixel].x = 255.0f * fscale;
+					ptr[pixel].y = 255.0f * fscale;
+					ptr[pixel].z = 255.0f * fscale;
+					ptr[pixel].w = 255.0f * fscale;
+					
+				}
+			}
+		}
 	}
 }

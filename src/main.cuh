@@ -30,6 +30,12 @@ struct SistemProperties {
     float timeStep;
     
     float2 gravity;
+    
+    int imageDIMx;
+    int imageDIMy;
+	int dimx;
+	int dimy;
+	float pRadius;
 
 };
 

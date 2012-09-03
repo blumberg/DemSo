@@ -23,13 +23,14 @@
 #include "functions.cu"
 
 #define DIM 800
-#define PARTICLES 62500
+#define PARTICLES 90000
 #define BOX_SIZE 10.0f
 #define TIME_STEP 1.0e-3
 #define GRAVITY 9.81f
 #define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 250
-#define Y_PARTICLES 250
+#define X_PARTICLES 300
+#define Y_PARTICLES 300
+#define ALWAYS 1
 
 #define log2( x ) log(x)/log(2)
 
@@ -42,12 +43,21 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 	params->timeStep = TIME_STEP;
 	
 	params->gravity = make_float2(0,-GRAVITY);
+	
+	params->imageDIMx = DIM;
+	params->imageDIMy = DIM;
 		
-	partProps[0].radius = 10e-3f;
-	partProps[0].mass = 1e-2;
-	partProps[0].collideStiffness = 1e3;
-	partProps[0].collideDamping = 0.1f;
-	partProps[0].boundaryDamping = BOUNDARYDAMPING;
+	partProps->radius = 15e-3f;
+	partProps->mass = 1e-2;
+	partProps->collideStiffness = 1e3;
+	partProps->collideDamping = 0.1f;
+	partProps->boundaryDamping = BOUNDARYDAMPING;
+	
+	params->dimx = ceil(params->imageDIMx/params->cubeDimension.x*partProps->radius)*2;
+	if (params->dimx < 2) params->dimx = 2;
+	params->dimy = ceil(params->imageDIMy/params->cubeDimension.y*partProps->radius)*2;
+	if (params->dimy < 2) params->dimy = 2;
+	params->pRadius = params->imageDIMy/params->cubeDimension.y*partProps->radius;
 
 	// Bloco inicial de esferas
 	float corner1[2] = {0.1, 0.1};
@@ -122,76 +132,77 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 
     SistemProperties *sisProps = &simBlock->sisProps;
-    ParticleProperties *partProps = &simBlock->partProps;
+//    ParticleProperties *partProps = &simBlock->partProps;
     ParticlesValues *partValues = &simBlock->partValues;
 
 	float2 *oldPos, *oldVel, *sortPos, *sortVel;
 
 	if ((ticks % 2))
 	{	
-//		printf("1");
 		oldPos = partValues->pos1;
 		sortPos = partValues->pos2;
 		oldVel = partValues->vel1;
 		sortVel = partValues->vel2;
 	} else {
-//		printf("0");
 		oldPos = partValues->pos2;
 		sortPos = partValues->pos1;
 		oldVel = partValues->vel2;
 		sortVel = partValues->vel1;
 	}
-	
-		// Define a celula de cada particula
-		calcHash(oldPos,
-				 partValues->particleIndex,
-				 partValues->particleHash,
-				 sisProps->numParticles);
 
-		// Ordena o grid pela posicao das particulas
-		sortParticles(partValues->particleHash,
-					  partValues->particleIndex,
-					  sisProps->numParticles);
+	// Define a celula de cada particula
+	calcHash(oldPos,
+			 partValues->particleIndex,
+			 partValues->particleHash,
+			 sisProps->numParticles);
 
-		// Encontra as particulas de inicializacao e de finalizacao
-		reorderDataAndFindCellStart(partValues->cellStart,
-									partValues->cellEnd,
-									sortPos,
-									sortVel,
-									partValues->particleHash,
-									partValues->particleIndex,
-									oldPos,
-									oldVel,
-									sisProps->numParticles,
-									sisProps->numCells);
+	// Ordena o grid pela posicao das particulas
+	sortParticles(partValues->particleHash,
+				  partValues->particleIndex,
+				  sisProps->numParticles);
 
-		// Detecta a colizao das particulas
-		collide(sortPos,
-				sortVel,
-				partValues->acc,
-				partValues->particleIndex,
-				partValues->cellStart,
-				partValues->cellEnd,
-				sisProps->numParticles,
-				sisProps->numCells);
+	// Encontra as particulas de inicializacao e de finalizacao
+	reorderDataAndFindCellStart(partValues->cellStart,
+								partValues->cellEnd,
+								sortPos,
+								sortVel,
+								partValues->particleHash,
+								partValues->particleIndex,
+								oldPos,
+								oldVel,
+								sisProps->numParticles,
+								sisProps->numCells);
 
-//		// Integracao no tempo (atualizacao das posicoes e velocidades)
-		integrateSystem(sortPos,
-			 	  		sortVel,
-			 	  		partValues->acc,
-			 	  		sisProps->numParticles);
+	// Detecta a colizao das particulas
+	collide(sortPos,
+			sortVel,
+			partValues->acc,
+			partValues->particleIndex,
+			partValues->cellStart,
+			partValues->cellEnd,
+			sisProps->numParticles,
+			sisProps->numCells);
 
-if (ticks % 20 == 1){
+	// Integracao no tempo (atualizacao das posicoes e velocidades)
+	integrateSystem(sortPos,
+		 	  		sortVel,
+		 	  		partValues->acc,
+		 	  		sisProps->numParticles);
+
+#if !ALWAYS
+	if (ticks % 10 == 1){
+#endif
 		// Saida grarica quando necessario
 		plotParticles(pixels,
 					  sortPos,
 					  sisProps->numParticles,
-					  sisProps->cubeDimension,
-					  partProps->radius,
-					  DIM);
+					  sisProps->imageDIMx,
+					  sisProps->imageDIMy);
 
-//printf("Fim %d\n\n",ticks);
-}
+	//printf("Fim %d\n\n",ticks);
+#if !ALWAYS
+	}
+#endif
 }
 
 void FinalizingSim( DataBlock *simBlock) {
