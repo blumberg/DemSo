@@ -7,10 +7,11 @@ git config --list                           --> Lista as configuraçoes definida
 git config <configuração>                   --> Exibe uma configuração em específico (user.name por exemplo)
 
 === INFOS E STATUS ===
-git status          --> exibe o status da branch atual
-git diff            --> exibe o que foi modificado desde o último COMMIT e não está na área STAGED
-git diff --cached   --> exibe o que foi modificado nos arquivos que estão na área STAGED
-git diff --check    --> Verify for white spaces on files
+git status                              --> exibe o status da branch atual
+git diff                                --> exibe o que foi modificado desde o último COMMIT e não está na área STAGED
+git diff --cached                       --> exibe o que foi modificado nos arquivos que estão na área STAGED
+git diff --check                        --> Verify for white spaces on files
+git log --pretty=format:"%h %s" --graph --> exibe um histórico gráfico dos commits
 
 === COMMIT ===
 git add <file>              --> adiciona um arquivo na área Staged (será adicionado no próximo commit)
