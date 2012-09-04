@@ -1,0 +1,5 @@
+# ignore all backup files
+*~
+
+# ignore the executable particles
+particles
