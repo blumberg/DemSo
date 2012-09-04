@@ -1,0 +1,49 @@
+=== CONFIGURANDO ===
+git config --global user.name "<name>"      --> Define o seu nome no git
+git config --global user.email "<e-mail>"   --> Define seu endereço de e-mail
+git config --global core.editor <editor>    --> Define o editor padrão (gedit por exemplo)
+git config --global merge.tool <diff_tool>  --> Define a ferramenta para merge (vimdiff, ou outro)
+git config --list                           --> Lista as configuraçoes definidas
+git config <configuração>                   --> Exibe uma configuração em específico (user.name por exemplo)
+
+=== INFOS E STATUS ===
+git status          --> exibe o status da branch atual
+git diff            --> exibe o que foi modificado desde o último COMMIT e não está na área STAGED
+git diff --cached   --> exibe o que foi modificado nos arquivos que estão na área STAGED
+git diff --check    --> Verify for white spaces on files
+
+=== COMMIT ===
+git add <file>              --> adiciona um arquivo na área Staged (será adicionado no próximo commit)
+git commit -m '<message>'   --> cria um commit com a mensagem <message> com os arquivos que estão na área Staged
+git commit -am '<message>'  --> cria um commit com todos os arquivos que não estão sendo seguidos e/ou foram alterados e adiciona a mensagem <message>
+git rm <file>               --> remove o arquivo <file> da pasta e do GIT no próximo COMMIT
+git rm -f <file>            --> força a remoção do arquivo
+git rm --cached <file>      --> exclui do GIT mas não da pasta (para de seguir o arquivo)
+git reset HEAD <file>       --> retira o arquivo da área STAGED (oposto de git add)
+git checkout -- <file>      --> restaura o arquivo para o último COMMIT (desfaz as últimas modificações)
+
+=== BRANCH ===
+git branch                      			--> exibe as branch atuais
+git branch <nome>               			--> cria uma nova branch com o nome <nome>
+git branch -d <branch>          			--> deleta uma branch
+git branch -v                   			--> exibe as branch do sistema e o último commit
+git branch --merged             			--> exibe quais as branch que estão unidas na branch atual (útil para verificar se uma branch pode ser excluída)
+git branch --no-merged          			--> exibe as branch que contei trabalho não unido na branch atual
+git checkout <branch>           			--> muda para a branch <branch>
+git checkout -b <new_branch>    			--> cria uma nova branch <branch> e muda para ela
+git checkout -b <branch> <remote>/<branch>  --> baixa uma branch da rede, criando uma nova branch no sistema.
+git checkout --track <remote>/<branch>  	--> mesmo que o anterior
+git merge <branch>              			--> uni a <branch> com a branch atual
+git rebase <branch>             			--> parecido com o merge, mas modifica os COMMITs para manter um histórico linear (precisa de um merge depois)
+
+=== REMOTE (precisa de internet) === 
+git clone <endereço>                	--> clona um repositório do endereço de rede <endereço>
+git remote                          	--> informa os remotes atuais
+git remote -v                       	--> informa os remotes e seus endereços
+git remote add <nome> <endereço>    	--> cria um remote com o nome <nome> no endereço <endereço>
+git remote set-url <remote> <endereço>  --> modifica o endereço de um remote
+git remote rm <remote>              	--> deleta um remote
+git fetch <remote>                  	--> baixa as atualizações para sua pasta atual mas não uni com a branch
+git pull <remote>                   	--> baixa as atualizações e realiza o merge
+git push <remote> <branch>          	--> sobe os arquivos para a Rede
+git push <remote> :<branch>         	--> delete uma branch da Rede
