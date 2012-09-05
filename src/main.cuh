@@ -14,7 +14,7 @@ struct ParticlesValues {
 	float2 *pos1, *vel1, *acc;
 	float2 *pos2, *vel2;
 	uint *cellStart, *cellEnd;
-	uint *particleIndex, *particleHash;
+	uint *gridParticleIndex, *gridParticleHash;
 
 };
 
@@ -23,7 +23,7 @@ struct SistemProperties {
     uint numParticles;
 
     float2 cubeDimension;
-    uint2 gridSize; // Variavel para a CPU
+    uint2 gridSize;
 	uint numCells;
     
     float timeStep;

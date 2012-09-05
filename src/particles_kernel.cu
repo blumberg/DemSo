@@ -1,5 +1,5 @@
 
-__constant__ SistemProperties simPropD;
+__constant__ SistemProperties sisPropD;
 __constant__ ParticleProperties partPropD;
 
 __global__ void initializeParticlePositionD(float2 *pos,
@@ -12,7 +12,7 @@ __global__ void initializeParticlePositionD(float2 *pos,
     uint y = threadIdx.y + blockIdx.y * blockDim.y;
     uint particle = x + y * blockDim.x * gridDim.x;
 	
-	uint numParticles = simPropD.numParticles;
+	uint numParticles = sisPropD.numParticles;
 	
     if (particle < numParticles){
 		
@@ -36,17 +36,17 @@ __global__ void initializeParticlePositionD(float2 *pos,
 __device__ int2 calcGridPos(float2 p)
 {
     int2 gridPos;
-    gridPos.x = floor(p.x * simPropD.gridSize.x / simPropD.cubeDimension.x);
-    gridPos.y = floor(p.y * simPropD.gridSize.y / simPropD.cubeDimension.y);
+    gridPos.x = floor(p.x * sisPropD.gridSize.x / sisPropD.cubeDimension.x);
+    gridPos.y = floor(p.y * sisPropD.gridSize.y / sisPropD.cubeDimension.y);
     return gridPos;
 }
 
 // calculate address in grid from position (clamping to edges)
 __device__ uint calcGridHash(int2 gridPos)
 {
-    gridPos.x = gridPos.x & (simPropD.gridSize.x-1);  // wrap grid, assumes size is power of 2
-    gridPos.y = gridPos.y & (simPropD.gridSize.y-1);
-    return gridPos.y * simPropD.gridSize.x + gridPos.x;
+    gridPos.x = gridPos.x & (sisPropD.gridSize.x-1);  // wrap grid, assumes size is power of 2
+    gridPos.y = gridPos.y & (sisPropD.gridSize.y-1);
+    return gridPos.y * sisPropD.gridSize.x + gridPos.x;
 }
 
 // calculate grid hash value for each particle
@@ -56,7 +56,7 @@ void calcHashD(uint*   gridParticleHash,  // output
                float2* pos)
 {
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
-    uint numParticles = simPropD.numParticles;
+    uint numParticles = sisPropD.numParticles;
     
     if (index >= numParticles) return;
     
@@ -86,7 +86,7 @@ void reorderDataAndFindCellStartD(uint*   cellStart,        // output: cell star
 {
 	extern __shared__ uint sharedHash[];    // blockSize + 1 elements
     uint index = __umul24(blockIdx.x,blockDim.x) + threadIdx.x;
-	uint numParticles = simPropD.numParticles;
+	uint numParticles = sisPropD.numParticles;
 	
     uint hash;
     // handle case when no. of particles not multiple of block size
@@ -213,7 +213,7 @@ void collideD(float2* sortPos,               // input: sorted positions
               uint*   cellStart,
               uint*   cellEnd)
 {
-	uint numParticles = simPropD.numParticles;
+	uint numParticles = sisPropD.numParticles;
 	
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index >= numParticles) return;    
@@ -240,24 +240,24 @@ void collideD(float2* sortPos,               // input: sorted positions
 __global__
 void integrateSystemD(float2* pos, float2* vel, float2* acc)
 {
-	uint numParticles = simPropD.numParticles;
+	uint numParticles = sisPropD.numParticles;
 	
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index >= numParticles) return;  
     
-    vel[index] += (simPropD.gravity + acc[index]) * simPropD.timeStep;
-    pos[index] += vel[index] * simPropD.timeStep;
+    vel[index] += (sisPropD.gravity + acc[index]) * sisPropD.timeStep;
+    pos[index] += vel[index] * sisPropD.timeStep;
     
         // set this to zero to disable collisions with cube sides
 #if 1
-        if (pos[index].x > simPropD.cubeDimension.x - partPropD.radius) {
-        	pos[index].x = simPropD.cubeDimension.x - partPropD.radius;
+        if (pos[index].x > sisPropD.cubeDimension.x - partPropD.radius) {
+        	pos[index].x = sisPropD.cubeDimension.x - partPropD.radius;
         	vel[index].x *= partPropD.boundaryDamping; }
         if (pos[index].x < partPropD.radius){
         	pos[index].x = partPropD.radius;
         	vel[index].x *= partPropD.boundaryDamping;}
-        if (pos[index].y > simPropD.cubeDimension.x - partPropD.radius) { 
-        	pos[index].y = simPropD.cubeDimension.x - partPropD.radius;
+        if (pos[index].y > sisPropD.cubeDimension.x - partPropD.radius) { 
+        	pos[index].y = sisPropD.cubeDimension.x - partPropD.radius;
         	vel[index].y *= partPropD.boundaryDamping; }
 #endif  
         if (pos[index].y < partPropD.radius) {
@@ -280,27 +280,27 @@ void plotSpheresD(uchar4*	ptr,
 {
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
 	
-	uint numParticles = simPropD.numParticles;
+	uint numParticles = sisPropD.numParticles;
 	
 	if (index < numParticles) {
 	
 		float2 pos = sortPos[index];
 	
-		int cPixelx = simPropD.imageDIMx/simPropD.cubeDimension.x*pos.x;
-		int cPixely = simPropD.imageDIMy/simPropD.cubeDimension.y*pos.y;
+		int cPixelx = sisPropD.imageDIMx/sisPropD.cubeDimension.x*pos.x;
+		int cPixely = sisPropD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
 	
-		for (int x = -simPropD.dimx/2; x < simPropD.dimx/2; x++ ) {
-			for (int y = -simPropD.dimy/2; y < simPropD.dimy/2; y++) {
-				if (x*x + y*y < simPropD.pRadius*simPropD.pRadius) {
+		for (int x = -sisPropD.dimx/2; x < sisPropD.dimx/2; x++ ) {
+			for (int y = -sisPropD.dimy/2; y < sisPropD.dimy/2; y++) {
+				if (x*x + y*y < sisPropD.pRadius*sisPropD.pRadius) {
 			
 					uint gPixelx = cPixelx + x;
 					uint gPixely = cPixely + y;
 				
-					float fscale = sqrtf((simPropD.pRadius*simPropD.pRadius - x*x - y*y)/(simPropD.pRadius*simPropD.pRadius));
+					float fscale = sqrtf((sisPropD.pRadius*sisPropD.pRadius - x*x - y*y)/(sisPropD.pRadius*sisPropD.pRadius));
 				
-					uint pixel = gPixelx + gPixely*simPropD.imageDIMx;
+					uint pixel = gPixelx + gPixely*sisPropD.imageDIMx;
 				
-					if (pixel >= simPropD.imageDIMx*simPropD.imageDIMy) pixel = simPropD.imageDIMx*simPropD.imageDIMy-1;
+					if (pixel >= sisPropD.imageDIMx*sisPropD.imageDIMy) pixel = sisPropD.imageDIMx*sisPropD.imageDIMy-1;
 					
 					ptr[pixel].x = 255.0f * fscale;
 					ptr[pixel].y = 255.0f * fscale;

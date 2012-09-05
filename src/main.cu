@@ -11,8 +11,8 @@
 #include "thrust/sort.h" 					   // thrust para ordenar vetor
 
 // Dependece files
-#include "functions.cu" 	 // arquivo de funções de preparação para a GPU
 #include "particles_kernel.cu" 				   // funções executadas na GPU
+#include "functions.cu" 	 // arquivo de funções de preparação para a GPU
 
 #define DIM 800
 #define PARTICLES 90000
@@ -22,34 +22,35 @@
 #define BOUNDARYDAMPING -0.5f
 #define X_PARTICLES 300
 #define Y_PARTICLES 300
-#define ALWAYS 1
+#define ALWAYS 0
+#define NUM_FRAMES_PER_PLOT 2
 
 #define log2( x ) log(x)/log(2)
 
-void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticleProperties *partProps ){
+void PrepareSim( SistemProperties *sisProps, ParticlesValues *partValues, ParticleProperties *partProps ){
 
-	params->numParticles = PARTICLES;
+	sisProps->numParticles = PARTICLES;
 
-	params->cubeDimension.x = params->cubeDimension.y = BOX_SIZE;
+	sisProps->cubeDimension.x = sisProps->cubeDimension.y = BOX_SIZE;
 	
-	params->timeStep = TIME_STEP;
+	sisProps->timeStep = TIME_STEP;
 	
-	params->gravity = make_float2(0,-GRAVITY);
+	sisProps->gravity = make_float2(0,-GRAVITY);
 	
-	params->imageDIMx = DIM;
-	params->imageDIMy = DIM;
+	sisProps->imageDIMx = DIM;
+	sisProps->imageDIMy = DIM;
 		
 	partProps->radius = 15e-3f;
 	partProps->mass = 1e-2;
 	partProps->collideStiffness = 1e3;
-	partProps->collideDamping = 0.1f;
+	partProps->collideDamping = 0.2f;
 	partProps->boundaryDamping = BOUNDARYDAMPING;
 	
-	params->dimx = ceil(params->imageDIMx/params->cubeDimension.x*partProps->radius)*2;
-	if (params->dimx < 2) params->dimx = 2;
-	params->dimy = ceil(params->imageDIMy/params->cubeDimension.y*partProps->radius)*2;
-	if (params->dimy < 2) params->dimy = 2;
-	params->pRadius = params->imageDIMy/params->cubeDimension.y*partProps->radius;
+	sisProps->dimx = ceil(sisProps->imageDIMx/sisProps->cubeDimension.x*partProps->radius)*2;
+	if (sisProps->dimx < 2) sisProps->dimx = 2;
+	sisProps->dimy = ceil(sisProps->imageDIMy/sisProps->cubeDimension.y*partProps->radius)*2;
+	if (sisProps->dimy < 2) sisProps->dimy = 2;
+	sisProps->pRadius = sisProps->imageDIMy/sisProps->cubeDimension.y*partProps->radius;
 
 	// Bloco inicial de esferas
 	float corner1[2] = {0.1, 0.1};
@@ -57,23 +58,23 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 	float sideLenght[2];
 
 	// Grid dimension
-	uint grid = params->cubeDimension.x / (4.0f * partProps[0].radius);
+	uint grid = sisProps->cubeDimension.x / (4.0f * partProps[0].radius);
 	uint temp = log2(grid);
 	uint gridUpdate = pow(2,temp);
-	float cellSize = params->cubeDimension.x / gridUpdate;
+	float cellSize = sisProps->cubeDimension.x / gridUpdate;
 	if ( cellSize/2.0f <= 1.2f * partProps[0].radius ) temp -= 1;
 	else if (cellSize/2.0f >= 3.0f * partProps[0].radius ) temp += 1;
-	params->gridSize.x = pow(2,temp);
+	sisProps->gridSize.x = pow(2,temp);
 	
-	grid = params->cubeDimension.y / (4 * partProps[0].radius);
+	grid = sisProps->cubeDimension.y / (4 * partProps[0].radius);
 	temp = log2(grid);
 	gridUpdate = pow(2,temp);
-	cellSize = params->cubeDimension.x / gridUpdate;
+	cellSize = sisProps->cubeDimension.x / gridUpdate;
 	if ( cellSize/2.0f <= 1.2f * partProps[0].radius ) temp -= 1;
 	else if (cellSize/2.0f >= 3.0f * partProps[0].radius ) temp += 1;	
-	params->gridSize.y = pow(2,temp);
+	sisProps->gridSize.y = pow(2,temp);
 
-	params->numCells = params->gridSize.x * params->gridSize.y;
+	sisProps->numCells = sisProps->gridSize.x * sisProps->gridSize.y;
 
 	// Posicionando as primeiras particulas
 	sideLenght[0] = corner2[0] - corner1[0];
@@ -88,24 +89,24 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 	cudaMalloc((void**)&d_corner1, sizeof(float)*2);
 	cudaMalloc((void**)&d_sideLenght, sizeof(float)*2);
 	cudaMalloc((void**)&d_side, sizeof(uint)*2);
-	cudaMalloc((void**)&particle->pos1, sizeof(float2) * params->numParticles);
-	cudaMalloc((void**)&particle->pos2, sizeof(float2) * params->numParticles);
-	cudaMalloc((void**)&particle->vel1, sizeof(float2) * params->numParticles);
-	cudaMalloc((void**)&particle->vel2, sizeof(float2) * params->numParticles);
-	cudaMalloc((void**)&particle->acc, sizeof(float2) * params->numParticles);
-	cudaMalloc((void**)&particle->cellStart, sizeof(uint) * params->numCells);
-	cudaMalloc((void**)&particle->cellEnd, sizeof(uint) * params->numCells);
-	cudaMalloc((void**)&particle->particleIndex, sizeof(uint) * params->numParticles);
-	cudaMalloc((void**)&particle->particleHash, sizeof(uint) * params->numParticles);
+	cudaMalloc((void**)&partValues->pos1, sizeof(float2) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->pos2, sizeof(float2) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->vel1, sizeof(float2) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->vel2, sizeof(float2) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->acc, sizeof(float2) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->cellStart, sizeof(uint) * sisProps->numCells);
+	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
+	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->gridParticleHash, sizeof(uint) * sisProps->numParticles);
 	cudaMemcpy(d_corner1, corner1, sizeof(float)*2, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_sideLenght, sideLenght, sizeof(float)*2, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_side, side, sizeof(uint)*2, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(simPropD, params, sizeof(SistemProperties));
+	cudaMemcpyToSymbol(sisPropD, sisProps, sizeof(SistemProperties));
 	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * 1);
 
-	initializeParticlePosition(particle->pos1,
-							   particle->vel1,
-							   particle->acc,
+	initializeParticlePosition(partValues->pos1,
+							   partValues->vel1,
+							   partValues->acc,
 							   d_corner1,
 							   d_sideLenght,
 							   d_side,
@@ -117,14 +118,13 @@ void PrepareSim( SistemProperties *params, ParticlesValues *particle, ParticlePr
 
 
 	// Screen output	
-	printf("Number of Spheres = %d\n",params->numParticles);
-	printf("grid %d x %d\n",params->gridSize.x,params->gridSize.y);
+	printf("Number of Particles = %d\n",sisProps->numParticles);
+	printf("grid %d x %d\n",sisProps->gridSize.x,sisProps->gridSize.y);
 }
 
-void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
+void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 
     SistemProperties *sisProps = &simBlock->sisProps;
-//    ParticleProperties *partProps = &simBlock->partProps;
     ParticlesValues *partValues = &simBlock->partValues;
 
 	float2 *oldPos, *oldVel, *sortPos, *sortVel;
@@ -144,13 +144,13 @@ void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 
 	// Define a celula de cada particula
 	calcHash(oldPos,
-			 partValues->particleIndex,
-			 partValues->particleHash,
+			 partValues->gridParticleIndex,
+			 partValues->gridParticleHash,
 			 sisProps->numParticles);
 
 	// Ordena o grid pela posicao das particulas
-	sortParticles(partValues->particleHash,
-				  partValues->particleIndex,
+	sortParticles(partValues->gridParticleHash,
+				  partValues->gridParticleIndex,
 				  sisProps->numParticles);
 
 	// Encontra as particulas de inicializacao e de finalizacao
@@ -158,8 +158,8 @@ void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 								partValues->cellEnd,
 								sortPos,
 								sortVel,
-								partValues->particleHash,
-								partValues->particleIndex,
+								partValues->gridParticleHash,
+								partValues->gridParticleIndex,
 								oldPos,
 								oldVel,
 								sisProps->numParticles,
@@ -169,7 +169,7 @@ void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 	collide(sortPos,
 			sortVel,
 			partValues->acc,
-			partValues->particleIndex,
+			partValues->gridParticleIndex,
 			partValues->cellStart,
 			partValues->cellEnd,
 			sisProps->numParticles,
@@ -182,16 +182,15 @@ void SimLooping( uchar4 *pixels, DataBlock *simBlock, int ticks ) {
 		 	  		sisProps->numParticles);
 
 #if !ALWAYS
-	if (ticks % 10 == 1){
+	if (ticks % NUM_FRAMES_PER_PLOT == 1){
 #endif
 		// Saida grarica quando necessario
-		plotParticles(pixels,
+		plotParticles(image,
 					  sortPos,
 					  sisProps->numParticles,
 					  sisProps->imageDIMx,
 					  sisProps->imageDIMy);
 
-	//printf("Fim %d\n\n",ticks);
 #if !ALWAYS
 	}
 #endif
@@ -201,22 +200,22 @@ void FinalizingSim( DataBlock *simBlock) {
 
     // Limpe aqui o que tiver que ser limpo
     
-    SistemProperties *d1 = &simBlock->sisProps;
-    ParticleProperties *d3 = &simBlock->partProps;
-    ParticlesValues *d2 = &simBlock->partValues;
+    SistemProperties *sisProps = &simBlock->sisProps;
+    ParticleProperties *partProps = &simBlock->partProps;
+    ParticlesValues *partValues = &simBlock->partValues;
     
-    cudaFree( d2->pos1 );
-    cudaFree( d2->pos2 );
-    cudaFree( d2->vel1 );
-    cudaFree( d2->vel2 );
-    cudaFree( d2->acc );
-    cudaFree( d2->cellStart );
-    cudaFree( d2->cellEnd );
-    cudaFree( d2->particleIndex );
-    cudaFree( d2->particleHash );
-    cudaFree( d1 );
-    cudaFree( d2 );
-    cudaFree( d3 );
+    cudaFree( partValues->pos1 );
+    cudaFree( partValues->pos2 );
+    cudaFree( partValues->vel1 );
+    cudaFree( partValues->vel2 );
+    cudaFree( partValues->acc );
+    cudaFree( partValues->cellStart );
+    cudaFree( partValues->cellEnd );
+    cudaFree( partValues->gridParticleIndex );
+    cudaFree( partValues->gridParticleHash );
+    cudaFree( sisProps );
+    cudaFree( partValues );
+    cudaFree( partProps );
 
 }
 
