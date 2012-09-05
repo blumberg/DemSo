@@ -1,5 +1,5 @@
 CC		:= nvcc
-EXECUTABLE	:= particles
+EXECUTABLE	:= DemSo
 CUFILE		:= src/main.cu
 CUHEADERS	:= src/main.cuh #main.h
 CUFLAGS		:= -lglut -lpthread -arch=sm_11 -lGL
