@@ -207,7 +207,6 @@ __global__
 void collideD(float2* sortPos,               // input: sorted positions
               float2* sortVel,               // input: sorted velocities
               float2* newAcc,                // output: new acceleration
-              uint*   gridParticleIndex,     // input: sorted particle indices
               uint*   cellStart,
               uint*   cellEnd)
 {	

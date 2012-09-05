@@ -72,19 +72,19 @@ void PrepareSim( SistemProperties *sisProps,
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera
 	uint grid = sisProps->cubeDimension.x / (4.0f * partProps[0].radius);
 	uint temp = log2(grid);
-	uint gridUpdate = pow(2,temp);
+	uint gridUpdate = 1 << temp;
 	float cellSize = sisProps->cubeDimension.x / gridUpdate;
 	if ( cellSize/2.0f <= 1.2f * partProps[0].radius ) temp -= 1;
 	else if (cellSize/2.0f >= 3.0f * partProps[0].radius ) temp += 1;
-	sisProps->gridSize.x = pow(2,temp);
+	sisProps->gridSize.x = 1 << temp;
 	
 	grid = sisProps->cubeDimension.y / (4 * partProps[0].radius);
 	temp = log2(grid);
-	gridUpdate = pow(2,temp);
+	gridUpdate = 1 << temp;
 	cellSize = sisProps->cubeDimension.x / gridUpdate;
 	if ( cellSize/2.0f <= 1.2f * partProps[0].radius ) temp -= 1;
 	else if (cellSize/2.0f >= 3.0f * partProps[0].radius ) temp += 1;	
-	sisProps->gridSize.y = pow(2,temp);
+	sisProps->gridSize.y = 1 << temp;
 
 	sisProps->numCells = sisProps->gridSize.x * sisProps->gridSize.y;
 	
@@ -190,11 +190,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	collide(sortPos,
 			sortVel,
 			partValues->acc,
-			partValues->gridParticleIndex,
 			partValues->cellStart,
 			partValues->cellEnd,
-			sisProps->numParticles,
-			sisProps->numCells);
+			sisProps->numParticles);
 
 	// Integracao no tempo (atualizacao das posicoes e velocidades)
 	integrateSystem(sortPos,

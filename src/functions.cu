@@ -110,11 +110,9 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 void collide(float2* 	sortPos,
              float2* 	sortVel,
              float2* 	newAcc,
-             uint*  	gridParticleIndex,
              uint*  	cellStart,
              uint*  	cellEnd,
-             uint   	numParticles,
-             uint   	numCells)
+             uint   	numParticles)
 {
     // thread per particle
     uint numThreads, numBlocks;
@@ -124,7 +122,6 @@ void collide(float2* 	sortPos,
     collideD<<< numBlocks, numThreads >>>(sortPos,
                                           sortVel,
                                           newAcc,
-                                          gridParticleIndex,
                                           cellStart,
                                           cellEnd);
 
