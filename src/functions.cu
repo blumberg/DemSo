@@ -1,4 +1,7 @@
+// Esse arquivo prepara as funções que serão executadas na GPU. Ele define
+// o tamanho do Grid e o número de Threads.
 
+// Função para retornar o maior inteiro da divisão a/b
 uint iDivUp(uint a, uint b){
     return (a % b != 0) ? (a / b + 1) : (a / b);
 }
@@ -10,13 +13,16 @@ void computeGridSize(uint n, uint blockSize, uint &numBlocks, uint &numThreads)
     numBlocks = iDivUp(n, numThreads);
 }
 
-void initializeParticlePosition (float2* 	pos,
-								 float2* 	vel,
-								 float2* 	acc,
-								 float*		corner1,
-								 float*		comp,
-								 uint*		side,
-								 uint*		hostSide){
+// cria a posição inicial das partículas. Esse kernel é executado em um
+// grid 2D com um número máximo de 16 threads por bloco
+void initializeParticlePosition (float2* 		pos,
+								 float2* 		vel,
+								 float2* 		acc,
+								 float*			corner1,
+								 float*			comp,
+								 uint*			side,
+								 uint*			hostSide,
+								 unsigned long	seed){
 
 	uint numBlocksx, numBlocksy, numThreadsx, numThreadsy;
 	computeGridSize(hostSide[0], 16, numBlocksx, numThreadsx);
@@ -30,9 +36,12 @@ initializeParticlePositionD<<<numBlocks,numThreads>>>(pos,
 													  acc,
 													  corner1,
 													  comp,
-													  side);
+													  side,
+													  seed);
 }
 
+// Calcula o numero da celula de cada particula. Esse kernel é executado
+// em um grid 1D com um número máximo de 256 threads por bloco
 void calcHash(float2* 	pos,
 			  uint* 	gridParticleIndex,
 			  uint* 	gridParticleHash,
@@ -47,6 +56,13 @@ void calcHash(float2* 	pos,
                                            pos);
 }
 
+// Ordena as partículas com base no número do Hash. Essa rotina é executada
+// pela biblioteca THRUST.
+// A função device_ptr permite passar o ponteiro de uma variável alocada na
+// GPU para o thrust.
+// Em seguida a função sort_by_key organiza o vetor dGridParticleHash em
+// ordem crescente e arruma o vetor dGridParticleIndex com base na
+// ordenação
 void sortParticles(uint *dGridParticleHash, uint *dGridParticleIndex, uint numParticles)
 {
     thrust::sort_by_key(thrust::device_ptr<uint>(dGridParticleHash),
@@ -54,6 +70,10 @@ void sortParticles(uint *dGridParticleHash, uint *dGridParticleIndex, uint numPa
                         thrust::device_ptr<uint>(dGridParticleIndex));
 }
 
+// Reordena os vetores de posição e velocidade com base na nova ordem das
+// partículas. Em seguida o vetor de inicio e fim de cada célula é criado.
+// Esse kernel é executado em um grid 1D com um número máximo de 256
+// threads por bloco
 void reorderDataAndFindCellStart(uint*  cellStart,
 							     uint*  cellEnd,
 							     float2* sortedPos,
@@ -84,7 +104,9 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 
 }
 
-
+// Rotina que verifica a colisão entre as partículas e transforma a força
+// de colisão em aceleração. Esse kernel é executado em um grid 1D com um
+// número máximo de 64 threads por bloco
 void collide(float2* 	sortPos,
              float2* 	sortVel,
              float2* 	newAcc,
@@ -108,6 +130,12 @@ void collide(float2* 	sortPos,
 
 }
 
+// Realiza a integração numérica do sistema. Essa é uma integração linear,
+// onde:
+// Velocidade = Velocidade + Aceleração * DeltaTempo
+// Posicão    =  Posição   + Velocidade * DeltaTempo
+// Esse kernel é executado em um grid 1D com um número máximo de 256
+// threads por bloco.
 void integrateSystem(float2 *pos,
 					 float2 *vel,
 					 float2 *acc,
@@ -121,26 +149,24 @@ void integrateSystem(float2 *pos,
 
 }
 
+// Desenha as partículas em uma imagem de DIMx x DIMy pixels e mostra na
+// tela. O fundo da imagem é definido como preto e as partículas são
+// brancas. Esse kernel é executado em um grid 1D com um número máximo de
+// 256 threads por bloco.
 void plotParticles(uchar4*	ptr,
 				   float2* 	pos,
 				   uint 	numParticles,
 				   int 		DIMx,
 				   int		DIMy){
 
-	uint numThreadsx, numBlocksx, numThreadsy, numBlocksy;
-	computeGridSize(DIMx, 16, numBlocksx, numThreadsx);
-	computeGridSize(DIMy, 16, numBlocksy, numThreadsy);
-
-	dim3 numBlocks(numBlocksx, numBlocksy);
-	dim3 numThreads(numThreadsx, numThreadsy);
+	// pinta o fundo de preto
+	cudaMemset(ptr, 0, DIMx*DIMy*sizeof(uchar4));
 	
-	plotBackgroundD<<<numBlocks,numThreads>>>(ptr);
-	
-	uint numThreads2, numBlocks2;
-	computeGridSize(numParticles, 256, numBlocks2, numThreads2);
+	uint numThreads, numBlocks;
+	computeGridSize(numParticles, 256, numBlocks, numThreads);
 	
 	// execute the kernel
-	plotSpheresD<<<numBlocks2,numThreads2>>>(ptr,
-											 pos);
+	plotSpheresD<<<numBlocks,numThreads>>>(ptr,
+									 	   pos);
 
 }

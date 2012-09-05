@@ -1,4 +1,7 @@
 
+// Estrutura de propriedades das partículas, caso houver mais do que um
+// tipo de partícula, essa estrutura será criada com um tamanho maior
+// Essa estrutura será carregana na memória de constantes da GPU
 struct ParticleProperties {
 
 	float radius;
@@ -9,6 +12,8 @@ struct ParticleProperties {
 
 };
 
+// Estrutura com os valores armazenados de cada partícula. Todas as
+// variáveis dessa estrutura serão alocadas na GPU.
 struct ParticlesValues {
 
 	float2 *pos1, *vel1, *acc;
@@ -18,6 +23,8 @@ struct ParticlesValues {
 
 };
 
+// Estrutura com as propriesdades do sistema. Seu tamanho será fixo e esta
+// estrutura inteira será passada para a memória de constantes da GPU
 struct SistemProperties {
 
     uint numParticles;
@@ -38,6 +45,7 @@ struct SistemProperties {
 
 };
 
+// Estrutura principal da simulação. Ela contem as 3 outras subestruturas.
 struct DataBlock {
 
 	ParticleProperties partProps;

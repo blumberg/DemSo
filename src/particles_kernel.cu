@@ -1,34 +1,34 @@
+// Esse arquivo contem todas as funções executadas na placa de vídeo
 
+// Declarando as variáveis da memória de constante
 __constant__ SistemProperties sisPropD;
 __constant__ ParticleProperties partPropD;
 
-__global__ void initializeParticlePositionD(float2 *pos,
-											float2 *vel,
-											float2 *acc,
-											float *corner1,
-											float *corner2,
-											uint *side) {
+__global__ void initializeParticlePositionD(float2*			pos,
+											float2*			vel,
+											float2*			acc,
+											float*			corner1,
+											float*			corner2,
+											uint*			side,
+											unsigned long 	seed) {
     uint x = threadIdx.x + blockIdx.x * blockDim.x;
     uint y = threadIdx.y + blockIdx.y * blockDim.y;
     uint particle = x + y * blockDim.x * gridDim.x;
 	
-	uint numParticles = sisPropD.numParticles;
+    if (particle >= sisPropD.numParticles) return;
+		
+	curandState state;
+	curand_init( seed, particle, 0, &state );
 	
-    if (particle < numParticles){
-		
-		curandState state;
-		curand_init( 1, particle, 0, &state );
-		
-		float comp[2];
-		
-		comp[0] = corner2[0] - corner1[0];
-		comp[1] = corner2[1] - corner1[1];
-    
-    	pos[particle].x = corner1[0] + comp[0]/(side[0]-1) * (x + (curand_normal(&state)-0.5f)/50);
-    	pos[particle].y = corner1[1] + comp[1]/(side[1]-1) * (y + (curand_normal(&state)-0.5f)/50);
-    	vel[particle] = make_float2( 0 );
-    	acc[particle] = make_float2( 0 );
-    }
+	float comp[2];
+	
+	comp[0] = corner2[0] - corner1[0];
+	comp[1] = corner2[1] - corner1[1];
+
+	pos[particle].x = corner1[0] + comp[0]/(side[0]-1) * (x + (curand_normal(&state)-0.5f)/100);
+	pos[particle].y = corner1[1] + comp[1]/(side[1]-1) * (y + (curand_normal(&state)-0.5f)/100);
+	vel[particle] = make_float2( 0 );
+	acc[particle] = make_float2( 0 );
 
 }
 
@@ -56,9 +56,8 @@ void calcHashD(uint*   gridParticleHash,  // output
                float2* pos)
 {
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
-    uint numParticles = sisPropD.numParticles;
     
-    if (index >= numParticles) return;
+    if (index >= sisPropD.numParticles) return;
     
     float2 p = pos[index];
 
@@ -86,11 +85,10 @@ void reorderDataAndFindCellStartD(uint*   cellStart,        // output: cell star
 {
 	extern __shared__ uint sharedHash[];    // blockSize + 1 elements
     uint index = __umul24(blockIdx.x,blockDim.x) + threadIdx.x;
-	uint numParticles = sisPropD.numParticles;
 	
     uint hash;
     // handle case when no. of particles not multiple of block size
-    if (index < numParticles) {
+    if (index < sisPropD.numParticles) {
         hash = gridParticleHash[index];
 
         // Load hash data into shared memory so that we can look 
@@ -107,7 +105,7 @@ void reorderDataAndFindCellStartD(uint*   cellStart,        // output: cell star
 
 	__syncthreads();
 	
-	if (index < numParticles) {
+	if (index < sisPropD.numParticles) {
 		// If this particle has a different cell index to the previous
 		// particle then it must be the first particle in the cell,
 		// so store the index of this particle in the cell.
@@ -121,7 +119,7 @@ void reorderDataAndFindCellStartD(uint*   cellStart,        // output: cell star
                 cellEnd[sharedHash[threadIdx.x]] = index;
 	    }
 
-        if (index == numParticles - 1)
+        if (index == sisPropD.numParticles - 1)
         {
             cellEnd[hash] = index + 1;
         }
@@ -212,11 +210,9 @@ void collideD(float2* sortPos,               // input: sorted positions
               uint*   gridParticleIndex,     // input: sorted particle indices
               uint*   cellStart,
               uint*   cellEnd)
-{
-	uint numParticles = sisPropD.numParticles;
-	
+{	
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
-    if (index >= numParticles) return;    
+    if (index >= sisPropD.numParticles) return;    
     
     // read particle data from sorted arrays
 	float2 pos = sortPos[index];
@@ -239,11 +235,9 @@ void collideD(float2* sortPos,               // input: sorted positions
 
 __global__
 void integrateSystemD(float2* pos, float2* vel, float2* acc)
-{
-	uint numParticles = sisPropD.numParticles;
-	
+{	
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
-    if (index >= numParticles) return;  
+    if (index >= sisPropD.numParticles) return;  
     
     vel[index] += (sisPropD.gravity + acc[index]) * sisPropD.timeStep;
     pos[index] += vel[index] * sisPropD.timeStep;
@@ -265,49 +259,44 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc)
         	vel[index].y *= partPropD.boundaryDamping;}
 }
 
-__global__
-void plotBackgroundD(uchar4 *ptr){
-    uint x = threadIdx.x + blockIdx.x * blockDim.x;
-    uint y = threadIdx.y + blockIdx.y * blockDim.y;
-    uint index = x + y * blockDim.x * gridDim.x;
-	
-	ptr[index] = make_uchar4(0,0,0,0);
-}
 
+// Pinta a esfera.
 __global__
 void plotSpheresD(uchar4*	ptr,
 				  float2* 	sortPos)
 {
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
 	
-	uint numParticles = sisPropD.numParticles;
+	if (index >= sisPropD.numParticles) return;
 	
-	if (index < numParticles) {
+	float2 pos = sortPos[index];
 	
-		float2 pos = sortPos[index];
+	// calcula a posição do centro da partícula em pixel
+	int cPixelx = sisPropD.imageDIMx/sisPropD.cubeDimension.x*pos.x;
+	int cPixely = sisPropD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
 	
-		int cPixelx = sisPropD.imageDIMx/sisPropD.cubeDimension.x*pos.x;
-		int cPixely = sisPropD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
-	
-		for (int x = -sisPropD.dimx/2; x < sisPropD.dimx/2; x++ ) {
-			for (int y = -sisPropD.dimy/2; y < sisPropD.dimy/2; y++) {
-				if (x*x + y*y < sisPropD.pRadius*sisPropD.pRadius) {
-			
-					uint gPixelx = cPixelx + x;
-					uint gPixely = cPixely + y;
+	// percorre o quadrado ocupado pela partícula (em pixel)
+	for (int x = -sisPropD.dimx/2; x < sisPropD.dimx/2; x++ ) {
+		for (int y = -sisPropD.dimy/2; y < sisPropD.dimy/2; y++) {
+			if (x*x + y*y < sisPropD.pRadius*sisPropD.pRadius) {
 				
-					float fscale = sqrtf((sisPropD.pRadius*sisPropD.pRadius - x*x - y*y)/(sisPropD.pRadius*sisPropD.pRadius));
+				// posição do ponto atual (em pixel)
+				uint gPixelx = cPixelx + x;
+				uint gPixely = cPixely + y;
 				
-					uint pixel = gPixelx + gPixely*sisPropD.imageDIMx;
+				// Cria o efeito 3D da partícula (escurece as bordas)
+				float fscale = sqrtf((sisPropD.pRadius*sisPropD.pRadius - x*x - y*y)/(sisPropD.pRadius*sisPropD.pRadius));
 				
-					if (pixel >= sisPropD.imageDIMx*sisPropD.imageDIMy) pixel = sisPropD.imageDIMx*sisPropD.imageDIMy-1;
-					
-					ptr[pixel].x = 255.0f * fscale;
-					ptr[pixel].y = 255.0f * fscale;
-					ptr[pixel].z = 255.0f * fscale;
-					ptr[pixel].w = 255.0f * fscale;
-					
-				}
+				// posição do pixel no vetor da imagem
+				uint pixel = gPixelx + gPixely*sisPropD.imageDIMx;
+				if (pixel >= sisPropD.imageDIMx*sisPropD.imageDIMy) pixel = sisPropD.imageDIMx*sisPropD.imageDIMy-1;
+				
+				// define a cor do pixel
+				ptr[pixel].x = 255.0f * fscale;
+				ptr[pixel].y = 255.0f * fscale;
+				ptr[pixel].z = 255.0f * fscale;
+				ptr[pixel].w = 255.0f * fscale;
+				
 			}
 		}
 	}
