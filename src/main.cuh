@@ -1,4 +1,3 @@
-#include <cuda.h>
 
 struct ParticleProperties {
 

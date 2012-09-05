@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <math.h>
-#include <cuda.h>
-#include <curand.h>
-#include <curand_kernel.h>
-#include "../includes/cutil_math.h"
-
 
 __constant__ SistemProperties simPropD;
 __constant__ ParticleProperties partPropD;
@@ -24,7 +17,7 @@ __global__ void initializeParticlePositionD(float2 *pos,
     if (particle < numParticles){
 		
 		curandState state;
-		curand_init( 1234, particle, 0, &state );
+		curand_init( 1, particle, 0, &state );
 		
 		float comp[2];
 		

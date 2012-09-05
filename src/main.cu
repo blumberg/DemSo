@@ -1,26 +1,18 @@
-// Includes que eu acho que preciso
-#include <math.h>
-#include <stdio.h>
-#include <iostream>
+// Input and Output include
+#include <iostream>								  // entra e saída de dados
 
 // CUDA includes
-#include <cuda.h>
-#include <curand.h>
-#include "../includes/cuda_by_example.h"
-#include "../includes/gpu_anim.h"                   // este inclui o cuda.h
-#include "../includes/cutil_math.h"
+#include <curand_kernel.h>  		  // bib. randomica para kernel em CUDA
+#include "../includes/gpu_anim.h" 	  // bib. de vizualização em tempo real
+#include "../includes/cutil_math.h"       // funções matemáticas de vetores
 
 // THRUST includes
-#include <thrust/device_vector.h>
-#include <thrust/fill.h>
-#include "thrust/device_ptr.h"
-#include "thrust/for_each.h"
-#include "thrust/iterator/zip_iterator.h"
-#include "thrust/sort.h"
+#include "thrust/device_ptr.h"  		   // thrust para utilizar ponteiro
+#include "thrust/sort.h" 					   // thrust para ordenar vetor
 
 // Dependece files
-#include "particles_kernel.cu"
-#include "functions.cu"
+#include "functions.cu" 	 // arquivo de funções de preparação para a GPU
+#include "particles_kernel.cu" 				   // funções executadas na GPU
 
 #define DIM 800
 #define PARTICLES 90000
