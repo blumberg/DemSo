@@ -16,8 +16,8 @@ struct ParticleProperties {
 // variáveis dessa estrutura serão alocadas na GPU.
 struct ParticlesValues {
 
-	float2 *pos1, *vel1, *acc;
-	float2 *pos2, *vel2;
+	float *pos1, *vel1, *acc;
+	float *pos2, *vel2;
 	uint *cellStart, *cellEnd;
 	uint *gridParticleIndex, *gridParticleHash;
 
@@ -52,7 +52,8 @@ struct DataBlock {
 	ParticlesValues partValues;
 	SistemProperties sisProps;
 	
-	clock_t start;
+	clock_t start, totalStart;
+	int tempo;
 	int IPS;
 
 };

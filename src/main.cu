@@ -24,6 +24,7 @@
 #define X_PARTICLES 300
 #define Y_PARTICLES 300
 #define FPS 31.0f
+#define USE_TEX 1
 
 #define log2( x ) log(x)/log(2)
 
@@ -97,11 +98,11 @@ void PrepareSim( SistemProperties *sisProps,
 	cudaMalloc((void**)&d_corner1, sizeof(float)*2);
 	cudaMalloc((void**)&d_sideLenght, sizeof(float)*2);
 	cudaMalloc((void**)&d_side, sizeof(uint)*2);
-	cudaMalloc((void**)&partValues->pos1, sizeof(float2) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->pos2, sizeof(float2) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->vel1, sizeof(float2) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->vel2, sizeof(float2) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->acc, sizeof(float2) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->pos1, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->pos2, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->vel1, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->vel2, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->acc, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->cellStart, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
@@ -128,8 +129,13 @@ void PrepareSim( SistemProperties *sisProps,
     cudaFree( d_side );
 
 	// Screen output	
-	printf("Number of Particles = %d\n",sisProps->numParticles);
-	printf("grid %d x %d\n",sisProps->gridSize.x,sisProps->gridSize.y);
+	printf("\nNumero de Particulas = %d\n",sisProps->numParticles);
+	printf("grid %d x %d\n\n",sisProps->gridSize.x,sisProps->gridSize.y);
+	if (USE_TEX){
+	printf("Memoria de textura: UTILIZADA\n\n");
+	}else{
+	printf("Memoria de textura: NAO\n\n");
+	}
 }
 
 void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
@@ -146,7 +152,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// dois vetores de posição alocados na GPU é criado. A cada iteração o
 	// vetor de início e o vetor reorganizado são invertidos, reduzindo uma
 	// operação de cópia
-	float2 *oldPos, *oldVel, *sortPos, *sortVel;
+	float *oldPos, *oldVel, *sortPos, *sortVel;
 	
 	// Integrando o programa IPS vezes antes de exibir a imagem
 	for (int i = 0 ; i < simBlock->IPS ; i++) {
@@ -163,6 +169,12 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 			oldVel = partValues->vel2;
 			sortVel = partValues->vel1;
 		}
+		
+		// Integracao no tempo (atualizacao das posicoes e velocidades)
+		integrateSystem(oldPos,
+			 	  		oldVel,
+			 	  		partValues->acc,
+			 	  		sisProps->numParticles);
 
 		// Define a celula de cada particula, criando os vetores
 		// gridParticleIndex e gridParticleHash ordenados pelo Index
@@ -197,13 +209,16 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				partValues->acc,
 				partValues->cellStart,
 				partValues->cellEnd,
-				sisProps->numParticles);
+				sisProps->numParticles,
+				sisProps->numCells);
 
-		// Integracao no tempo (atualizacao das posicoes e velocidades)
-		integrateSystem(sortPos,
-			 	  		sortVel,
-			 	  		partValues->acc,
-			 	  		sisProps->numParticles);
+//		// Integracao no tempo (atualizacao das posicoes e velocidades)
+//		integrateSystem(sortPos,
+//			 	  		sortVel,
+//			 	  		partValues->acc,
+//			 	  		sisProps->numParticles);
+
+		simBlock->tempo++;
 	}
 
 	// Saida grarica quando necessario
@@ -240,9 +255,14 @@ void FinalizingSim( DataBlock *simBlock) {
     cudaFree( simBlock->partValues.gridParticleIndex );
     cudaFree( simBlock->partValues.gridParticleHash );
     
-   	printf("Integracoes por plot = %d\n",simBlock->IPS);
-  	printf("\n");
-
+   	printf("Integracoes por plot = %d\n\n",simBlock->IPS);
+	double elapsedTime = ((double)clock() - simBlock->totalStart)/CLOCKS_PER_SEC;
+	double simulationTime = simBlock->tempo * simBlock->sisProps.timeStep;
+	
+	printf("Duracao da simulacao = %4.2f s\n",elapsedTime);
+	printf("Tempo de simulacao = %4.2f s\n\n",simulationTime);
+	printf("Razao de tempo (Real/Simulado) = %3.3f\n\n",elapsedTime/simulationTime);
+	
 }
 
 
@@ -258,6 +278,8 @@ int main() {
     
     // Definindo que a primeira iteração será exibida
     simBlock.IPS = 1;
+	simBlock.totalStart = clock();
+	simBlock.tempo = 0;
     
     // função que define o tamanho da imagem e a estrutura que será
     // repassada para dentro do looping
