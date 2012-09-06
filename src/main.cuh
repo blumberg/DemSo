@@ -51,5 +51,8 @@ struct DataBlock {
 	ParticleProperties partProps;
 	ParticlesValues partValues;
 	SistemProperties sisProps;
+	
+	clock_t start;
+	int IPS;
 
 };

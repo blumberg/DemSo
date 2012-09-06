@@ -8,22 +8,26 @@ __global__ void initializeParticlePositionD(float2*			pos,
 											float2*			vel,
 											float2*			acc,
 											float*			corner1,
-											float*			corner2,
+											float*			comp,
 											uint*			side,
 											unsigned long 	seed) {
     uint x = threadIdx.x + blockIdx.x * blockDim.x;
     uint y = threadIdx.y + blockIdx.y * blockDim.y;
-    uint particle = x + y * blockDim.x * gridDim.x;
 	
+	if (x >= side[0]) return;
+	if (y >= side[1]) return;
+	
+	uint particle = x + y*side[0];
+
     if (particle >= sisPropD.numParticles) return;
-		
+
 	curandState state;
 	curand_init( seed, particle, 0, &state );
 	
-	float comp[2];
-	
-	comp[0] = corner2[0] - corner1[0];
-	comp[1] = corner2[1] - corner1[1];
+//	float comp[2];
+//	
+//	comp[0] = corner2[0] - corner1[0];
+//	comp[1] = corner2[1] - corner1[1];
 
 	pos[particle].x = corner1[0] + comp[0]/(side[0]-1) * (x + (curand_normal(&state)-0.5f)/100);
 	pos[particle].y = corner1[1] + comp[1]/(side[1]-1) * (y + (curand_normal(&state)-0.5f)/100);

@@ -23,8 +23,7 @@
 #define BOUNDARYDAMPING -0.5f
 #define X_PARTICLES 300
 #define Y_PARTICLES 300
-#define ALWAYS 0
-#define NUM_FRAMES_PER_PLOT 2
+#define FPS 31.0f
 
 #define log2( x ) log(x)/log(2)
 
@@ -43,10 +42,10 @@ void PrepareSim( SistemProperties *sisProps,
 	sisProps->imageDIMx = DIM;
 	sisProps->imageDIMy = DIM;
 		
-	partProps->radius = 15e-3f;
+	partProps->radius = 16e-3f;
 	partProps->mass = 1e-2;
 	partProps->collideStiffness = 1e3;
-	partProps->collideDamping = 0.1f;
+	partProps->collideDamping = 0.2f;
 	partProps->boundaryDamping = BOUNDARYDAMPING;
 	
 	// tamanho do quadrado que contem a esfera em PIXEL (para a saida grafica)
@@ -135,6 +134,9 @@ void PrepareSim( SistemProperties *sisProps,
 
 void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 
+	// inicia o cronometro
+	simBlock->start = clock();
+
 	// Estruturas auxiliares
     SistemProperties *sisProps = &simBlock->sisProps;
     ParticlesValues *partValues = &simBlock->partValues;
@@ -145,75 +147,84 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// vetor de início e o vetor reorganizado são invertidos, reduzindo uma
 	// operação de cópia
 	float2 *oldPos, *oldVel, *sortPos, *sortVel;
+	
+	// Integrando o programa IPS vezes antes de exibir a imagem
+	for (int i = 0 ; i < simBlock->IPS ; i++) {
 
-	if (ticks & 1) // quando par (FALSE) quando impar (TRUE)
-	{	
-		oldPos = partValues->pos1;
-		sortPos = partValues->pos2;
-		oldVel = partValues->vel1;
-		sortVel = partValues->vel2;
-	} else {
-		oldPos = partValues->pos2;
-		sortPos = partValues->pos1;
-		oldVel = partValues->vel2;
-		sortVel = partValues->vel1;
+		if ((ticks + i) & 1) // quando par (FALSE) quando impar (TRUE)
+		{	
+			oldPos = partValues->pos1;
+			sortPos = partValues->pos2;
+			oldVel = partValues->vel1;
+			sortVel = partValues->vel2;
+		} else {
+			oldPos = partValues->pos2;
+			sortPos = partValues->pos1;
+			oldVel = partValues->vel2;
+			sortVel = partValues->vel1;
+		}
+
+		// Define a celula de cada particula, criando os vetores
+		// gridParticleIndex e gridParticleHash ordenados pelo Index
+		calcHash(oldPos,
+				 partValues->gridParticleIndex,
+				 partValues->gridParticleHash,
+				 sisProps->numParticles);
+
+		// Reordena os vetores baseado no Hash
+		sortParticles(partValues->gridParticleHash,
+					  partValues->gridParticleIndex,
+					  sisProps->numParticles);
+
+		// Reorganiza as variaveis de Pos e Vel para a nova ordem de particulas
+		// e cria os vetores indicando a partícula de início e fim de cada
+		// celula
+		reorderDataAndFindCellStart(partValues->cellStart,
+									partValues->cellEnd,
+									sortPos,
+									sortVel,
+									partValues->gridParticleHash,
+									partValues->gridParticleIndex,
+									oldPos,
+									oldVel,
+									sisProps->numParticles,
+									sisProps->numCells);
+
+		// Detecta a colisao das particulas e transforma a força de colisão em
+		// aceleração
+		collide(sortPos,
+				sortVel,
+				partValues->acc,
+				partValues->cellStart,
+				partValues->cellEnd,
+				sisProps->numParticles);
+
+		// Integracao no tempo (atualizacao das posicoes e velocidades)
+		integrateSystem(sortPos,
+			 	  		sortVel,
+			 	  		partValues->acc,
+			 	  		sisProps->numParticles);
 	}
 
-	// Define a celula de cada particula, criando os vetores
-	// gridParticleIndex e gridParticleHash ordenados pelo Index
-	calcHash(oldPos,
-			 partValues->gridParticleIndex,
-			 partValues->gridParticleHash,
-			 sisProps->numParticles);
+	// Saida grarica quando necessario
+	plotParticles(image,
+				  sortPos,
+				  sisProps->numParticles,
+				  sisProps->imageDIMx,
+				  sisProps->imageDIMy);
 
-	// Reordena os vetores baseado no Hash
-	sortParticles(partValues->gridParticleHash,
-				  partValues->gridParticleIndex,
-				  sisProps->numParticles);
+	
+	// calcula o tempo de exibição do frame
+	double time = ((double)clock() - simBlock->start)/CLOCKS_PER_SEC;
+	if (time < 0.003f) time = 0.03f;
+	
+	// Define o número de Interações por segundo para exibir a imagem em 
+	// FPS (definida no cabeçalho) frames por segundo.
+	// Após a conta, transforma o número em impar para não calcular duas
+	// duas vezes a mesma iteração (por causa do switch)
+	simBlock->IPS = floor(1.0f/time/FPS*simBlock->IPS);
+	simBlock->IPS = simBlock->IPS | 0x0001;
 
-	// Reorganiza as variaveis de Pos e Vel para a nova ordem de particulas
-	// e cria os vetores indicando a partícula de início e fim de cada
-	// celula
-	reorderDataAndFindCellStart(partValues->cellStart,
-								partValues->cellEnd,
-								sortPos,
-								sortVel,
-								partValues->gridParticleHash,
-								partValues->gridParticleIndex,
-								oldPos,
-								oldVel,
-								sisProps->numParticles,
-								sisProps->numCells);
-
-	// Detecta a colisao das particulas e transforma a força de colisão em
-	// aceleração
-	collide(sortPos,
-			sortVel,
-			partValues->acc,
-			partValues->cellStart,
-			partValues->cellEnd,
-			sisProps->numParticles);
-
-	// Integracao no tempo (atualizacao das posicoes e velocidades)
-	integrateSystem(sortPos,
-		 	  		sortVel,
-		 	  		partValues->acc,
-		 	  		sisProps->numParticles);
-
-// verifica quando deve ocorrer a saída gráfica e  cria uma nova imagem
-#if !ALWAYS
-	if (ticks % NUM_FRAMES_PER_PLOT == 1){
-#endif
-		// Saida grarica quando necessario
-		plotParticles(image,
-					  sortPos,
-					  sisProps->numParticles,
-					  sisProps->imageDIMx,
-					  sisProps->imageDIMy);
-
-#if !ALWAYS
-	}
-#endif
 }
 
 void FinalizingSim( DataBlock *simBlock) {
@@ -228,6 +239,9 @@ void FinalizingSim( DataBlock *simBlock) {
     cudaFree( simBlock->partValues.cellEnd );
     cudaFree( simBlock->partValues.gridParticleIndex );
     cudaFree( simBlock->partValues.gridParticleHash );
+    
+   	printf("Integracoes por plot = %d\n",simBlock->IPS);
+  	printf("\n");
 
 }
 
@@ -241,6 +255,9 @@ int main() {
     SistemProperties *sisProps = &simBlock.sisProps;
     ParticleProperties *partProps = &simBlock.partProps;
     ParticlesValues *partValues = &simBlock.partValues;
+    
+    // Definindo que a primeira iteração será exibida
+    simBlock.IPS = 1;
     
     // função que define o tamanho da imagem e a estrutura que será
     // repassada para dentro do looping

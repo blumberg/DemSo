@@ -7,6 +7,9 @@ CUDEPS		:= src/functions.cu src/particles_kernel.cu
 
 $(EXECUTABLE): $(CUFILE) $(CUDEPS) $(CUHEADERS)
 	$(CC) $(CUFILE) -o $(EXECUTABLE) $(CUFLAGS) -include $(CUHEADERS)
+
+ptx: $(CUFILE) $(CUDEPS) $(CUHEADERS)
+	$(CC) $(CUFILE) -o $(EXECUTABLE).ptx $(CUFLAGS) -ptx -include $(CUHEADERS)
 	
 clean:
 	ls src/*~ | xargs rm -f
@@ -14,6 +17,7 @@ clean:
 	ls includes/*~ | xargs rm -f
 	ls *~ | xargs rm -f
 	rm -f $(EXECUTABLE)
+	rm -f $(EXECUTABLE).ptx
 	
 clean_tio:
 	ls src/*~ | xargs rm -f
