@@ -8,6 +8,9 @@ CUDEPS		:= src/functions.cu src/particles_kernel.cu
 $(EXECUTABLE): $(CUFILE) $(CUDEPS) $(CUHEADERS)
 	$(CC) $(CUFILE) -o $(EXECUTABLE) $(CUFLAGS) -include $(CUHEADERS)
 
+debug: $(CUFILE) $(CUDEPS) $(CUHEADERS)
+	$(CC) -g -G $(CUFILE) -o $(EXECUTABLE) $(CUFLAGS) -include $(CUHEADERS)
+
 ptx: $(CUFILE) $(CUDEPS) $(CUHEADERS)
 	$(CC) $(CUFILE) -o $(EXECUTABLE).ptx $(CUFLAGS) -ptx -include $(CUHEADERS)
 	
