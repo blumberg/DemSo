@@ -18,7 +18,7 @@ texture<uint, 1, cudaReadModeElementType> cellEndTex;
 #endif
 
 // Declarando as variáveis da memória de constante
-__constant__ SistemProperties sisPropD;
+__constant__ SystemProperties sisPropD;
 __constant__ ParticleProperties partPropD;
 
 __global__ void initializeParticlePositionD(float2*			pos,

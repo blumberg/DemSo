@@ -25,7 +25,7 @@ struct ParticlesValues {
 
 // Estrutura com as propriesdades do sistema. Seu tamanho será fixo e esta
 // estrutura inteira será passada para a memória de constantes da GPU
-struct SistemProperties {
+struct SystemProperties {
 
     uint numParticles;
 
@@ -50,7 +50,7 @@ struct DataBlock {
 
 	ParticleProperties partProps;
 	ParticlesValues partValues;
-	SistemProperties sisProps;
+	SystemProperties sisProps;
 	
 	clock_t start, totalStart;
 	int tempo;

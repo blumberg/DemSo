@@ -28,7 +28,7 @@
 
 #define log2( x ) log(x)/log(2)
 
-void PrepareSim( SistemProperties *sisProps,
+void PrepareSim( SystemProperties *sisProps,
 				 ParticlesValues *partValues,
 				 ParticleProperties *partProps ) {
 
@@ -110,7 +110,7 @@ void PrepareSim( SistemProperties *sisProps,
 	cudaMemcpy(d_corner1, corner1, sizeof(float)*2, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_sideLenght, sideLenght, sizeof(float)*2, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_side, side, sizeof(uint)*2, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(sisPropD, sisProps, sizeof(SistemProperties));
+	cudaMemcpyToSymbol(sisPropD, sisProps, sizeof(SystemProperties));
 	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * 1);
 
 	// Função para definir a posição inicial das esferas
@@ -144,7 +144,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	simBlock->start = clock();
 
 	// Estruturas auxiliares
-    SistemProperties *sisProps = &simBlock->sisProps;
+    SystemProperties *sisProps = &simBlock->sisProps;
     ParticlesValues *partValues = &simBlock->partValues;
 	
 	// para ordenarmos os vetores de posicao e velocidade sem necessidade
@@ -272,7 +272,7 @@ int main() {
     DataBlock simBlock;
     
     // declarando as subestruturas (apenas por facilidade)
-    SistemProperties *sisProps = &simBlock.sisProps;
+    SystemProperties *sisProps = &simBlock.sisProps;
     ParticleProperties *partProps = &simBlock.partProps;
     ParticlesValues *partValues = &simBlock.partValues;
     
