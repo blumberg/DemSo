@@ -3,28 +3,14 @@
 #include <time.h> 		   // biblioteca de tempo para criar o seed do rand
 
 // CUDA includes
-#include <curand_kernel.h>  		  // bib. randomica para kernel em CUDA
-#include "../includes/gpu_anim.h" 	  // bib. de vizualização em tempo real
-#include "../includes/cutil_math.h"       // funções matemáticas de vetores
-
-// THRUST includes
-#include "thrust/device_ptr.h"  		   // thrust para utilizar ponteiro
-#include "thrust/sort.h" 					   // thrust para ordenar vetor
+#include "gpu_anim.h" 				  // bib. de vizualização em tempo real
+#include "cutil_math.h" 		      // funções matemáticas de vetores
 
 // Dependece files
-#include "particles_kernel.cu" 				   // funções executadas na GPU
-#include "functions.cu" 	 // arquivo de funções de preparação para a GPU
+#include "main.cuh"
+#include "particles_kernel.cuh" 			   // funções executadas na GPU
+#include "functions.cuh" 	 // arquivo de funções de preparação para a GPU
 
-#define DIM 800
-#define PARTICLES 90000
-#define BOX_SIZE 10.0f
-#define TIME_STEP 1.0e-3
-#define GRAVITY 9.81f
-#define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 300
-#define Y_PARTICLES 300
-#define FPS 31.0f
-#define USE_TEX 1
 
 #define log2( x ) log(x)/log(2)
 
@@ -131,11 +117,11 @@ void PrepareSim( SystemProperties *sisProps,
 	// Screen output	
 	printf("\nNumero de Particulas = %d\n",sisProps->numParticles);
 	printf("grid %d x %d\n\n",sisProps->gridSize.x,sisProps->gridSize.y);
-	if (USE_TEX){
+#ifdef USE_TEX
 	printf("Memoria de textura: UTILIZADA\n\n");
-	}else{
+#else
 	printf("Memoria de textura: NAO\n\n");
-	}
+#endif 
 }
 
 void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {

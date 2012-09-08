@@ -1,3 +1,7 @@
+#include "thrust/device_ptr.h"  		   // thrust para utilizar ponteiro
+#include "thrust/sort.h" 					   // thrust para ordenar vetor
+#include "main.cuh"
+#include "particles_kernel.cuh"
 // Esse arquivo prepara as funções que serão executadas na GPU. Ele define
 // o tamanho do Grid e o número de Threads.
 
@@ -129,8 +133,8 @@ void collide(float* 	oldPos,
 {
 	// Declarando como memória de textura
 	#if USE_TEX
-		cudaBindTexture(0, oldPosTex, sortedPos, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldVelTex, sortedVel, numParticles*sizeof(float2));
+		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
+		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
 		cudaBindTexture(0, cellStartTex, cellStart, numCells*sizeof(uint));
 		cudaBindTexture(0, cellEndTex, cellEnd, numCells*sizeof(uint));    
 	#endif

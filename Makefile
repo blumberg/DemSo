@@ -1,29 +1,34 @@
-CC		:= nvcc
-EXECUTABLE	:= DemSo
-CUFILE		:= src/main.cu
-CUHEADERS	:= src/main.cuh #main.h
-CUFLAGS		:= -lglut -lpthread -arch=sm_11 -lGL -I./includes
-CUDEPS		:= src/functions.cu src/particles_kernel.cu
+CC			:= nvcc
+BINNAME		:= DemSo
+CFLAGS		:= -arch=sm_11 -I../includes -DUSE_TEX
+LIBS		:= -lglut -lpthread -lGL
+OBJS		:= main.o functions.o particles_kernel.o
 
-$(EXECUTABLE): $(CUFILE) $(CUDEPS) $(CUHEADERS)
-	$(CC) $(CUFILE) -o $(EXECUTABLE) $(CUFLAGS) -include $(CUHEADERS)
+SUBDIRS 	:= src
 
-debug: $(CUFILE) $(CUDEPS) $(CUHEADERS)
-	$(CC) -g -G $(CUFILE) -o $(EXECUTABLE) $(CUFLAGS) -include $(CUHEADERS)
+export CC CFLAGS LIBS OBJS BINNAME
 
-ptx: $(CUFILE) $(CUDEPS) $(CUHEADERS)
-	$(CC) $(CUFILE) -o $(EXECUTABLE).ptx $(CUFLAGS) -ptx -include $(CUHEADERS)
+all:
+	@for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) $(WHAT_TO_MAKE)) || exit 1; \
+	done
+
+#$(EXECUTABLE): $(CUFILE) $(CUDEPS) $(CUHEADERS)
+#	$(CC) $(CUFILE) -o $(EXECUTABLE) $(CUFLAGS) -include $(CUHEADERS)
+
+#debug: $(CUFILE) $(CUDEPS) $(CUHEADERS)
+#	$(CC) -g -G $(CUFILE) -o $(EXECUTABLE) $(CUFLAGS) -include $(CUHEADERS)
+
+#ptx: $(CUFILE) $(CUDEPS) $(CUHEADERS)
+#	$(CC) $(CUFILE) -o $(EXECUTABLE).ptx $(CUFLAGS) -ptx -include $(CUHEADERS)
 
 parser: src/parser.cpp src/DEMSimulation.cpp
 	$(CC) src/parser.cpp src/DEMSimulation.cpp -o parser $(CUFLAGS)
 	
 clean:
-	ls src/*~ | xargs rm -f
-	ls doc/*~ | xargs rm -f
-	ls includes/*~ | xargs rm -f
-	ls *~ | xargs rm -f
-	rm -f $(EXECUTABLE)
-	rm -f $(EXECUTABLE).ptx
+	@for dir in $(SUBDIRS); do \
+		(cd $$dir && $(MAKE) $@) || exit 1; \
+	done
 	
 clean_tio:
 	ls src/*~ | xargs rm -f

@@ -1,4 +1,17 @@
 /* vim: set filetype=cpp */
+#ifndef MAIN_CUH
+#define MAIN_CUH
+
+#define DIM 800
+#define PARTICLES 90000
+#define BOX_SIZE 10.0f
+#define TIME_STEP 1.0e-3
+#define GRAVITY 9.81f
+#define BOUNDARYDAMPING -0.5f
+#define X_PARTICLES 300
+#define Y_PARTICLES 300
+#define FPS 31.0f
+
 // Estrutura de propriedades das partículas, caso houver mais do que um
 // tipo de partícula, essa estrutura será criada com um tamanho maior
 // Essa estrutura será carregana na memória de constantes da GPU
@@ -57,3 +70,5 @@ struct DataBlock {
 	int IPS;
 
 };
+
+#endif /* MAIN_CUH */
