@@ -44,35 +44,91 @@ DEMEnvironment DEMParser::loadEnvironment (void)
 
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
-		if (node->name() == (string) "dimensions") cout << node->value();//env.dimension = readVector(node);
+		if (node->name() == (string) "dimensions") env.dimension = readVector(node);
+		if (node->name() == (string) "gravity") env.gravity = readVector(node);
 	}
 	return env;
 }
 
-float * DEMParser::readVector (rapidxml::xml_node<> *root)
+DEMProperties DEMParser::loadProperties (void)
 {
-	float vect[3] = {0.0f, 0.0f, 0.0f};
+	DEMProperties prop;
+	xml_node<> *root = rootTag->first_node("properties");
 
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
-		if (node->name() == (string) "x") vect[0] = atof(node->value());
-		else if (node->name() == (string) "y") vect[1] = atof(node->value());
-		else if (node->name() == (string) "z") vect[2] = atof(node->value());
+		if (node->name() == (string) "particletype") prop.addParticleType (loadParticleType (node));
+	}
+	return prop;
+}
+
+DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
+{
+	DEMParticleType ptype;
+	
+	if (root->first_attribute("id")) ptype.id = root->first_attribute("id")->value();
+	if (root->first_attribute("name")) ptype.name = root->first_attribute("name")->value();
+
+	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
+	{
+		if (node->name() == (string) "mass") ptype.mass = atof(node->value());
+		else if (node->name() == (string) "radius") ptype.radius = atof(node->value());
+		else if (node->name() == (string) "stiffness")
+		{
+			xml_attribute<> *attr = node->first_attribute("dir");
+			if (attr->value() == (string) "normal") ptype.normalStiffness = atof(node->value());
+			//else if (attr->value() == (string) "tangent") ptype.tangentStiffness = atof(node->value());
+			else throw "Unrecognized stiffness direction";
+		}
+		else if (node->name() == (string) "damping")
+		{
+			xml_attribute<> *attr = node->first_attribute("type");
+			if (attr && attr->value() == (string) "boundary")
+				ptype.boundaryDamping = atof(node->value()); //FIXME: test if tangent or normal
+			else {
+				attr = node->first_attribute("dir");
+				if (attr->value() == (string) "normal") ptype.normalDamping = atof(node->value());
+				//else if (attr->value() == (string) "tangent") ptype.tangentDamping = atof(node->value());
+				else throw "Unrecognized damping direction";
+			}
+			
+		}
+		else throw "Unrecognized tag inside <particletype>";
+	}
+	return ptype;
+}
+
+DEMParticles DEMParser::loadParticles (void)
+{
+	DEMParticles parts;
+	xml_node<> *root = rootTag->first_node("particles");
+
+	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
+	{
+		if (node->name() == (string) "block") cout << "Achei um block!\n"; //parts.addParticles(loadBlock(node));
+	}
+
+	return parts;
+}
+
+float3 DEMParser::readVector (xml_node<> *root)
+{
+	float3 vect = make_float3(0.0f);
+
+	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
+	{
+		if (node->name() == (string) "x") vect.x = atof(node->value());
+		else if (node->name() == (string) "y") vect.y = atof(node->value());
+		else if (node->name() == (string) "z") vect.z = atof(node->value());
 	}
 	return vect;
 }
 
 int main (int argc, char **argv)
 {
-	DEMParser parser(argv[1]);
+	DEMSimulation sim;
+	sim.loadFromFile (argv[1]);
+	sim.printConfiguration();
 
-	DEMParameters params = parser.loadParameters();
-	DEMEnvironment env = parser.loadEnvironment();
-
-	cout << "-- Parameters" << endl;
-	cout << "timeStep: " << params.timeStep << endl;
-	cout << "FPS: " << params.framesPerSecond << endl;
-	cout << "-- Environment" << endl;
-	cout << "dimensions: " << env.dimension << endl;
 	return 0;
 }

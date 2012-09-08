@@ -2,7 +2,7 @@ CC		:= nvcc
 EXECUTABLE	:= DemSo
 CUFILE		:= src/main.cu
 CUHEADERS	:= src/main.cuh #main.h
-CUFLAGS		:= -lglut -lpthread -arch=sm_11 -lGL
+CUFLAGS		:= -lglut -lpthread -arch=sm_11 -lGL -I./includes
 CUDEPS		:= src/functions.cu src/particles_kernel.cu
 
 $(EXECUTABLE): $(CUFILE) $(CUDEPS) $(CUHEADERS)
@@ -13,6 +13,9 @@ debug: $(CUFILE) $(CUDEPS) $(CUHEADERS)
 
 ptx: $(CUFILE) $(CUDEPS) $(CUHEADERS)
 	$(CC) $(CUFILE) -o $(EXECUTABLE).ptx $(CUFLAGS) -ptx -include $(CUHEADERS)
+
+parser: src/parser.cpp src/DEMSimulation.cpp
+	$(CC) src/parser.cpp src/DEMSimulation.cpp -o parser $(CUFLAGS)
 	
 clean:
 	ls src/*~ | xargs rm -f

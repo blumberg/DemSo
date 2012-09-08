@@ -1,5 +1,8 @@
 #ifndef DATATYPES_H
 #define DATATYPES_H
+#include <vector>
+#include <math.h>
+#include "../includes/cutil_math.h"
 
 class DEMParameters {
 	public:
@@ -9,8 +12,8 @@ class DEMParameters {
 
 class DEMEnvironment {
 	public:
-		float dimension[3];		//FIXME: deveria ser float3
-		float gravity[3];		//FIXME: deveria ser float3
+		float3 dimension;
+		float3 gravity;
 };
 
 class DEMParticleType {
@@ -22,21 +25,21 @@ class DEMParticleType {
 		float normalStiffness;
 		float normalDamping;
 		float boundaryDamping;
+		DEMParticleType () {};
 };
 
 class DEMProperties {
-	private:
-		DEMParticleType *particleTypes;
 	public:
-		void addParticleType (DEMParticleType newType) {};
+		std::vector<DEMParticleType> particleTypes;
+		void addParticleType (DEMParticleType);
 };
 
 class DEMParticles {
 	public:
-		float *positions;
-		float *velocities;
-		float *accelerations;
-		int   *typeIndexes;		// Se para uma partícula i, typeIndexes[i] == 1, então
+		float **positions;
+		float **velocities;
+		float **accelerations;
+		int   **typeIndexes;	// Se para uma partícula i, typeIndexes[i] == 1, então
 								// o tipo desta partícula será o que estiver na posição
 								// 1 no vetor particleTypes[]
 };
@@ -49,6 +52,7 @@ class DEMSimulation {
 		DEMParticles	particles;
 	public:
 		void loadFromFile (const char *filename);
+		void printConfiguration ();
 };
 
 #endif /* DATATYPES_H */
