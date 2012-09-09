@@ -8,6 +8,9 @@
 # ignore OS X stupid files
 .DS_Store
 
+# ignore OS X stupid files
+.DS_Store
+
 # ignore the executable particles
 DemSo
 parser
