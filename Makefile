@@ -23,7 +23,7 @@ all:
 #	$(CC) $(CUFILE) -o $(EXECUTABLE).ptx $(CUFLAGS) -ptx -include $(CUHEADERS)
 
 parser: src/parser.cpp src/DEMSimulation.cpp
-	$(CC) src/parser.cpp src/DEMSimulation.cpp -o parser $(CUFLAGS)
+	$(CC) src/parser.cpp src/DEMParticles.cpp src/DEMSimulation.cpp -o parser -I./includes $(CFLAGS)
 	
 clean:
 	@for dir in $(SUBDIRS); do \

@@ -32,16 +32,19 @@ class DEMProperties {
 	public:
 		std::vector<DEMParticleType> particleTypes;
 		void addParticleType (DEMParticleType);
+		int particleTypeIndexById (std::string);
 };
 
 class DEMParticles {
 	public:
-		float **positions;
-		float **velocities;
-		float **accelerations;
-		int   **typeIndexes;	// Se para uma partícula i, typeIndexes[i] == 1, então
-								// o tipo desta partícula será o que estiver na posição
-								// 1 no vetor particleTypes[]
+		std::vector<float3> positions;
+		std::vector<float3> velocities;
+		std::vector<float3> accelerations;
+		std::vector<int> typeIndexes;	// Se para uma partícula i, typeIndexes[i] == 1, então
+										// o tipo desta partícula será o que estiver na posição
+										// 1 no vetor particleTypes[]
+		void addParticles (DEMParticles);
+		void generateBlock (int, float3, float3, float3, DEMProperties *);
 };
 
 class DEMSimulation {

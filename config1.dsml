@@ -34,8 +34,8 @@
 	<particles>
 		<block id="1" particletype="areia" color="255255255">
 			<start><x>0.1</x><y>0.1</y><z>0.1</z></start>
-			<end><x>0.9</x><y>0.9</y><z>0.9</z></end>
-			<spacing>0</spacing>
+			<end><x>9.9</x><y>9.9</y><z>9.9</z></end>
+			<spacing><x>0</x><y>0</y><z>0</z></spacing>
 		</block>
 	</particles>
 </simulation>

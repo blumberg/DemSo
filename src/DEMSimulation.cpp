@@ -15,6 +15,14 @@ void DEMProperties::addParticleType (DEMParticleType newType)
 	particleTypes.push_back(newType);
 }
 
+int DEMProperties::particleTypeIndexById (string id)
+{
+	for (register int i = 0;i < particleTypes.size();i++)
+		if (particleTypes[i].id == id) return i;
+	throw "Nonexistant particle id: " + id;
+}
+// --- end FIXME
+
 void DEMSimulation::loadFromFile (const char *filename)
 {
 	DEMParser parser(filename);
@@ -23,9 +31,9 @@ void DEMSimulation::loadFromFile (const char *filename)
 		parameters = parser.loadParameters();
 		environment = parser.loadEnvironment();
 		properties = parser.loadProperties();
-		particles = parser.loadParticles();
+		particles = parser.loadParticles(&properties);
 	}
-	catch (const char *errorMsg) {
+	catch (string errorMsg) {
 		cerr << "Parsing Error: " << errorMsg << endl;
 		exit (1);
 	}
@@ -60,4 +68,5 @@ void DEMSimulation::printConfiguration (void)
 		cout << "\tboundaryDamping: " << properties.particleTypes[i].boundaryDamping << endl;
 		cout << endl;
 	}
+	cout << "numParticles: " << particles.positions.size() << endl;
 }
