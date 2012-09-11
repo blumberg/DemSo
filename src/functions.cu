@@ -31,6 +31,10 @@ void allocateVectors(ParticleProperties* partProps,
 	// cudaMalloc --> aloca espaço na placa de vídeo
 	// cudaMemcpy --> transfere dados entre a CPU (Host) e GPU (Device)
 	// cudaMemcpyToSymbol --> copia variável para a memória de constante
+	cudaMalloc((void**)&partValues->type1, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->type2, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->ID1, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->ID2, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->pos1, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->pos2, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->vel1, sizeof(float) * sisProps->numParticles * 2);
@@ -43,12 +47,16 @@ void allocateVectors(ParticleProperties* partProps,
 	
 	cudaMemcpyToSymbol(sisPropD, sisProps, sizeof(SystemProperties));
 	cudaMemcpyToSymbol(renderParD, renderPar, sizeof(RenderParameters));
-	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * 1);
+	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * MAX_PARTICLES_TYPES);
 }
 
 // Desaloca o espaço reservado na GPU
 void desAllocateVectors(ParticlesValues* partValues)
 {
+	cudaFree( partValues->type1 );
+	cudaFree( partValues->type2 );
+	cudaFree( partValues->ID1 );
+	cudaFree( partValues->ID2 );
     cudaFree( partValues->pos1 );
     cudaFree( partValues->pos2 );
     cudaFree( partValues->vel1 );
@@ -77,6 +85,8 @@ void computeGridSize(uint n, uint blockSize, uint &numBlocks, uint &numThreads)
 void initializeParticlePosition (float* 		pos,
 								 float* 		vel,
 								 float* 		acc,
+								 uint*			ID,
+								 uint*			type,
 								 float*			corner1,
 								 float*			sideLenght,
 								 uint*			side,
@@ -107,6 +117,8 @@ void initializeParticlePosition (float* 		pos,
 	initializeParticlePositionD<<<numBlocks,numThreads>>>((float2*)pos,
 														  (float2*)vel,
 														  (float2*)acc,
+														  ID,
+														  type,
 														  d_corner1,
 														  d_sideLenght,
 														  d_side,
@@ -156,10 +168,14 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 							     uint*  cellEnd,
 							     float* sortedPos,
 							     float* sortedVel,
+							     uint* 	sortedID,
+							     uint* 	sortedType,
                                  uint*  gridParticleHash,
                                  uint*  gridParticleIndex,
 							     float* oldPos,
 							     float* oldVel,
+							     uint*	oldID,
+							     uint* 	oldType,
 							     uint   numParticles,
 							     uint   numCells)
 {
@@ -173,6 +189,8 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 	#if USE_TEX
 		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
 		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
+		cudaBindTexture(0, oldIDTex, oldID, numParticles*sizeof(uint));
+		cudaBindTexture(0, oldTypeTex, oldType, numParticles*sizeof(uint));
 	#endif
 
     uint smemSize = sizeof(uint)*(numThreads+1);
@@ -181,15 +199,21 @@ void reorderDataAndFindCellStart(uint*  cellStart,
         cellEnd,
         (float2*)sortedPos,
         (float2*)sortedVel,
+        sortedID,
+        sortedType,
 		gridParticleHash,
 		gridParticleIndex,
         (float2*)oldPos,
-        (float2*)oldVel);
+        (float2*)oldVel,
+        oldID,
+        oldType);
     
     // Retirando da memória de textura 
 	#if USE_TEX
 		cudaUnbindTexture(oldPosTex);
 		cudaUnbindTexture(oldVelTex);
+		cudaUnbindTexture(oldIDTex);
+		cudaUnbindTexture(oldTypeTex);
 	#endif
 
 }
@@ -200,6 +224,7 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 void collide(float* 	oldPos,
              float* 	oldVel,
              float* 	newAcc,
+             uint*		oldType,
              uint*  	cellStart,
              uint*  	cellEnd,
              uint   	numParticles,
@@ -209,6 +234,7 @@ void collide(float* 	oldPos,
 	#if USE_TEX
 		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
 		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
+		cudaBindTexture(0, oldTypeTex, oldType, numParticles*sizeof(uint));
 		cudaBindTexture(0, cellStartTex, cellStart, numCells*sizeof(uint));
 		cudaBindTexture(0, cellEndTex, cellEnd, numCells*sizeof(uint));    
 	#endif
@@ -221,12 +247,14 @@ void collide(float* 	oldPos,
     collideD<<< numBlocks, numThreads >>>((float2*)oldPos,
                                           (float2*)oldVel,
                                           (float2*)newAcc,
+                                          oldType,
                                           cellStart,
                                           cellEnd);
     // Retirando da memória de textura 
 	#if USE_TEX
 		cudaUnbindTexture(oldPosTex);
 		cudaUnbindTexture(oldVelTex);
+		cudaUnbindTexture(oldTypeTex);
 		cudaUnbindTexture(cellStartTex);
 		cudaUnbindTexture(cellEndTex);
 	#endif
@@ -238,10 +266,11 @@ void collide(float* 	oldPos,
 // Posicão    =  Posição   + Velocidade * DeltaTempo
 // Esse kernel é executado em um grid 1D com um número máximo de 256
 // threads por bloco.
-void integrateSystem(float *pos,
-					 float *vel,
-					 float *acc,
-					 uint numParticles)
+void integrateSystem(float 	*pos,
+					 float 	*vel,
+					 float 	*acc,
+					 uint 	*type,
+					 uint 	numParticles)
 {
 	uint numThreads, numBlocks;
 	computeGridSize(numParticles, 256, numBlocks, numThreads);
@@ -249,7 +278,8 @@ void integrateSystem(float *pos,
 	// execute the kernel
 	integrateSystemD<<<numBlocks,numThreads>>>((float2*)pos,
 				 							   (float2*)vel,
-				 							   (float2*)acc);
+				 							   (float2*)acc,
+				 							   type);
 }
 
 // Desenha as partículas em uma imagem de DIMx x DIMy pixels e mostra na
@@ -258,6 +288,7 @@ void integrateSystem(float *pos,
 // 256 threads por bloco.
 void plotParticles(uchar4*	ptr,
 				   float* 	pos,
+				   uint*	type,
 				   uint 	numParticles,
 				   int 		DIMx,
 				   int		DIMy){
@@ -270,6 +301,7 @@ void plotParticles(uchar4*	ptr,
 	
 	// execute the kernel
 	plotSpheresD<<<numBlocks,numThreads>>>(ptr,
-									 	   (float2*)pos);
+									 	   (float2*)pos,
+									 	   type);
 
 }

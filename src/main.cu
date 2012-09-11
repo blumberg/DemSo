@@ -35,13 +35,13 @@
 #include "functions.cu" 	 // arquivo de funções de preparação para a GPU
 
 #define DIM 800
-#define PARTICLES 90000
+#define PARTICLES 400
 #define BOX_SIZE 10.0f
 #define TIME_STEP 1.0e-3
 #define GRAVITY 9.81f
 #define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 300
-#define Y_PARTICLES 300
+#define X_PARTICLES 20
+#define Y_PARTICLES 20
 #define FPS 31.0f
 
 #define log2( x ) log(x)/log(2)
@@ -61,25 +61,64 @@ void PrepareSim( SystemProperties *sisProps,
 	
 	renderPar->imageDIMx = DIM;
 	renderPar->imageDIMy = DIM;
-		
-	partProps->radius = 16e-3f;
-	partProps->mass = 1e-2;
-	partProps->collideStiffness = 1e3;
-	partProps->collideDamping = 0.2f;
-	partProps->boundaryDamping = BOUNDARYDAMPING;
+
+	// Propriedades da partícula 0
+	partProps[0].radius = 200e-3f;
+	partProps[0].mass = 1e-2;
+	partProps[0].collideStiffness = 1e3;
+	partProps[0].collideDamping = 0.2f;
+	partProps[0].boundaryDamping = BOUNDARYDAMPING;
+	partProps[0].colorR = 255;
+	partProps[0].colorG = 0;
+	partProps[0].colorB = 0;
+	
+	// Propriedades da partícula 1
+	partProps[1].radius = 150e-3f;
+	partProps[1].mass = 1e-2;
+	partProps[1].collideStiffness = 1e3;
+	partProps[1].collideDamping = 0.2f;
+	partProps[1].boundaryDamping = BOUNDARYDAMPING;
+	partProps[1].colorR = 0;
+	partProps[1].colorG = 255;
+	partProps[1].colorB = 0;
+	
+	// Propriedades da partícula 2
+	partProps[2].radius = 100e-3f;
+	partProps[2].mass = 1e-2;
+	partProps[2].collideStiffness = 1e3;
+	partProps[2].collideDamping = 0.2f;
+	partProps[2].boundaryDamping = BOUNDARYDAMPING;
+	partProps[2].colorR = 0;
+	partProps[2].colorG = 0;
+	partProps[2].colorB = 255;
+	
+	// Propriedades da partícula 3
+	partProps[3].radius = 250e-3f;
+	partProps[3].mass = 1e-2;
+	partProps[3].collideStiffness = 1e3;
+	partProps[3].collideDamping = 0.2f;
+	partProps[3].boundaryDamping = BOUNDARYDAMPING;
+	partProps[3].colorR = 255;
+	partProps[3].colorG = 255;
+	partProps[3].colorB = 255;
+	
+	float maxRadius = 0;
+	for (int i = 0; i < MAX_PARTICLES_TYPES; i++){
+		if (maxRadius < partProps[i].radius) maxRadius = partProps[i].radius;
+	}
 	
 	// tamanho do quadrado que contem a esfera em PIXEL (para a saida grafica)
-	renderPar->dimx = ceil(renderPar->imageDIMx/sisProps->cubeDimension.x*partProps->radius)*2;
+	renderPar->dimx = ceil(renderPar->imageDIMx/sisProps->cubeDimension.x*maxRadius)*2;
 	if (renderPar->dimx < 2) renderPar->dimx = 2;
-	renderPar->dimy = ceil(renderPar->imageDIMy/sisProps->cubeDimension.y*partProps->radius)*2;
+	renderPar->dimy = ceil(renderPar->imageDIMy/sisProps->cubeDimension.y*maxRadius)*2;
 	if (renderPar->dimy < 2) renderPar->dimy = 2;
 	
 	// raio da esfera em PIXEL (para a saída grafica)
-	renderPar->pRadius = renderPar->imageDIMy/sisProps->cubeDimension.y*partProps->radius;
+	renderPar->pRadius = renderPar->imageDIMy/sisProps->cubeDimension.y*maxRadius;
 
 	// Bloco inicial de esferas
-	float corner1[2] = {0.1, 0.1}; 				 // canto inferior esquerdo
-	float corner2[2] = {9.9, 9.9}; 				  // canto superior direito
+	float corner1[2] = {1.1, 1.1}; 				 // canto inferior esquerdo
+	float corner2[2] = {8.9, 8.9}; 				  // canto superior direito
 	float sideLenght[2];
 	sideLenght[0] = corner2[0] - corner1[0]; 			   // dimensao em X
 	sideLenght[1] = corner2[1] - corner1[1]; 			   // dimensao em Y
@@ -89,20 +128,20 @@ void PrepareSim( SystemProperties *sisProps,
 
 	// Calcula o tamanho do grid arredondando para um valor que seja
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera
-	uint grid = sisProps->cubeDimension.x / (4.0f * partProps[0].radius);
+	uint grid = sisProps->cubeDimension.x / (4.0f * maxRadius);
 	uint temp = log2(grid);
 	uint gridUpdate = 1 << temp;
 	float cellSize = sisProps->cubeDimension.x / gridUpdate;
-	if ( cellSize/2.0f <= 1.2f * partProps[0].radius ) temp -= 1;
-	else if (cellSize/2.0f >= 3.0f * partProps[0].radius ) temp += 1;
+	if ( cellSize/2.0f <= 1.2f * maxRadius ) temp -= 1;
+	else if (cellSize/2.0f >= 3.0f * maxRadius ) temp += 1;
 	sisProps->gridSize.x = 1 << temp;
 	
-	grid = sisProps->cubeDimension.y / (4 * partProps[0].radius);
+	grid = sisProps->cubeDimension.y / (4 * maxRadius);
 	temp = log2(grid);
 	gridUpdate = 1 << temp;
 	cellSize = sisProps->cubeDimension.x / gridUpdate;
-	if ( cellSize/2.0f <= 1.2f * partProps[0].radius ) temp -= 1;
-	else if (cellSize/2.0f >= 3.0f * partProps[0].radius ) temp += 1;	
+	if ( cellSize/2.0f <= 1.2f * maxRadius ) temp -= 1;
+	else if (cellSize/2.0f >= 3.0f * maxRadius ) temp += 1;	
 	sisProps->gridSize.y = 1 << temp;
 
 	sisProps->numCells = sisProps->gridSize.x * sisProps->gridSize.y;
@@ -113,6 +152,8 @@ void PrepareSim( SystemProperties *sisProps,
 	initializeParticlePosition(partValues->pos1,
 							   partValues->vel1,
 							   partValues->acc,
+							   partValues->ID1,
+							   partValues->type1,
 							   corner1,
 							   sideLenght,
 							   side,
@@ -144,7 +185,10 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// dois vetores de posição alocados na GPU é criado. A cada iteração o
 	// vetor de início e o vetor reorganizado são invertidos, reduzindo uma
 	// operação de cópia
-	float *oldPos, *oldVel, *sortPos, *sortVel;
+	float  *oldPos,  *oldVel;
+	float *sortPos, *sortVel;
+	uint  *oldID,  *oldType;
+	uint *sortID, *sortType;
 	
 	// Integrando o programa IPS vezes antes de exibir a imagem
 	for (int i = 0 ; i < timeCtrl->IPS ; i++) {
@@ -152,20 +196,29 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		if ((ticks + i) & 1) // quando par (FALSE) quando impar (TRUE)
 		{	
 			oldPos = partValues->pos1;
-			sortPos = partValues->pos2;
 			oldVel = partValues->vel1;
+			oldID = partValues->ID1;
+			oldType = partValues->type1;
+			sortPos = partValues->pos2;
 			sortVel = partValues->vel2;
+			sortID = partValues->ID2;
+			sortType = partValues->type2;
 		} else {
 			oldPos = partValues->pos2;
-			sortPos = partValues->pos1;
 			oldVel = partValues->vel2;
+			oldID = partValues->ID2;
+			oldType = partValues->type2;
+			sortPos = partValues->pos1;
 			sortVel = partValues->vel1;
+			sortID = partValues->ID1;
+			sortType = partValues->type1;
 		}
 		
 		// Integracao no tempo (atualizacao das posicoes e velocidades)
 		integrateSystem(oldPos,
 			 	  		oldVel,
 			 	  		partValues->acc,
+			 	  		oldType,
 			 	  		sisProps->numParticles);
 
 		// Define a celula de cada particula, criando os vetores
@@ -187,10 +240,14 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 									partValues->cellEnd,
 									sortPos,
 									sortVel,
+									sortID,
+									sortType,
 									partValues->gridParticleHash,
 									partValues->gridParticleIndex,
 									oldPos,
 									oldVel,
+									oldID,
+									oldType,
 									sisProps->numParticles,
 									sisProps->numCells);
 
@@ -199,6 +256,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		collide(sortPos,
 				sortVel,
 				partValues->acc,
+				sortType,
 				partValues->cellStart,
 				partValues->cellEnd,
 				sisProps->numParticles,
@@ -208,6 +266,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 //		integrateSystem(sortPos,
 //			 	  		sortVel,
 //			 	  		partValues->acc,
+//						sortType,
 //			 	  		sisProps->numParticles);
 
 		timeCtrl->tempo++;
@@ -216,6 +275,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// Saida grarica quando necessario
 	plotParticles(image,
 				  sortPos,
+				  sortType,
 				  sisProps->numParticles,
 				  renderPar->imageDIMx,
 				  renderPar->imageDIMy);
@@ -259,10 +319,12 @@ int main() {
     
     // declarando as subestruturas (apenas por facilidade)
     SystemProperties *sisProps = &simBlock.sisProps;
-    ParticleProperties *partProps = &simBlock.partProps;
+//    ParticleProperties *partProps = &simBlock.partProps;
     ParticlesValues *partValues = &simBlock.partValues;
 	RenderParameters *renderPar = &simBlock.renderPar;
 	TimeControl *timeCtrl = &simBlock.timeCtrl;
+    
+    ParticleProperties partProps[MAX_PARTICLES_TYPES];
     
     // Definindo que a primeira iteração será exibida
     timeCtrl->IPS = 1;

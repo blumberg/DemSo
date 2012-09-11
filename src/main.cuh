@@ -18,18 +18,21 @@
  */
 
 #define USE_TEX 0
-//#define MAX_PARTICLES_TYPES 10
+#define MAX_PARTICLES_TYPES 10
 
 // Estrutura de propriedades das partículas, caso houver mais do que um
 // tipo de partícula, essa estrutura será criada com um tamanho maior
 // Essa estrutura será carregana na memória de constantes da GPU
 struct ParticleProperties {
 
-	float radius;
-	float mass;
-	float collideStiffness;
-	float collideDamping;
-	float boundaryDamping;
+	float 	radius;
+	float 	mass;
+	float 	collideStiffness;
+	float 	collideDamping;
+	float 	boundaryDamping;
+	float 	colorR;
+	float 	colorG;
+	float 	colorB;
 
 };
 
@@ -39,6 +42,8 @@ struct ParticlesValues {
 
 	float *pos1, *vel1, *acc;
 	float *pos2, *vel2;
+	uint *ID1, *type1;
+	uint *ID2, *type2;
 	uint *cellStart, *cellEnd;
 	uint *gridParticleIndex, *gridParticleHash;
 
@@ -80,7 +85,6 @@ struct TimeControl {
 // Estrutura principal da simulação. Ela contem as 3 outras subestruturas.
 struct DataBlock {
 
-	ParticleProperties partProps;
 	ParticlesValues partValues;
 	SystemProperties sisProps;
 	RenderParameters renderPar;
