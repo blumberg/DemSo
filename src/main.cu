@@ -1,5 +1,5 @@
 /*
- *   DemSo - 2D Discrete Element Method for soil application
+ *   DemSo - 2D Discrete Element Method for Soil application
  *   Copyright (C) 2012  UNICAMP FEM/DMC
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -49,7 +49,8 @@
 
 void PrepareSim( SystemProperties *sisProps,
 				 ParticlesValues *partValues,
-				 ParticleProperties *partProps ) {
+				 ParticleProperties *partProps,
+				 RenderParameters *renderPar ) {
 
 	sisProps->numParticles = PARTICLES;
 
@@ -59,8 +60,8 @@ void PrepareSim( SystemProperties *sisProps,
 	
 	sisProps->gravity = make_float2(0,-GRAVITY);
 	
-	sisProps->imageDIMx = DIM;
-	sisProps->imageDIMy = DIM;
+	renderPar->imageDIMx = DIM;
+	renderPar->imageDIMy = DIM;
 		
 	partProps->radius = 16e-3f;
 	partProps->mass = 1e-2;
@@ -69,13 +70,13 @@ void PrepareSim( SystemProperties *sisProps,
 	partProps->boundaryDamping = BOUNDARYDAMPING;
 	
 	// tamanho do quadrado que contem a esfera em PIXEL (para a saida grafica)
-	sisProps->dimx = ceil(sisProps->imageDIMx/sisProps->cubeDimension.x*partProps->radius)*2;
-	if (sisProps->dimx < 2) sisProps->dimx = 2;
-	sisProps->dimy = ceil(sisProps->imageDIMy/sisProps->cubeDimension.y*partProps->radius)*2;
-	if (sisProps->dimy < 2) sisProps->dimy = 2;
+	renderPar->dimx = ceil(renderPar->imageDIMx/sisProps->cubeDimension.x*partProps->radius)*2;
+	if (renderPar->dimx < 2) renderPar->dimx = 2;
+	renderPar->dimy = ceil(renderPar->imageDIMy/sisProps->cubeDimension.y*partProps->radius)*2;
+	if (renderPar->dimy < 2) renderPar->dimy = 2;
 	
 	// raio da esfera em PIXEL (para a saída grafica)
-	sisProps->pRadius = sisProps->imageDIMy/sisProps->cubeDimension.y*partProps->radius;
+	renderPar->pRadius = renderPar->imageDIMy/sisProps->cubeDimension.y*partProps->radius;
 
 	// Bloco inicial de esferas
 	float corner1[2] = {0.1, 0.1}; 				 // canto inferior esquerdo
@@ -130,6 +131,7 @@ void PrepareSim( SystemProperties *sisProps,
 	cudaMemcpy(d_sideLenght, sideLenght, sizeof(float)*2, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_side, side, sizeof(uint)*2, cudaMemcpyHostToDevice);
 	cudaMemcpyToSymbol(sisPropD, sisProps, sizeof(SystemProperties));
+	cudaMemcpyToSymbol(renderParD, renderPar, sizeof(RenderParameters));
 	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * 1);
 
 	// Função para definir a posição inicial das esferas
@@ -159,12 +161,14 @@ void PrepareSim( SystemProperties *sisProps,
 
 void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 
-	// inicia o cronometro
-	simBlock->start = clock();
-
 	// Estruturas auxiliares
     SystemProperties *sisProps = &simBlock->sisProps;
     ParticlesValues *partValues = &simBlock->partValues;
+	RenderParameters *renderPar = &simBlock->renderPar;
+	TimeControl *timeCtrl = &simBlock->timeCtrl;
+
+	// inicia o cronometro
+	timeCtrl->start = clock();
 	
 	// para ordenarmos os vetores de posicao e velocidade sem necessidade
 	// de retornarmos a variável para o vetor original, um switch entre os
@@ -174,7 +178,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	float *oldPos, *oldVel, *sortPos, *sortVel;
 	
 	// Integrando o programa IPS vezes antes de exibir a imagem
-	for (int i = 0 ; i < simBlock->IPS ; i++) {
+	for (int i = 0 ; i < timeCtrl->IPS ; i++) {
 
 		if ((ticks + i) & 1) // quando par (FALSE) quando impar (TRUE)
 		{	
@@ -237,31 +241,33 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 //			 	  		partValues->acc,
 //			 	  		sisProps->numParticles);
 
-		simBlock->tempo++;
+		timeCtrl->tempo++;
 	}
 
 	// Saida grarica quando necessario
 	plotParticles(image,
 				  sortPos,
 				  sisProps->numParticles,
-				  sisProps->imageDIMx,
-				  sisProps->imageDIMy);
+				  renderPar->imageDIMx,
+				  renderPar->imageDIMy);
 
 	
 	// calcula o tempo de exibição do frame
-	double time = ((double)clock() - simBlock->start)/CLOCKS_PER_SEC;
+	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;
 	if (time < 0.003f) time = 0.03f;
 	
 	// Define o número de Interações por segundo para exibir a imagem em 
 	// FPS (definida no cabeçalho) frames por segundo.
 	// Após a conta, transforma o número em impar para não calcular duas
 	// duas vezes a mesma iteração (por causa do switch)
-	simBlock->IPS = floor(1.0f/time/FPS*simBlock->IPS);
-	simBlock->IPS = simBlock->IPS | 0x0001;
+	timeCtrl->IPS = floor(1.0f/time/FPS*timeCtrl->IPS);
+	timeCtrl->IPS = timeCtrl->IPS | 0x0001;
 
 }
 
 void FinalizingSim( DataBlock *simBlock) {
+
+	TimeControl *timeCtrl = &simBlock->timeCtrl;
 
     // Limpe aqui o que tiver que ser limpo
     cudaFree( simBlock->partValues.pos1 );
@@ -274,9 +280,9 @@ void FinalizingSim( DataBlock *simBlock) {
     cudaFree( simBlock->partValues.gridParticleIndex );
     cudaFree( simBlock->partValues.gridParticleHash );
     
-   	printf("Integracoes por plot = %d\n\n",simBlock->IPS);
-	double elapsedTime = ((double)clock() - simBlock->totalStart)/CLOCKS_PER_SEC;
-	double simulationTime = simBlock->tempo * simBlock->sisProps.timeStep;
+   	printf("Integracoes por plot = %d\n\n",timeCtrl->IPS);
+	double elapsedTime = ((double)clock() - timeCtrl->totalStart)/CLOCKS_PER_SEC;
+	double simulationTime = timeCtrl->tempo * simBlock->sisProps.timeStep;
 	
 	printf("Duracao da simulacao = %4.2f s\n",elapsedTime);
 	printf("Tempo de simulacao = %4.2f s\n\n",simulationTime);
@@ -294,11 +300,13 @@ int main() {
     SystemProperties *sisProps = &simBlock.sisProps;
     ParticleProperties *partProps = &simBlock.partProps;
     ParticlesValues *partValues = &simBlock.partValues;
+	RenderParameters *renderPar = &simBlock.renderPar;
+	TimeControl *timeCtrl = &simBlock.timeCtrl;
     
     // Definindo que a primeira iteração será exibida
-    simBlock.IPS = 1;
-	simBlock.totalStart = clock();
-	simBlock.tempo = 0;
+    timeCtrl->IPS = 1;
+	timeCtrl->totalStart = clock();
+	timeCtrl->tempo = 0;
     
     // função que define o tamanho da imagem e a estrutura que será
     // repassada para dentro do looping
@@ -309,7 +317,7 @@ int main() {
 	// Criar uma rotina para fazer este tipo de leitura
 	
 	// Prepara a simulacao, define as condicoes iniciais do problema
-	PrepareSim(sisProps, partValues, partProps);
+	PrepareSim(sisProps, partValues, partProps, renderPar);
 	
 	// Executa o looping até que a tecla ESC seja pressionada
     bitmap.anim_and_exit(

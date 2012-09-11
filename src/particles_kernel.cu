@@ -1,5 +1,5 @@
 /*
- *   DemSo - 2D Discrete Element Method for soil application
+ *   DemSo - 2D Discrete Element Method for Soil application
  *   Copyright (C) 2012  UNICAMP FEM/DMC
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -31,7 +31,6 @@
 texture<float2, 1, cudaReadModeElementType> oldPosTex;
 texture<float2, 1, cudaReadModeElementType> oldVelTex;
 
-//texture<uint, 1, cudaReadModeElementType> gridParticleHashTex;
 texture<uint, 1, cudaReadModeElementType> cellStartTex;
 texture<uint, 1, cudaReadModeElementType> cellEndTex;
 #endif
@@ -39,6 +38,7 @@ texture<uint, 1, cudaReadModeElementType> cellEndTex;
 // Declarando as variáveis da memória de constante
 __constant__ SystemProperties sisPropD;
 __constant__ ParticleProperties partPropD;
+__constant__ RenderParameters renderParD;
 
 __global__ void initializeParticlePositionD(float2*			pos,
 											float2*			vel,
@@ -311,24 +311,24 @@ void plotSpheresD(uchar4*	ptr,
 	float2 pos = sortPos[index];
 	
 	// calcula a posição do centro da partícula em pixel
-	int cPixelx = sisPropD.imageDIMx/sisPropD.cubeDimension.x*pos.x;
-	int cPixely = sisPropD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
+	int cPixelx = renderParD.imageDIMx/sisPropD.cubeDimension.x*pos.x;
+	int cPixely = renderParD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
 	
 	// percorre o quadrado ocupado pela partícula (em pixel)
-	for (int x = -sisPropD.dimx/2; x < sisPropD.dimx/2; x++ ) {
-		for (int y = -sisPropD.dimy/2; y < sisPropD.dimy/2; y++) {
-			if (x*x + y*y < sisPropD.pRadius*sisPropD.pRadius) {
+	for (int x = -renderParD.dimx/2; x < renderParD.dimx/2; x++ ) {
+		for (int y = -renderParD.dimy/2; y < renderParD.dimy/2; y++) {
+			if (x*x + y*y < renderParD.pRadius*renderParD.pRadius) {
 				
 				// posição do ponto atual (em pixel)
 				uint gPixelx = cPixelx + x;
 				uint gPixely = cPixely + y;
 				
 				// Cria o efeito 3D da partícula (escurece as bordas)
-				float fscale = sqrtf((sisPropD.pRadius*sisPropD.pRadius - x*x - y*y)/(sisPropD.pRadius*sisPropD.pRadius));
+				float fscale = sqrtf((renderParD.pRadius*renderParD.pRadius - x*x - y*y)/(renderParD.pRadius*renderParD.pRadius));
 				
 				// posição do pixel no vetor da imagem
-				uint pixel = gPixelx + gPixely*sisPropD.imageDIMx;
-				if (pixel >= sisPropD.imageDIMx*sisPropD.imageDIMy) pixel = sisPropD.imageDIMx*sisPropD.imageDIMy-1;
+				uint pixel = gPixelx + gPixely*renderParD.imageDIMx;
+				if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
 				
 				// define a cor do pixel
 				ptr[pixel].x = 255.0f * fscale;

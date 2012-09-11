@@ -1,5 +1,5 @@
 /*
- *   DemSo - 2D Discrete Element Method for soil application
+ *   DemSo - 2D Discrete Element Method for Soil application
  *   Copyright (C) 2012  UNICAMP FEM/DMC
  *
  *   This program is free software: you can redistribute it and/or modify
@@ -54,13 +54,24 @@ struct SystemProperties {
     float timeStep;
     
     float2 gravity;
-    
-    int imageDIMx;
+
+};
+
+struct RenderParameters {
+
+	int imageDIMx;
     int imageDIMy;
 	int dimx;
 	int dimy;
 	float pRadius;
 
+};
+
+struct TimeControl {
+
+	clock_t start, totalStart;
+	int tempo;
+	int IPS;
 };
 
 // Estrutura principal da simulação. Ela contem as 3 outras subestruturas.
@@ -69,9 +80,7 @@ struct DataBlock {
 	ParticleProperties partProps;
 	ParticlesValues partValues;
 	SystemProperties sisProps;
-	
-	clock_t start, totalStart;
-	int tempo;
-	int IPS;
+	RenderParameters renderPar;
+	TimeControl timeCtrl;
 
 };
