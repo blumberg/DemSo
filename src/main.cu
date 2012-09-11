@@ -43,7 +43,6 @@
 #define X_PARTICLES 300
 #define Y_PARTICLES 300
 #define FPS 31.0f
-#define USE_TEX 1
 
 #define log2( x ) log(x)/log(2)
 
@@ -108,46 +107,16 @@ void PrepareSim( SystemProperties *sisProps,
 
 	sisProps->numCells = sisProps->gridSize.x * sisProps->gridSize.y;
 	
-	// alocando vetores na placa de video
-	// cudaMalloc --> aloca espaço na placa de vídeo
-	// cudaMemcpy --> transfere dados entre a CPU (Host) e GPU (Device)
-	// cudaMemcpyToSymbol --> copia variável para a memória de constante
-	float *d_corner1, *d_sideLenght;
-	uint *d_side;
-
-	cudaMalloc((void**)&d_corner1, sizeof(float)*2);
-	cudaMalloc((void**)&d_sideLenght, sizeof(float)*2);
-	cudaMalloc((void**)&d_side, sizeof(uint)*2);
-	cudaMalloc((void**)&partValues->pos1, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->pos2, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->vel1, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->vel2, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->acc, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->cellStart, sizeof(uint) * sisProps->numCells);
-	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
-	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->gridParticleHash, sizeof(uint) * sisProps->numParticles);
-	cudaMemcpy(d_corner1, corner1, sizeof(float)*2, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_sideLenght, sideLenght, sizeof(float)*2, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_side, side, sizeof(uint)*2, cudaMemcpyHostToDevice);
-	cudaMemcpyToSymbol(sisPropD, sisProps, sizeof(SystemProperties));
-	cudaMemcpyToSymbol(renderParD, renderPar, sizeof(RenderParameters));
-	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * 1);
+	allocateVectors(partProps, partValues, sisProps, renderPar);
 
 	// Função para definir a posição inicial das esferas
 	initializeParticlePosition(partValues->pos1,
 							   partValues->vel1,
 							   partValues->acc,
-							   d_corner1,
-							   d_sideLenght,
-							   d_side,
+							   corner1,
+							   sideLenght,
 							   side,
 							   time(NULL));
-	
-	// Desalocando espaço na placa de vídeo (Não mais necessário)
-    cudaFree( d_corner1 );
-    cudaFree( d_sideLenght );
-    cudaFree( d_side );
 
 	// Screen output	
 	printf("\nNumero de Particulas = %d\n",sisProps->numParticles);
@@ -270,15 +239,7 @@ void FinalizingSim( DataBlock *simBlock) {
 	TimeControl *timeCtrl = &simBlock->timeCtrl;
 
     // Limpe aqui o que tiver que ser limpo
-    cudaFree( simBlock->partValues.pos1 );
-    cudaFree( simBlock->partValues.pos2 );
-    cudaFree( simBlock->partValues.vel1 );
-    cudaFree( simBlock->partValues.vel2 );
-    cudaFree( simBlock->partValues.acc );
-    cudaFree( simBlock->partValues.cellStart );
-    cudaFree( simBlock->partValues.cellEnd );
-    cudaFree( simBlock->partValues.gridParticleIndex );
-    cudaFree( simBlock->partValues.gridParticleHash );
+	desAllocateVectors( &simBlock->partValues );
     
    	printf("Integracoes por plot = %d\n\n",timeCtrl->IPS);
 	double elapsedTime = ((double)clock() - timeCtrl->totalStart)/CLOCKS_PER_SEC;

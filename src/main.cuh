@@ -17,6 +17,9 @@
  *
  */
 
+#define USE_TEX 0
+//#define MAX_PARTICLES_TYPES 10
+
 // Estrutura de propriedades das partículas, caso houver mais do que um
 // tipo de partícula, essa estrutura será criada com um tamanho maior
 // Essa estrutura será carregana na memória de constantes da GPU

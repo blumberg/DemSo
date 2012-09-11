@@ -20,6 +20,46 @@
 // Esse arquivo prepara as funções que serão executadas na GPU. Ele define
 // o tamanho do Grid e o número de Threads.
 
+// Aloca espaço na memória da GPU e copia as propriedades para a memória de
+// constantes.
+void allocateVectors(ParticleProperties* partProps,
+					 ParticlesValues* partValues,
+					 SystemProperties* sisProps,
+					 RenderParameters* renderPar)
+{
+	// alocando vetores na placa de video
+	// cudaMalloc --> aloca espaço na placa de vídeo
+	// cudaMemcpy --> transfere dados entre a CPU (Host) e GPU (Device)
+	// cudaMemcpyToSymbol --> copia variável para a memória de constante
+	cudaMalloc((void**)&partValues->pos1, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->pos2, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->vel1, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->vel2, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->acc, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->cellStart, sizeof(uint) * sisProps->numCells);
+	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
+	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->gridParticleHash, sizeof(uint) * sisProps->numParticles);
+	
+	cudaMemcpyToSymbol(sisPropD, sisProps, sizeof(SystemProperties));
+	cudaMemcpyToSymbol(renderParD, renderPar, sizeof(RenderParameters));
+	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * 1);
+}
+
+// Desaloca o espaço reservado na GPU
+void desAllocateVectors(ParticlesValues* partValues)
+{
+    cudaFree( partValues->pos1 );
+    cudaFree( partValues->pos2 );
+    cudaFree( partValues->vel1 );
+    cudaFree( partValues->vel2 );
+    cudaFree( partValues->acc );
+    cudaFree( partValues->cellStart );
+    cudaFree( partValues->cellEnd );
+    cudaFree( partValues->gridParticleIndex );
+    cudaFree( partValues->gridParticleHash );
+}
+
 // Função para retornar o maior inteiro da divisão a/b
 uint iDivUp(uint a, uint b){
     return (a % b != 0) ? (a / b + 1) : (a / b);
@@ -38,25 +78,44 @@ void initializeParticlePosition (float* 		pos,
 								 float* 		vel,
 								 float* 		acc,
 								 float*			corner1,
-								 float*			comp,
+								 float*			sideLenght,
 								 uint*			side,
-								 uint*			hostSide,
 								 unsigned long	seed){
 
+	// alocando vetores na placa de video
+	// cudaMalloc --> aloca espaço na placa de vídeo
+	// cudaMemcpy --> transfere dados entre a CPU (Host) e GPU (Device)
+	// cudaMemcpyToSymbol --> copia variável para a memória de constante
+	float *d_corner1, *d_sideLenght;
+	uint *d_side;
+
+	cudaMalloc((void**)&d_corner1, sizeof(float)*2);
+	cudaMalloc((void**)&d_sideLenght, sizeof(float)*2);
+	cudaMalloc((void**)&d_side, sizeof(uint)*2);
+
+	cudaMemcpy(d_corner1, corner1, sizeof(float)*2, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_sideLenght, sideLenght, sizeof(float)*2, cudaMemcpyHostToDevice);
+	cudaMemcpy(d_side, side, sizeof(uint)*2, cudaMemcpyHostToDevice);
+
 	uint numBlocksx, numBlocksy, numThreadsx, numThreadsy;
-	computeGridSize(hostSide[0], 16, numBlocksx, numThreadsx);
-	computeGridSize(hostSide[1], 16, numBlocksy, numThreadsy);
+	computeGridSize(side[0], 16, numBlocksx, numThreadsx);
+	computeGridSize(side[1], 16, numBlocksy, numThreadsy);
 	
 	dim3 numBlocks(numBlocksx,numBlocksy);
 	dim3 numThreads(numThreadsx,numThreadsy);
 
-initializeParticlePositionD<<<numBlocks,numThreads>>>((float2*)pos,
-													  (float2*)vel,
-													  (float2*)acc,
-													  corner1,
-													  comp,
-													  side,
-													  seed);
+	initializeParticlePositionD<<<numBlocks,numThreads>>>((float2*)pos,
+														  (float2*)vel,
+														  (float2*)acc,
+														  d_corner1,
+														  d_sideLenght,
+														  d_side,
+														  seed);
+													  
+	// Desalocando espaço na placa de vídeo (Não mais necessário)
+    cudaFree( d_corner1 );
+    cudaFree( d_sideLenght );
+    cudaFree( d_side );													  
 }
 
 // Calcula o numero da celula de cada particula. Esse kernel é executado
@@ -148,8 +207,8 @@ void collide(float* 	oldPos,
 {
 	// Declarando como memória de textura
 	#if USE_TEX
-		cudaBindTexture(0, oldPosTex, sortedPos, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldVelTex, sortedVel, numParticles*sizeof(float2));
+		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
+		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
 		cudaBindTexture(0, cellStartTex, cellStart, numCells*sizeof(uint));
 		cudaBindTexture(0, cellEndTex, cellEnd, numCells*sizeof(uint));    
 	#endif
