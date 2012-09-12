@@ -17,8 +17,9 @@ CUH_FILES = $(wildcard $(SRC_DIR)/*.cuh)
 OBJ_FILES = $(addprefix $(OBJ_DIR)/,$(notdir $(CPP_FILES:.cpp=.o)))
 CUO_FILES = $(addprefix $(OBJ_DIR)/,$(notdir $(CU_FILES:.cu=.cu.o)))
 
-OBJS =  $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(notdir $(CPP_FILES)))
-OBJS += $(patsubst %.cu,$(OBJ_DIR)/%.cu.o,$(notdir $(CU_FILES)))
+TOBJS =  $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(notdir $(CPP_FILES)))
+TOBJS += $(patsubst %.cu,$(OBJ_DIR)/%.cu.o,$(notdir $(CU_FILES)))
+OBJS = $(patsubst $(OBJ_DIR)/particles_kernel.cu.o, ,$(TOBJS))
 
 $(TARGET) : $(OBJS)
 	$(NVCC) $(NVCCFLAGS) -o $@ $(OBJS) $(LIBS)

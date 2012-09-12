@@ -1,27 +1,53 @@
+/*
+ *   DemSo - 2D Discrete Element Method for Soil application
+ *   Copyright (C) 2012  UNICAMP FEM/DMC
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 /* vim: set filetype=cpp */
+
 #ifndef MAIN_CUH
 #define MAIN_CUH
 
 #define DIM 800
-#define PARTICLES 90000
+#define PARTICLES 400
 #define BOX_SIZE 10.0f
 #define TIME_STEP 1.0e-3
 #define GRAVITY 9.81f
 #define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 300
-#define Y_PARTICLES 300
+#define X_PARTICLES 20
+#define Y_PARTICLES 20
 #define FPS 31.0f
+#define USE_TEX 0
+#define MAX_PARTICLES_TYPES 10
+
 
 // Estrutura de propriedades das partículas, caso houver mais do que um
 // tipo de partícula, essa estrutura será criada com um tamanho maior
 // Essa estrutura será carregana na memória de constantes da GPU
 struct ParticleProperties {
 
-	float radius;
-	float mass;
-	float collideStiffness;
-	float collideDamping;
-	float boundaryDamping;
+	float 	radius;
+	float 	mass;
+	float 	collideStiffness;
+	float 	collideDamping;
+	float 	boundaryDamping;
+	float 	colorR;
+	float 	colorG;
+	float 	colorB;
 
 };
 
@@ -31,6 +57,8 @@ struct ParticlesValues {
 
 	float *pos1, *vel1, *acc;
 	float *pos2, *vel2;
+	uint *ID1, *type1;
+	uint *ID2, *type2;
 	uint *cellStart, *cellEnd;
 	uint *gridParticleIndex, *gridParticleHash;
 
@@ -49,8 +77,12 @@ struct SystemProperties {
     float timeStep;
     
     float2 gravity;
-    
-    int imageDIMx;
+
+};
+
+struct RenderParameters {
+
+	int imageDIMx;
     int imageDIMy;
 	int dimx;
 	int dimy;
@@ -58,16 +90,20 @@ struct SystemProperties {
 
 };
 
-// Estrutura principal da simulação. Ela contem as 3 outras subestruturas.
-struct DataBlock {
+struct TimeControl {
 
-	ParticleProperties partProps;
-	ParticlesValues partValues;
-	SystemProperties sisProps;
-	
 	clock_t start, totalStart;
 	int tempo;
 	int IPS;
+};
+
+// Estrutura principal da simulação. Ela contem as 3 outras subestruturas.
+struct DataBlock {
+
+	ParticlesValues partValues;
+	SystemProperties sisProps;
+	RenderParameters renderPar;
+	TimeControl timeCtrl;
 
 };
 
