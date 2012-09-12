@@ -29,9 +29,17 @@ $(OBJ_DIR)/%.cu.o : $(SRC_DIR)/%.cu $(CUH_FILES)
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp $(H_FILES)
 	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(LIBS)
-	
-clean:
+
+.PRONY: all
+all: $(TARGET)
+
+.PRONY: distclean	
+distclean:
 	rm -f $(OBJS) $(TARGET) src/*~ *~
+
+.PRONY: clean	
+clean:
+	rm -f $(TARGET)
 
 parser: src/parser.cpp src/DEMSimulation.cpp
 	$(NVCC) src/parser.cpp src/DEMParticles.cpp src/DEMSimulation.cpp -o parser -I./includes $(NVCCFLAGS) 
