@@ -1,7 +1,9 @@
+#ifndef PARTICLES_KERNEL_CU_
+#define PARTICLES_KERNEL_CU_
+
 #include <curand_kernel.h>  		  // bib. randomica para kernel em CUDA
 #include "cutil_math.h"       // funções matemáticas de vetores
 #include "main.cuh"
-#include "particles_kernel.cuh"
 // Esse arquivo contem todas as funções executadas na placa de vídeo
 
 // Define se pega a variável da memória global ou da memória de textura
@@ -10,6 +12,19 @@
 #else
 #define FETCH(t, i) t[i]
 #endif
+
+#if USE_TEX
+// textures for particle position and velocity
+texture<float2, 1, cudaReadModeElementType> oldPosTex;
+texture<float2, 1, cudaReadModeElementType> oldVelTex;
+
+texture<uint, 1, cudaReadModeElementType> cellStartTex;
+texture<uint, 1, cudaReadModeElementType> cellEndTex;
+#endif
+
+// Declarando as variáveis da memória de constante
+__constant__ SystemProperties sisPropD;
+__constant__ ParticleProperties partPropD;
 
 __global__ void initializeParticlePositionD(float2*			pos,
 											float2*			vel,
@@ -311,3 +326,4 @@ void plotSpheresD(uchar4*	ptr,
 		}
 	}
 }
+#endif

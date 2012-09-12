@@ -8,7 +8,6 @@
 
 // Dependece files
 #include "main.cuh"
-#include "particles_kernel.cuh" 			   // funções executadas na GPU
 #include "functions.cuh" 	 // arquivo de funções de preparação para a GPU
 
 
