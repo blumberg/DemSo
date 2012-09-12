@@ -20,7 +20,7 @@
 #include "thrust/device_ptr.h"  		   // thrust para utilizar ponteiro
 #include "thrust/sort.h" 					   // thrust para ordenar vetor
 #include "main.cuh"
-#include "particles_kernel.cu"
+#include "particles_kernel.cuh"
 
 // Esse arquivo prepara as funções que serão executadas na GPU. Ele define
 // o tamanho do Grid e o número de Threads.

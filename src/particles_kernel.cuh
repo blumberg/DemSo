@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef PARTICLES_KERNEL_CU_
-#define PARTICLES_KERNEL_CU_
+#ifndef PARTICLES_KERNEL_CUH
+#define PARTICLES_KERNEL_CUH
 
 #include <curand_kernel.h>  		  // bib. randomica para kernel em CUDA
 #include "cutil_math.h"       // funções matemáticas de vetores
