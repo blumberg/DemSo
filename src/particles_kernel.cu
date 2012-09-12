@@ -5,7 +5,7 @@
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ *   any later version.
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -49,15 +49,16 @@ __constant__ SystemProperties sisPropD;
 __constant__ ParticleProperties partPropD[MAX_PARTICLES_TYPES];
 __constant__ RenderParameters renderParD;
 
-__global__ void initializeParticlePositionD(float2*			pos,
-											float2*			vel,
-											float2*			acc,
-											uint*			ID,
-											uint*			type,
-											float*			corner1,
-											float*			comp,
-											uint*			side,
-											unsigned long 	seed) {
+__global__
+void initializeParticlePositionD(float2*			pos,
+								 float2*			vel,
+								 float2*			acc,
+								 uint*				ID,
+								 uint*				type,
+								 float*				corner1,
+								 float*				comp,
+								 uint*				side,
+								 unsigned long 		seed) {
     uint x = threadIdx.x + blockIdx.x * blockDim.x;
     uint y = threadIdx.y + blockIdx.y * blockDim.y;
 	
@@ -81,7 +82,8 @@ __global__ void initializeParticlePositionD(float2*			pos,
 }
 
 // calculate position in uniform grid
-__device__ int2 calcGridPos(float2 p)
+__device__
+int2 calcGridPos(float2 p)
 {
     int2 gridPos;
     gridPos.x = floor(p.x * sisPropD.gridSize.x / sisPropD.cubeDimension.x);
@@ -90,7 +92,8 @@ __device__ int2 calcGridPos(float2 p)
 }
 
 // calculate address in grid from position (clamping to edges)
-__device__ uint calcGridHash(int2 gridPos)
+__device__
+uint calcGridHash(int2 gridPos)
 {
     gridPos.x = gridPos.x & (sisPropD.gridSize.x-1);  // wrap grid, assumes size is power of 2
     gridPos.y = gridPos.y & (sisPropD.gridSize.y-1);

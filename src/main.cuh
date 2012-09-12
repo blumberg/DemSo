@@ -5,7 +5,7 @@
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ *   any later version.
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -23,13 +23,13 @@
 #define MAIN_CUH
 
 #define DIM 800
-#define PARTICLES 400
+#define PARTICLES 10000
 #define BOX_SIZE 10.0f
 #define TIME_STEP 1.0e-3
 #define GRAVITY 9.81f
 #define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 20
-#define Y_PARTICLES 20
+#define X_PARTICLES 100
+#define Y_PARTICLES 100
 #define FPS 31.0f
 #define USE_TEX 0
 #define MAX_PARTICLES_TYPES 10

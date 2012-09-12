@@ -5,7 +5,7 @@
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
- *   (at your option) any later version.
+ *   any later version.
  *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -49,7 +49,7 @@ void PrepareSim( SystemProperties *sisProps,
 	renderPar->imageDIMy = DIM;
 
 	// Propriedades da partícula 0
-	partProps[0].radius = 200e-3f;
+	partProps[0].radius = 20e-3f;
 	partProps[0].mass = 1e-2;
 	partProps[0].collideStiffness = 1e3;
 	partProps[0].collideDamping = 0.2f;
@@ -59,7 +59,7 @@ void PrepareSim( SystemProperties *sisProps,
 	partProps[0].colorB = 0;
 	
 	// Propriedades da partícula 1
-	partProps[1].radius = 150e-3f;
+	partProps[1].radius = 35e-3f;
 	partProps[1].mass = 1e-2;
 	partProps[1].collideStiffness = 1e3;
 	partProps[1].collideDamping = 0.2f;
@@ -69,7 +69,7 @@ void PrepareSim( SystemProperties *sisProps,
 	partProps[1].colorB = 0;
 	
 	// Propriedades da partícula 2
-	partProps[2].radius = 100e-3f;
+	partProps[2].radius = 30e-3f;
 	partProps[2].mass = 1e-2;
 	partProps[2].collideStiffness = 1e3;
 	partProps[2].collideDamping = 0.2f;
@@ -79,7 +79,7 @@ void PrepareSim( SystemProperties *sisProps,
 	partProps[2].colorB = 255;
 	
 	// Propriedades da partícula 3
-	partProps[3].radius = 250e-3f;
+	partProps[3].radius = 25e-3f;
 	partProps[3].mass = 1e-2;
 	partProps[3].collideStiffness = 1e3;
 	partProps[3].collideDamping = 0.2f;
