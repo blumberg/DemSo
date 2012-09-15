@@ -46,6 +46,6 @@
 				<point><x>0.1</x><y>0.9</y><z>0.1</z></point>
 			</base>
 		</pyramid>
-		<point particletype="pedras" color="255255255"><x>6</x><y>6</y><z>6</z></point>
+		<particle particletype="pedras" color="255255255"><x>6</x><y>6</y><z>6</z></particle>
 	</particles>
 </simulation>
