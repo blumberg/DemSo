@@ -48,6 +48,11 @@ void PrepareSim( SystemProperties *sisProps,
 	renderPar->imageDIMx = DIM;
 	renderPar->imageDIMy = DIM;
 
+	// Zerando o raio das partículas
+	for (int i = 0; i < MAX_PARTICLES_TYPES; i++){
+		partProps[i].radius = 0;
+	}
+
 	// Propriedades da partícula 0
 	partProps[0].radius = 20e-3f;
 	partProps[0].mass = 1e-2;
