@@ -61,6 +61,9 @@ void DEMSimulation::printConfiguration (void)
 		cout << "\t---- Particle Type " << i+1 << endl;
 		cout << "\tid: " << properties.particleTypes[i].id << endl;
 		cout << "\tname: " << properties.particleTypes[i].name << endl;
+		cout << "\tcolor: (" << properties.particleTypes[i].color.x;
+		cout << ", " << properties.particleTypes[i].color.y;
+		cout << ", " << properties.particleTypes[i].color.z << ")" << endl;
 		cout << "\tmass: " << properties.particleTypes[i].mass << endl;
 		cout << "\tradius: " << properties.particleTypes[i].radius << endl;
 		cout << "\tnormalStiffness: " << properties.particleTypes[i].normalStiffness << endl;

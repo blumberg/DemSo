@@ -26,7 +26,11 @@ void DEMParticles::generateBlock (int typeIndex, float3 start, float3 end, float
 									  *floor((cubeSize.y + spacing.y)/(2*radius + spacing.y))
 /*									  *floor((cubeSize.z + spacing.z)/(2*radius + spacing.z))*/; 
 										// Descomentar a linha acima para o caso 3D
-	//cout << "numParticles: " << numParticles << endl;	//DEBUG
+
+	cout << "Bloco tipo: " << properties->particleTypes[typeIndex].id << endl;
+	cout << "numParticles: " << numParticles << endl;	//DEBUG
+	cout << "Cubesize: (" << cubeSize.x << ", " << cubeSize.y << ", " << cubeSize.z << ")" << endl;
+	cout << "Spacing: (" << spacing.x << ", " << spacing.y << ", " << spacing.z << ")" << endl;
 
 	positions.reserve(numParticles);
 	velocities.reserve(numParticles);
@@ -34,9 +38,9 @@ void DEMParticles::generateBlock (int typeIndex, float3 start, float3 end, float
 	typeIndexes.reserve(numParticles);
 
 	register int counter = 0;
-	for(register float y = start.y; y + 2*radius + spacing.y < end.y; y += 2*radius + spacing.y)
+	for(float y = start.y; y + 2*radius < end.y; y += 2*radius + spacing.y)
 	{
-		for(register float x = start.x; x + 2*radius + spacing.x < end.x; x += 2*radius + spacing.x)
+		for(float x = start.x; x + 2*radius < end.x; x += 2*radius + spacing.x)
 		{
 			positions.push_back(make_float3(x+radius, y+radius, 0));// TODO: Caso 3D
 			velocities.push_back(make_float3(0.0));					// TODO: Deveria ser possível dar vel. iniciais
@@ -45,5 +49,6 @@ void DEMParticles::generateBlock (int typeIndex, float3 start, float3 end, float
 			counter++;
 		}
 	}
-	//cout << "counter: " << counter << endl;	// DEBUG
+	cout << "counter: " << counter << endl;	// DEBUG
+	cout << "positions size: " << positions.size() << endl;
 }

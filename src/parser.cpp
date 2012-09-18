@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <cstdlib>
 #include <cmath>
 #include <stdexcept>
@@ -70,6 +71,14 @@ DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 	
 	if (root->first_attribute("id")) ptype.id = root->first_attribute("id")->value();
 	if (root->first_attribute("name")) ptype.name = root->first_attribute("name")->value();
+	if (root->first_attribute("color"))
+	{
+		string color = root->first_attribute("color")->value();
+		ptype.color.x = atof(color.substr(0,3).c_str());
+		ptype.color.y = atof(color.substr(3,3).c_str());
+		ptype.color.z = atof(color.substr(6,3).c_str());
+	}
+	else ptype.color = make_float3(255,255,255);
 
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
@@ -107,7 +116,18 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
-		if (node->name() == string("block")) parts.addParticles(loadBlock(node, properties));
+		if (node->name() == string("block")) {
+			float3 start = make_float3(0);
+			float3 end = make_float3(0);
+			if (node->first_node("start")) start = readVector(node->first_node("start"));
+			if (node->first_node("end")) end = readVector(node->first_node("end"));
+			parts.start[0] = start.x;
+			parts.start[1] = start.y;
+			parts.end[0] = end.x;
+			parts.end[1] = end.y;
+			//parts.addParticles(loadBlock(node, properties));
+			//cout << "Achei o bloco " << node->first_attribute("id")->value() << endl;
+		}
 	}
 
 	return parts;
@@ -160,11 +180,11 @@ float3 DEMParser::readVector (xml_node<> *root)
 	return vect;
 }
 
-int main (int argc, char **argv)
+/*int main (int argc, char **argv)
 {
 	DEMSimulation sim;
 	sim.loadFromFile (argv[1]);
 	sim.printConfiguration();
 
 	return 0;
-}
+}*/

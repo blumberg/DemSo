@@ -19,7 +19,7 @@
 
 // Input and Output include
 #include <iostream>								  // entra e saída de dados
-#include <time.h> 		   // biblioteca de tempo para criar o seed do rand
+#include <ctime> 		   // biblioteca de tempo para criar o seed do rand
 
 // CUDA includes
 #include "gpu_anim.h" 				  // bib. de vizualização em tempo real
@@ -28,24 +28,37 @@
 // Dependece files
 #include "main.cuh"
 #include "functions.cuh" 	 // arquivo de funções de preparação para a GPU
+#include "datatypes.hpp"
+#include "parser.hpp"
 
 
 #define log2( x ) log(x)/log(2)
 
-void PrepareSim( SystemProperties *sisProps,
+using std::cout;
+using std::endl;
+
+void PrepareSim( const char *filename,
+				 SystemProperties *sisProps,
 				 ParticlesValues *partValues,
 				 ParticleProperties *partProps,
 				 RenderParameters *renderPar ) {
 
-	sisProps->numParticles = PARTICLES;
+	/* Usamos a estrutura de dados C++ e carregamos o arquivo de estado */
+	DEMSimulation sim;
+	sim.loadFromFile(filename);
+	sim.printConfiguration();
+	/* Agora vamos copiar para a estrutura C */
 
-	sisProps->cubeDimension.x = sisProps->cubeDimension.y = BOX_SIZE;
+	sisProps->numParticles = 10000;
+
+	sisProps->cubeDimension.x = sim.environment.dimension.x;
+	sisProps->cubeDimension.y = sim.environment.dimension.y;
 	
-	sisProps->timeStep = TIME_STEP;
+	sisProps->timeStep = sim.parameters.timeStep;
 	
-	sisProps->gravity = make_float2(0,-GRAVITY);
+	sisProps->gravity = make_float2(sim.environment.gravity); // Transformando a gravidade de float3 para float2
 	
-	renderPar->imageDIMx = DIM;
+	renderPar->imageDIMx = DIM; //TODO: Fazer uma funcão q pega o ratio do environment e aplica nos imageDIM
 	renderPar->imageDIMy = DIM;
 
 	// Zerando o raio das partículas
@@ -53,6 +66,19 @@ void PrepareSim( SystemProperties *sisProps,
 		partProps[i].radius = 0;
 	}
 
+	//PARSER: copiando as propriedades de partículas
+	for (register int i = 0; i < sim.properties.particleTypes.size(); i++)
+	{
+		partProps[i].mass = sim.properties.particleTypes[i].mass;
+		partProps[i].radius = sim.properties.particleTypes[i].radius;
+		partProps[i].collideStiffness = sim.properties.particleTypes[i].normalStiffness;
+		partProps[i].collideDamping = sim.properties.particleTypes[i].normalDamping;
+		partProps[i].boundaryDamping = sim.properties.particleTypes[i].boundaryDamping;
+		partProps[i].colorR = sim.properties.particleTypes[i].color.x;
+		partProps[i].colorG = sim.properties.particleTypes[i].color.y;
+		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
+	}
+/*
 	// Propriedades da partícula 0
 	partProps[0].radius = 20e-3f;
 	partProps[0].mass = 1e-2;
@@ -92,7 +118,7 @@ void PrepareSim( SystemProperties *sisProps,
 	partProps[3].colorR = 255;
 	partProps[3].colorG = 255;
 	partProps[3].colorB = 255;
-	
+*/	
 	float maxRadius = 0;
 	for (int i = 0; i < MAX_PARTICLES_TYPES; i++){
 		if (maxRadius < partProps[i].radius) maxRadius = partProps[i].radius;
@@ -111,8 +137,10 @@ void PrepareSim( SystemProperties *sisProps,
 	float corner1[2] = {1.1, 1.1}; 				 // canto inferior esquerdo
 	float corner2[2] = {8.9, 8.9}; 				  // canto superior direito
 	float sideLenght[2];
-	sideLenght[0] = corner2[0] - corner1[0]; 			   // dimensao em X
-	sideLenght[1] = corner2[1] - corner1[1]; 			   // dimensao em Y
+	//sideLenght[0] = corner2[0] - corner1[0]; 			   // dimensao em X
+	//sideLenght[1] = corner2[1] - corner1[1]; 			   // dimensao em Y
+	sideLenght[0] = sim.particles.end[0] - sim.particles.start[0]; 			   // dimensao em X
+	sideLenght[1] = sim.particles.end[1] - sim.particles.start[1]; 			   // dimensao em Y
 	
 	uint side[2] = {X_PARTICLES, Y_PARTICLES}; // numero de partículas em X
 											  // e Y (deve ser maior que 2)
@@ -139,13 +167,47 @@ void PrepareSim( SystemProperties *sisProps,
 	
 	allocateVectors(partProps, partValues, sisProps, renderPar);
 
+	/*
+	//PARSER: Copiando partículas da estrutura C++ para a estrutura C 
+	std::vector<uint> merda_id;
+	std::vector<float> merda_pos, merda_vel, merda_acc;
+	merda_id.reserve(sim.particles.positions.size());
+	merda_pos.reserve(2*sim.particles.positions.size());
+	merda_vel.reserve(2*sim.particles.velocities.size());
+	merda_acc.reserve(2*sim.particles.accelerations.size());
+
+	cudaMemcpy (partValues->type1,
+				&sim.particles.typeIndexes[0],
+				sizeof(int)*sim.particles.typeIndexes.size(),
+				cudaMemcpyHostToDevice);
+	for (register int i = 0; i < sim.particles.positions.size(); i++)
+	{
+		merda_id.push_back(i);
+	}
+	cudaMemcpy (partValues->ID1, &merda_id[0], sizeof(uint)*merda_id.size(), cudaMemcpyHostToDevice);
+
+	srand(time(NULL));
+	for (register int i = 0; i < sim.particles.positions.size(); i++)
+	{
+		merda_pos.push_back (sim.particles.positions[i].x); //FIXME: considerar o tamanho das particulas
+		merda_pos.push_back (sim.particles.positions[i].y);
+		merda_vel.push_back (sim.particles.velocities[i].x);
+		merda_vel.push_back (sim.particles.velocities[i].y);
+		merda_acc.push_back (sim.particles.accelerations[i].x);
+		merda_acc.push_back (sim.particles.accelerations[i].y);
+	}
+	cudaMemcpy (partValues->pos1, &merda_pos[0], sizeof(float)*merda_pos.size(), cudaMemcpyHostToDevice);
+	cudaMemcpy (partValues->vel1, &merda_vel[0], sizeof(float)*merda_vel.size(), cudaMemcpyHostToDevice);
+	cudaMemcpy (partValues->acc, &merda_acc[0], sizeof(float)*merda_acc.size(), cudaMemcpyHostToDevice);
+
+*/
 	// Função para definir a posição inicial das esferas
 	initializeParticlePosition(partValues->pos1,
 							   partValues->vel1,
 							   partValues->acc,
 							   partValues->ID1,
 							   partValues->type1,
-							   corner1,
+							   sim.particles.start,
 							   sideLenght,
 							   side,
 							   time(NULL));
@@ -153,7 +215,7 @@ void PrepareSim( SystemProperties *sisProps,
 	// Screen output	
 	printf("\nNumero de Particulas = %d\n",sisProps->numParticles);
 	printf("grid %d x %d\n\n",sisProps->gridSize.x,sisProps->gridSize.y);
-#ifdef USE_TEX
+#if USE_TEX
 	printf("Memoria de textura: UTILIZADA\n\n");
 #else
 	printf("Memoria de textura: NAO\n\n");
@@ -303,7 +365,7 @@ void FinalizingSim( DataBlock *simBlock) {
 }
 
 
-int main() {
+int main(int argc, char **argv) {
 	
 	// declarando estrutura de dados principal
     DataBlock simBlock;
@@ -331,7 +393,7 @@ int main() {
 	// Criar uma rotina para fazer este tipo de leitura
 	
 	// Prepara a simulacao, define as condicoes iniciais do problema
-	PrepareSim(sisProps, partValues, partProps, renderPar);
+	PrepareSim(argv[1], sisProps, partValues, partProps, renderPar);
 	
 	// Executa o looping até que a tecla ESC seja pressionada
     bitmap.anim_and_exit(

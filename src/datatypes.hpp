@@ -25,6 +25,7 @@ class DEMParticleType {
 		float normalStiffness;
 		float normalDamping;
 		float boundaryDamping;
+		float3 color;
 		DEMParticleType () {};
 };
 
@@ -37,6 +38,8 @@ class DEMProperties {
 
 class DEMParticles {
 	public:
+		float start[2];
+		float end[2];
 		std::vector<float3> positions;
 		std::vector<float3> velocities;
 		std::vector<float3> accelerations;
@@ -48,12 +51,11 @@ class DEMParticles {
 };
 
 class DEMSimulation {
-	private:
+	public:
 		DEMParameters 	parameters;
 		DEMEnvironment	environment;
 		DEMProperties	properties;
 		DEMParticles	particles;
-	public:
 		void loadFromFile (const char *filename);
 		void printConfiguration ();
 };

@@ -77,7 +77,7 @@ void initializeParticlePositionD(float2*			pos,
 	vel[particle] = make_float2( 0 );
 	acc[particle] = make_float2( 0 );
 	ID[particle] = particle;
-	type[particle] = particle & 3;
+	type[particle] = (particle+y) & 3;
 //	type[particle] = 0;
 }
 

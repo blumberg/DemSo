@@ -1,0 +1,58 @@
+<?xml version="1.0" xmlns="http://fem.unicamp.br/ns/dsml"?>
+<simulation>
+	<parameters>
+		<timestep>1.0e-3</timestep>
+		<fps>31</fps>
+	</parameters>
+
+	<environment>
+		<dimensions>
+			<x>10</x>
+			<y>10</y>
+			<z>10</z><!-- Not used in 2D -->
+		</dimensions>
+		<gravity><y>-9.81</y></gravity>
+	</environment>
+
+	<properties>
+		<particletype id="vermelha" name="Partículas Vermelhas" color="255000000">
+			<mass>1e-2</mass>
+			<radius>20e-3</radius>
+			<stiffness dir="normal">1000</stiffness>
+			<damping dir="normal">0.2</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+
+		<particletype id="verde" name="Partículas Verdes" color="000255000">
+			<mass>1e-2</mass>
+			<radius>35e-3</radius>
+			<stiffness dir="normal">1000</stiffness>
+			<damping dir="normal">0.2</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+
+		<particletype id="azul" name="Partículas Azuis" color="000000255">
+			<mass>1e-2</mass>
+			<radius>30e-3</radius>
+			<stiffness dir="normal">1000</stiffness>
+			<damping dir="normal">0.2</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+
+		<particletype id="branca" name="Partículas Brancas" color="255255255">
+			<mass>1e-2</mass>
+			<radius>25e-3</radius>
+			<stiffness dir="normal">1000</stiffness>
+			<damping dir="normal">0.2</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+	</properties>
+
+	<particles>
+		<block id="1" particletype="vermelha">
+			<start><x>1.1</x><y>1.1</y></start>
+			<end><x>8.9</x><y>1.9</y></end>
+			<spacing><x>0.2</x><y>0.2</y></spacing>
+		</block>
+	</particles>
+</simulation>
