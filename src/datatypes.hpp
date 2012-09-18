@@ -40,6 +40,7 @@ class DEMParticles {
 	public:
 		float start[2];
 		float end[2];
+		float3 num;
 		std::vector<float3> positions;
 		std::vector<float3> velocities;
 		std::vector<float3> accelerations;

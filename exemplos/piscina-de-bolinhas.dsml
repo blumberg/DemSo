@@ -16,7 +16,7 @@
 
 	<properties>
 		<particletype id="vermelha" name="Partículas Vermelhas" color="255000000">
-			<mass>1e-2</mass>
+			<mass>10e-2</mass>
 			<radius>20e-3</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<damping dir="normal">0.2</damping>
@@ -51,8 +51,8 @@
 	<particles>
 		<block id="1" particletype="vermelha">
 			<start><x>1.1</x><y>1.1</y></start>
-			<end><x>8.9</x><y>1.9</y></end>
-			<spacing><x>0.2</x><y>0.2</y></spacing>
+			<end><x>8.9</x><y>8.9</y></end>
+			<num><x>200</x><y>20</y></num>
 		</block>
 	</particles>
 </simulation>

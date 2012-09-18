@@ -49,7 +49,7 @@ void PrepareSim( const char *filename,
 	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
-	sisProps->numParticles = 10000;
+	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y;
 
 	sisProps->cubeDimension.x = sim.environment.dimension.x;
 	sisProps->cubeDimension.y = sim.environment.dimension.y;
@@ -142,8 +142,11 @@ void PrepareSim( const char *filename,
 	sideLenght[0] = sim.particles.end[0] - sim.particles.start[0]; 			   // dimensao em X
 	sideLenght[1] = sim.particles.end[1] - sim.particles.start[1]; 			   // dimensao em Y
 	
-	uint side[2] = {X_PARTICLES, Y_PARTICLES}; // numero de partículas em X
+	//uint side[2] = {X_PARTICLES, Y_PARTICLES}; // numero de partículas em X
 											  // e Y (deve ser maior que 2)
+	uint side[2];
+	side[0] = sim.particles.num.x;
+	side[1] = sim.particles.num.y;
 
 	// Calcula o tamanho do grid arredondando para um valor que seja
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera

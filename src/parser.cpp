@@ -119,8 +119,10 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 		if (node->name() == string("block")) {
 			float3 start = make_float3(0);
 			float3 end = make_float3(0);
+			parts.num = make_float3(0);
 			if (node->first_node("start")) start = readVector(node->first_node("start"));
 			if (node->first_node("end")) end = readVector(node->first_node("end"));
+			if (node->first_node("num")) parts.num = readVector(node->first_node("num"));
 			parts.start[0] = start.x;
 			parts.start[1] = start.y;
 			parts.end[0] = end.x;
