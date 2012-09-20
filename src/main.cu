@@ -46,7 +46,7 @@ void PrepareSim( const char *filename,
 	/* Usamos a estrutura de dados C++ e carregamos o arquivo de estado */
 	DEMSimulation sim;
 	sim.loadFromFile(filename);
-	sim.printConfiguration();
+//	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
 	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y;
@@ -61,11 +61,6 @@ void PrepareSim( const char *filename,
 	renderPar->imageDIMx = DIM; //TODO: Fazer uma funcão q pega o ratio do environment e aplica nos imageDIM
 	renderPar->imageDIMy = DIM;
 
-	// Zerando o raio das partículas
-	for (int i = 0; i < MAX_PARTICLES_TYPES; i++){
-		partProps[i].radius = 0;
-	}
-
 	//PARSER: copiando as propriedades de partículas
 	for (register int i = 0; i < sim.properties.particleTypes.size(); i++)
 	{
@@ -78,49 +73,9 @@ void PrepareSim( const char *filename,
 		partProps[i].colorG = sim.properties.particleTypes[i].color.y;
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
 	}
-/*
-	// Propriedades da partícula 0
-	partProps[0].radius = 20e-3f;
-	partProps[0].mass = 1e-2;
-	partProps[0].collideStiffness = 1e3;
-	partProps[0].collideDamping = 0.2f;
-	partProps[0].boundaryDamping = BOUNDARYDAMPING;
-	partProps[0].colorR = 255;
-	partProps[0].colorG = 0;
-	partProps[0].colorB = 0;
-	
-	// Propriedades da partícula 1
-	partProps[1].radius = 35e-3f;
-	partProps[1].mass = 1e-2;
-	partProps[1].collideStiffness = 1e3;
-	partProps[1].collideDamping = 0.2f;
-	partProps[1].boundaryDamping = BOUNDARYDAMPING;
-	partProps[1].colorR = 0;
-	partProps[1].colorG = 255;
-	partProps[1].colorB = 0;
-	
-	// Propriedades da partícula 2
-	partProps[2].radius = 30e-3f;
-	partProps[2].mass = 1e-2;
-	partProps[2].collideStiffness = 1e3;
-	partProps[2].collideDamping = 0.2f;
-	partProps[2].boundaryDamping = BOUNDARYDAMPING;
-	partProps[2].colorR = 0;
-	partProps[2].colorG = 0;
-	partProps[2].colorB = 255;
-	
-	// Propriedades da partícula 3
-	partProps[3].radius = 25e-3f;
-	partProps[3].mass = 1e-2;
-	partProps[3].collideStiffness = 1e3;
-	partProps[3].collideDamping = 0.2f;
-	partProps[3].boundaryDamping = BOUNDARYDAMPING;
-	partProps[3].colorR = 255;
-	partProps[3].colorG = 255;
-	partProps[3].colorB = 255;
-*/	
+
 	float maxRadius = 0;
-	for (int i = 0; i < MAX_PARTICLES_TYPES; i++){
+	for (int i = 0; i < sim.properties.particleTypes.size(); i++){
 		if (maxRadius < partProps[i].radius) maxRadius = partProps[i].radius;
 	}
 	
@@ -134,16 +89,10 @@ void PrepareSim( const char *filename,
 	renderPar->pRadius = renderPar->imageDIMy/sisProps->cubeDimension.y*maxRadius;
 
 	// Bloco inicial de esferas
-	float corner1[2] = {1.1, 1.1}; 				 // canto inferior esquerdo
-	float corner2[2] = {8.9, 8.9}; 				  // canto superior direito
 	float sideLenght[2];
-	//sideLenght[0] = corner2[0] - corner1[0]; 			   // dimensao em X
-	//sideLenght[1] = corner2[1] - corner1[1]; 			   // dimensao em Y
 	sideLenght[0] = sim.particles.end[0] - sim.particles.start[0]; 			   // dimensao em X
 	sideLenght[1] = sim.particles.end[1] - sim.particles.start[1]; 			   // dimensao em Y
 	
-	//uint side[2] = {X_PARTICLES, Y_PARTICLES}; // numero de partículas em X
-											  // e Y (deve ser maior que 2)
 	uint side[2];
 	side[0] = sim.particles.num.x;
 	side[1] = sim.particles.num.y;
@@ -170,40 +119,6 @@ void PrepareSim( const char *filename,
 	
 	allocateVectors(partProps, partValues, sisProps, renderPar);
 
-	/*
-	//PARSER: Copiando partículas da estrutura C++ para a estrutura C 
-	std::vector<uint> merda_id;
-	std::vector<float> merda_pos, merda_vel, merda_acc;
-	merda_id.reserve(sim.particles.positions.size());
-	merda_pos.reserve(2*sim.particles.positions.size());
-	merda_vel.reserve(2*sim.particles.velocities.size());
-	merda_acc.reserve(2*sim.particles.accelerations.size());
-
-	cudaMemcpy (partValues->type1,
-				&sim.particles.typeIndexes[0],
-				sizeof(int)*sim.particles.typeIndexes.size(),
-				cudaMemcpyHostToDevice);
-	for (register int i = 0; i < sim.particles.positions.size(); i++)
-	{
-		merda_id.push_back(i);
-	}
-	cudaMemcpy (partValues->ID1, &merda_id[0], sizeof(uint)*merda_id.size(), cudaMemcpyHostToDevice);
-
-	srand(time(NULL));
-	for (register int i = 0; i < sim.particles.positions.size(); i++)
-	{
-		merda_pos.push_back (sim.particles.positions[i].x); //FIXME: considerar o tamanho das particulas
-		merda_pos.push_back (sim.particles.positions[i].y);
-		merda_vel.push_back (sim.particles.velocities[i].x);
-		merda_vel.push_back (sim.particles.velocities[i].y);
-		merda_acc.push_back (sim.particles.accelerations[i].x);
-		merda_acc.push_back (sim.particles.accelerations[i].y);
-	}
-	cudaMemcpy (partValues->pos1, &merda_pos[0], sizeof(float)*merda_pos.size(), cudaMemcpyHostToDevice);
-	cudaMemcpy (partValues->vel1, &merda_vel[0], sizeof(float)*merda_vel.size(), cudaMemcpyHostToDevice);
-	cudaMemcpy (partValues->acc, &merda_acc[0], sizeof(float)*merda_acc.size(), cudaMemcpyHostToDevice);
-
-*/
 	// Função para definir a posição inicial das esferas
 	initializeParticlePosition(partValues->pos1,
 							   partValues->vel1,
@@ -213,7 +128,8 @@ void PrepareSim( const char *filename,
 							   sim.particles.start,
 							   sideLenght,
 							   side,
-							   time(NULL));
+							   time(NULL),
+							   sim.properties.particleTypes.size());
 
 	// Screen output	
 	printf("\nNumero de Particulas = %d\n",sisProps->numParticles);
@@ -390,10 +306,6 @@ int main(int argc, char **argv) {
     // função que define o tamanho da imagem e a estrutura que será
     // repassada para dentro do looping
     GPUAnimBitmap bitmap(DIM, DIM, &simBlock );
-
-	// Utilizar ARGC e ARGV para pegar propriedades na linha de comando
-	// ler esses comandos de um arquivo TXT externo
-	// Criar uma rotina para fazer este tipo de leitura
 	
 	// Prepara a simulacao, define as condicoes iniciais do problema
 	PrepareSim(argv[1], sisProps, partValues, partProps, renderPar);

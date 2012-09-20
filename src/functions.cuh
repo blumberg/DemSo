@@ -32,7 +32,7 @@ uint iDivUp(uint, uint);
 void computeGridSize(uint, uint, uint &, uint &);
 
 void initializeParticlePosition (float*, float*, float*, uint*, uint*,
-								 float*, float*, uint*, unsigned long);
+								 float*, float*, uint*, unsigned long, int);
 
 void calcHash(float*, uint*, uint*, uint);
 

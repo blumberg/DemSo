@@ -58,7 +58,8 @@ void initializeParticlePositionD(float2*			pos,
 								 float*				corner1,
 								 float*				comp,
 								 uint*				side,
-								 unsigned long 		seed) {
+								 unsigned long 		seed,
+								 int 				numParticleTypes) {
     uint x = threadIdx.x + blockIdx.x * blockDim.x;
     uint y = threadIdx.y + blockIdx.y * blockDim.y;
 	
@@ -77,7 +78,7 @@ void initializeParticlePositionD(float2*			pos,
 	vel[particle] = make_float2( 0 );
 	acc[particle] = make_float2( 0 );
 	ID[particle] = particle;
-	type[particle] = (particle+y) & 3;
+	type[particle] = (particle+y) % numParticleTypes;
 //	type[particle] = 0;
 }
 

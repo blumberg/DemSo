@@ -1,7 +1,7 @@
 <?xml version="1.0" xmlns="http://fem.unicamp.br/ns/dsml"?>
 <simulation>
 	<parameters>
-		<timestep>1.0e-3</timestep>
+		<timestep>10.0e-4</timestep>
 		<fps>31</fps>
 	</parameters>
 
@@ -16,43 +16,75 @@
 
 	<properties>
 		<particletype id="vermelha" name="Partículas Vermelhas" color="255000000">
-			<mass>10e-2</mass>
+			<mass>1e-2</mass>
 			<radius>20e-3</radius>
-			<stiffness dir="normal">1000</stiffness>
-			<damping dir="normal">0.2</damping>
+			<stiffness dir="normal">5000</stiffness>
+			<damping dir="normal">1.5</damping>
 			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
 
 		<particletype id="verde" name="Partículas Verdes" color="000255000">
 			<mass>1e-2</mass>
 			<radius>35e-3</radius>
-			<stiffness dir="normal">1000</stiffness>
-			<damping dir="normal">0.2</damping>
+			<stiffness dir="normal">5000</stiffness>
+			<damping dir="normal">1.5</damping>
 			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
 
 		<particletype id="azul" name="Partículas Azuis" color="000000255">
 			<mass>1e-2</mass>
 			<radius>30e-3</radius>
-			<stiffness dir="normal">1000</stiffness>
-			<damping dir="normal">0.2</damping>
+			<stiffness dir="normal">5000</stiffness>
+			<damping dir="normal">1.5</damping>
 			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
 
 		<particletype id="branca" name="Partículas Brancas" color="255255255">
 			<mass>1e-2</mass>
 			<radius>25e-3</radius>
-			<stiffness dir="normal">1000</stiffness>
-			<damping dir="normal">0.2</damping>
+			<stiffness dir="normal">5000</stiffness>
+			<damping dir="normal">1.5</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+		
+		<particletype id="vermelha2" name="Partículas Vermelhas2" color="255255000">
+			<mass>1e-2</mass>
+			<radius>20e-3</radius>
+			<stiffness dir="normal">5000</stiffness>
+			<damping dir="normal">1.1</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+
+		<particletype id="verde2" name="Partículas Verdes2" color="000255255">
+			<mass>1e-2</mass>
+			<radius>35e-3</radius>
+			<stiffness dir="normal">5000</stiffness>
+			<damping dir="normal">1.5</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+
+		<particletype id="azul2" name="Partículas Azuis2" color="255000255">
+			<mass>1e-2</mass>
+			<radius>80e-3</radius>
+			<stiffness dir="normal">5000</stiffness>
+			<damping dir="normal">10.5</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+
+		<particletype id="branca2" name="Partículas Brancas2" color="100100100">
+			<mass>1e-2</mass>
+			<radius>25e-3</radius>
+			<stiffness dir="normal">5000</stiffness>
+			<damping dir="normal">1.5</damping>
 			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
 	</properties>
 
 	<particles>
 		<block id="1" particletype="vermelha">
-			<start><x>1.1</x><y>1.1</y></start>
-			<end><x>8.9</x><y>8.9</y></end>
-			<num><x>200</x><y>20</y></num>
+			<start><x>0.1</x><y>0.1</y></start>
+			<end><x>9.9</x><y>9.9</y></end>
+			<num><x>100</x><y>100</y></num>
 		</block>
 	</particles>
 </simulation>

@@ -95,7 +95,8 @@ void initializeParticlePosition (float* 		pos,
 								 float*			corner1,
 								 float*			sideLenght,
 								 uint*			side,
-								 unsigned long	seed){
+								 unsigned long	seed,
+								 int 			numParticleTypes){
 
 	// alocando vetores na placa de video
 	// cudaMalloc --> aloca espaço na placa de vídeo
@@ -127,7 +128,8 @@ void initializeParticlePosition (float* 		pos,
 														  d_corner1,
 														  d_sideLenght,
 														  d_side,
-														  seed);
+														  seed,
+														  numParticleTypes);
 													  
 	// Desalocando espaço na placa de vídeo (Não mais necessário)
     cudaFree( d_corner1 );
