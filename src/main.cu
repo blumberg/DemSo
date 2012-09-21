@@ -37,6 +37,16 @@
 using std::cout;
 using std::endl;
 
+bool file_exist(const char *filename){
+	
+	if (FILE *file = fopen(filename,"r")){
+		fclose(file);
+		return true;
+	}else{
+		return false;
+	}
+}
+
 void PrepareSim( const char *filename,
 				 SystemProperties *sisProps,
 				 ParticlesValues *partValues,
@@ -132,7 +142,7 @@ void PrepareSim( const char *filename,
 							   sim.properties.particleTypes.size());
 
 	// Screen output	
-	printf("\nNumero de Particulas = %d\n",sisProps->numParticles);
+	printf("Numero de Particulas = %d\n",sisProps->numParticles);
 	printf("grid %d x %d\n\n",sisProps->gridSize.x,sisProps->gridSize.y);
 #if USE_TEX
 	printf("Memoria de textura: UTILIZADA\n\n");
@@ -286,12 +296,38 @@ void FinalizingSim( DataBlock *simBlock) {
 
 int main(int argc, char **argv) {
 	
+	// Verificando arquivo de entrada (Parametros da simulacao)
+	const char *filename;
+	
+	if (argc == 2){
+		if (file_exist(argv[1])){
+			printf("\nUsing %s parameters file\n\n",argv[1]);
+			filename = argv[1];
+		}else if (file_exist("exemplos/default.dsml")){
+			printf("\nFile %s does not exist, using exemplos/default.dsml file\n\n",argv[1]);
+			filename = "exemplos/default.dsml";
+		}else{
+			printf("\nFile %s and exemlos/default.dsml does not exist.\n\nClosing simulation\n\n",argv[1]);
+			return 0;
+		}
+	}else if (argc == 1){
+		if (file_exist("exemplos/default.dsml")){
+			printf("\nUsing default parameters file (exemplos/default.dsml)\n\n");
+			filename = "exemplos/default.dsml";
+		}else{
+			printf("\nDefault file exemlos/default.dsml does not exist.\n\nClosing simulation\n\n");
+			return 0;
+		}
+	}else{
+		printf("\nToo many arguments.\n\nClosing simulation\n\n");
+		return 0;
+	}
+	
 	// declarando estrutura de dados principal
     DataBlock simBlock;
     
     // declarando as subestruturas (apenas por facilidade)
     SystemProperties *sisProps = &simBlock.sisProps;
-//    ParticleProperties *partProps = &simBlock.partProps;
     ParticlesValues *partValues = &simBlock.partValues;
 	RenderParameters *renderPar = &simBlock.renderPar;
 	TimeControl *timeCtrl = &simBlock.timeCtrl;
@@ -308,7 +344,7 @@ int main(int argc, char **argv) {
     GPUAnimBitmap bitmap(DIM, DIM, &simBlock );
 	
 	// Prepara a simulacao, define as condicoes iniciais do problema
-	PrepareSim(argv[1], sisProps, partValues, partProps, renderPar);
+	PrepareSim(filename, sisProps, partValues, partProps, renderPar);
 	
 	// Executa o looping até que a tecla ESC seja pressionada
     bitmap.anim_and_exit(

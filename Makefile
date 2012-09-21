@@ -20,13 +20,15 @@ CUO_FILES = $(addprefix $(OBJ_DIR)/,$(notdir $(CU_FILES:.cu=.cu.o)))
 OBJS =  $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(notdir $(CPP_FILES)))
 OBJS += $(patsubst %.cu,$(OBJ_DIR)/%.cu.o,$(notdir $(CU_FILES)))
 
-$(TARGET) : $(OBJS) makedir
+$(TARGET) : $(OBJS)
 	$(NVCC) $(NVCCFLAGS) -o $@ $(OBJS) $(LIBS)
 
-$(OBJ_DIR)/%.cu.o : $(SRC_DIR)/%.cu $(CUH_FILES) makedir
+$(OBJ_DIR)/%.cu.o : $(SRC_DIR)/%.cu $(CUH_FILES)
+	mkdir -p $(OBJ_DIR)
 	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(LIBS)
 
-$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp $(H_FILES) makedir
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp $(H_FILES)
+	mkdir -p $(OBJ_DIR)
 	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(LIBS)
 
 .PRONY: all
@@ -39,9 +41,6 @@ distclean:
 .PRONY: clean	
 clean:
 	rm -f $(TARGET)
-
-makedir:
-	mkdir -p $(OBJ_DIR)
 
 parser: src/parser.cpp src/DEMSimulation.cpp
 	$(NVCC) src/parser.cpp src/DEMParticles.cpp src/DEMSimulation.cpp -o parser -I./includes $(NVCCFLAGS) 

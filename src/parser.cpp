@@ -93,9 +93,19 @@ DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 	if (root->first_attribute("color"))
 	{
 		string color = root->first_attribute("color")->value();
-		ptype.color.x = atof(color.substr(0,3).c_str());
-		ptype.color.y = atof(color.substr(3,3).c_str());
-		ptype.color.z = atof(color.substr(6,3).c_str());
+		char red[4];
+		char green[4];
+		char blue[4];
+		strcpy (red,"0x");
+		strcpy (green,"0x");
+		strcpy (blue,"0x");
+		strcat (red,color.substr(0,2).c_str());
+		strcat (green,color.substr(2,2).c_str());
+		strcat (blue,color.substr(4,2).c_str());
+		
+		ptype.color.x = atof(red);
+		ptype.color.y = atof(green);
+		ptype.color.z = atof(blue);
 	}
 	else ptype.color = make_float3(255,255,255);
 
