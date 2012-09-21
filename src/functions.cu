@@ -40,6 +40,8 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMalloc((void**)&partValues->type2, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->ID1, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->ID2, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->loc1, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->loc2, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->pos1, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->pos2, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->vel1, sizeof(float) * sisProps->numParticles * 2);
@@ -55,6 +57,8 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * MAX_PARTICLES_TYPES);
 }
 
+
+
 // Desaloca o espaço reservado na GPU
 void desAllocateVectors(ParticlesValues* partValues)
 {
@@ -62,6 +66,8 @@ void desAllocateVectors(ParticlesValues* partValues)
 	cudaFree( partValues->type2 );
 	cudaFree( partValues->ID1 );
 	cudaFree( partValues->ID2 );
+	cudaFree( partValues->loc1 );
+	cudaFree( partValues->loc2 );
     cudaFree( partValues->pos1 );
     cudaFree( partValues->pos2 );
     cudaFree( partValues->vel1 );
@@ -91,6 +97,7 @@ void initializeParticlePosition (float* 		pos,
 								 float* 		vel,
 								 float* 		acc,
 								 uint*			ID,
+								 uint*			loc,
 								 uint*			type,
 								 float*			corner1,
 								 float*			sideLenght,
@@ -124,6 +131,7 @@ void initializeParticlePosition (float* 		pos,
 														  (float2*)vel,
 														  (float2*)acc,
 														  ID,
+														  loc,
 														  type,
 														  d_corner1,
 														  d_sideLenght,
@@ -135,6 +143,27 @@ void initializeParticlePosition (float* 		pos,
     cudaFree( d_corner1 );
     cudaFree( d_sideLenght );
     cudaFree( d_side );													  
+}
+
+void initializeBigParticlePosition(float* 		pos,
+								   float* 		vel,
+								   float* 		acc,
+								   uint*		ID,
+								   uint*		loc,
+								   uint*		type,
+							       float2		pPos,
+							       float2		pVel,
+							       uint			particleType)
+{
+	initializeBigParticlePositionD<<<1,1>>>((float2*)pos,
+											(float2*)vel,
+											(float2*)acc,
+											ID,
+											loc,
+											type,
+											pPos,
+											pVel,
+											particleType);
 }
 
 // Calcula o numero da celula de cada particula. Esse kernel é executado
@@ -176,6 +205,7 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 							     float* sortedPos,
 							     float* sortedVel,
 							     uint* 	sortedID,
+							     uint* 	sortedLoc,
 							     uint* 	sortedType,
                                  uint*  gridParticleHash,
                                  uint*  gridParticleIndex,
@@ -207,6 +237,7 @@ void reorderDataAndFindCellStart(uint*  cellStart,
         (float2*)sortedPos,
         (float2*)sortedVel,
         sortedID,
+        sortedLoc,
         sortedType,
 		gridParticleHash,
 		gridParticleIndex,
@@ -290,6 +321,17 @@ void integrateSystem(float*	pos,
 				 							   (float2*)vel,
 				 							   (float2*)acc,
 				 							   type);
+}
+
+void restoreFixPositions(float* oldPos,
+						 float* newPos,
+						 uint* 	oldLoc,
+						 uint*	newLoc)
+{
+	restorFixPositionsD<<<1,1>>>((float2*)oldPos,
+								 (float2*)newPos,
+								 oldLoc,
+								 newLoc);
 }
 
 // Desenha as partículas em uma imagem de DIMx x DIMy pixels e mostra na

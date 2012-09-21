@@ -54,6 +54,7 @@ void initializeParticlePositionD(float2*			pos,
 								 float2*			vel,
 								 float2*			acc,
 								 uint*				ID,
+								 uint*				loc,
 								 uint*				type,
 								 float*				corner1,
 								 float*				comp,
@@ -68,7 +69,7 @@ void initializeParticlePositionD(float2*			pos,
 	
 	uint particle = x + y*side[0];
 
-    if (particle >= sisPropD.numParticles) return;
+    if (particle >= side[1]*side[0]) return;
 
 	curandState state;
 	curand_init( seed, particle, 0, &state );
@@ -78,8 +79,26 @@ void initializeParticlePositionD(float2*			pos,
 	vel[particle] = make_float2( 0 );
 	acc[particle] = make_float2( 0 );
 	ID[particle] = particle;
-	type[particle] = (particle+y) % numParticleTypes;
-//	type[particle] = 0;
+	loc[particle] = particle;
+	type[particle] = (x+y) % numParticleTypes;
+}
+
+__global__
+void initializeBigParticlePositionD(float2*			pos,
+					   			    float2*			vel,
+								    float2*			acc,
+								    uint*			ID,
+								    uint*			loc,
+								    uint*			type,
+								    float2			pPos,
+								    float2			pVel,
+								    uint			particleType) {
+	uint particleID = sisPropD.numParticles-1;
+	pos[particleID] = pPos;
+	vel[particleID] = pVel;
+	ID[particleID] = particleID;
+	loc[particleID] = particleID;
+	type[particleID] = particleType;
 }
 
 // calculate position in uniform grid
@@ -131,6 +150,7 @@ void reorderDataAndFindCellStartD(uint*   	cellStart,        // output: cell sta
 							      float2*	sortedPos,        // output: sorted positions
   							      float2* 	sortedVel,        // output: sorted velocities
   							      uint*		sortedID,		  // output: sorted Identifications
+  							      uint*		sortedLoc,		  // output: sorted Localization
   							      uint*		sortedType,		  // output: sorted Type
                                   uint*  	gridParticleHash, // input: sorted grid hashes
                                   uint*  	gridParticleIndex,// input: sorted particle indices
@@ -190,6 +210,7 @@ void reorderDataAndFindCellStartD(uint*   	cellStart,        // output: cell sta
         sortedPos[index] = pos;
         sortedVel[index] = vel;
         sortedID[index] = ID;
+        sortedLoc[ID] = index;
         sortedType[index] = type;
 	}
 }
@@ -332,7 +353,18 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc, uint* type)
         	pos[index].y = radius;
         	vel[index].y *= boundaryDamping;}
 }
-
+__global__
+void restorFixPositionsD(float2*	oldPos,
+	  					 float2*	newPos,
+						 uint*		oldLoc,
+						 uint*		newLoc)
+{
+	uint particle = sisPropD.numParticles - 1;
+	uint oldIndex = oldLoc[particle];
+	uint newIndex = newLoc[particle];
+	newPos[newIndex].y = oldPos[oldIndex].y-0.001;
+	newPos[newIndex].x = oldPos[oldIndex].x;
+}
 
 // Pinta a esfera.
 __global__

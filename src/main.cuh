@@ -57,10 +57,11 @@ struct ParticlesValues {
 
 	float *pos1, *vel1, *acc;
 	float *pos2, *vel2;
-	uint *ID1, *type1;
-	uint *ID2, *type2;
+	uint *ID1, *type1, *loc1;
+	uint *ID2, *type2, *loc2;
 	uint *cellStart, *cellEnd;
 	uint *gridParticleIndex, *gridParticleHash;
+	uint *fixParticleIndex, *ctrlParticleIndex;
 
 };
 

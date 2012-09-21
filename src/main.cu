@@ -59,10 +59,9 @@ void PrepareSim( const char *filename,
 //	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
-	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y;
+	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y + 1; // Esse 1 é devido a partícula controlada ************************************************************
 
-	sisProps->cubeDimension.x = sim.environment.dimension.x;
-	sisProps->cubeDimension.y = sim.environment.dimension.y;
+	sisProps->cubeDimension = make_float2(sim.environment.dimension);
 	
 	sisProps->timeStep = sim.parameters.timeStep;
 	
@@ -71,7 +70,7 @@ void PrepareSim( const char *filename,
 	renderPar->imageDIMx = DIM; //TODO: Fazer uma funcão q pega o ratio do environment e aplica nos imageDIM
 	renderPar->imageDIMy = DIM;
 
-	//PARSER: copiando as propriedades de partículas
+	// PARSER: copiando as propriedades de partículas
 	for (register int i = 0; i < sim.properties.particleTypes.size(); i++)
 	{
 		partProps[i].mass = sim.properties.particleTypes[i].mass;
@@ -84,6 +83,10 @@ void PrepareSim( const char *filename,
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
 	}
 
+	// Definindo o maior raio da simulação
+	// Se existir uma única partícula gigante (TUBULAÇÃO) talvez seja
+	// interessante desprezar esse valor e no lugar, fazer com que essa
+	// única partícula teste com todas as outras.
 	float maxRadius = 0;
 	for (int i = 0; i < sim.properties.particleTypes.size(); i++){
 		if (maxRadius < partProps[i].radius) maxRadius = partProps[i].radius;
@@ -97,15 +100,6 @@ void PrepareSim( const char *filename,
 	
 	// raio da esfera em PIXEL (para a saída grafica)
 	renderPar->pRadius = renderPar->imageDIMy/sisProps->cubeDimension.y*maxRadius;
-
-	// Bloco inicial de esferas
-	float sideLenght[2];
-	sideLenght[0] = sim.particles.end[0] - sim.particles.start[0]; 			   // dimensao em X
-	sideLenght[1] = sim.particles.end[1] - sim.particles.start[1]; 			   // dimensao em Y
-	
-	uint side[2];
-	side[0] = sim.particles.num.x;
-	side[1] = sim.particles.num.y;
 
 	// Calcula o tamanho do grid arredondando para um valor que seja
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera
@@ -127,6 +121,15 @@ void PrepareSim( const char *filename,
 
 	sisProps->numCells = sisProps->gridSize.x * sisProps->gridSize.y;
 	
+	// Bloco inicial de esferas
+	float sideLenght[2];
+	sideLenght[0] = sim.particles.end[0] - sim.particles.start[0]; 			   // dimensao em X
+	sideLenght[1] = sim.particles.end[1] - sim.particles.start[1]; 			   // dimensao em Y
+	
+	uint side[2];
+	side[0] = sim.particles.num.x;
+	side[1] = sim.particles.num.y;
+	
 	allocateVectors(partProps, partValues, sisProps, renderPar);
 
 	// Função para definir a posição inicial das esferas
@@ -134,13 +137,28 @@ void PrepareSim( const char *filename,
 							   partValues->vel1,
 							   partValues->acc,
 							   partValues->ID1,
+							   partValues->loc1,
 							   partValues->type1,
 							   sim.particles.start,
 							   sideLenght,
 							   side,
 							   time(NULL),
-							   sim.properties.particleTypes.size());
+							   sim.properties.particleTypes.size()-1); // subraindo 1 para não fazer o sorteio com a partícula controlada ********************************************
 
+	float2 bigParticlePos = make_float2(5,9.5);
+	float2 bigParticleVel = make_float2(0,0);
+
+	// Adicionar partícula externa gigante
+	initializeBigParticlePosition(partValues->pos1,
+								  partValues->vel1,
+								  partValues->acc,
+								  partValues->ID1,
+								  partValues->loc1,
+								  partValues->type1,
+								  bigParticlePos,
+								  bigParticleVel,
+								  sim.properties.particleTypes.size()-1); // Tipo da partícula, por enquanto ela é a última **************************************************************
+	
 	// Screen output	
 	printf("Numero de Particulas = %d\n",sisProps->numParticles);
 	printf("grid %d x %d\n\n",sisProps->gridSize.x,sisProps->gridSize.y);
@@ -169,8 +187,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// operação de cópia
 	float  *oldPos,  *oldVel;
 	float *sortPos, *sortVel;
-	uint  *oldID,  *oldType;
-	uint *sortID, *sortType;
+	uint  *oldID,  *oldType,  *oldLoc;
+	uint *sortID, *sortType, *sortLoc;
 	
 	// Integrando o programa IPS vezes antes de exibir a imagem
 	for (int i = 0 ; i < timeCtrl->IPS ; i++) {
@@ -180,28 +198,32 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 			oldPos = partValues->pos1;
 			oldVel = partValues->vel1;
 			oldID = partValues->ID1;
+			oldLoc = partValues->loc1;
 			oldType = partValues->type1;
 			sortPos = partValues->pos2;
 			sortVel = partValues->vel2;
 			sortID = partValues->ID2;
+			sortLoc = partValues->loc2;
 			sortType = partValues->type2;
 		} else {
 			oldPos = partValues->pos2;
 			oldVel = partValues->vel2;
 			oldID = partValues->ID2;
+			oldLoc = partValues->loc2;
 			oldType = partValues->type2;
 			sortPos = partValues->pos1;
 			sortVel = partValues->vel1;
 			sortID = partValues->ID1;
+			sortLoc = partValues->loc1;
 			sortType = partValues->type1;
 		}
 		
-		// Integracao no tempo (atualizacao das posicoes e velocidades)
-		integrateSystem(oldPos,
-			 	  		oldVel,
-			 	  		partValues->acc,
-			 	  		oldType,
-			 	  		sisProps->numParticles);
+//		// Integracao no tempo (atualizacao das posicoes e velocidades)
+//		integrateSystem(oldPos,
+//			 	  		oldVel,
+//			 	  		partValues->acc,
+//			 	  		oldType,
+//			 	  		sisProps->numParticles);
 
 		// Define a celula de cada particula, criando os vetores
 		// gridParticleIndex e gridParticleHash ordenados pelo Index
@@ -223,6 +245,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 									sortPos,
 									sortVel,
 									sortID,
+									sortLoc,
 									sortType,
 									partValues->gridParticleHash,
 									partValues->gridParticleIndex,
@@ -244,12 +267,17 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				sisProps->numParticles,
 				sisProps->numCells);
 
-//		// Integracao no tempo (atualizacao das posicoes e velocidades)
-//		integrateSystem(sortPos,
-//			 	  		sortVel,
-//			 	  		partValues->acc,
-//						sortType,
-//			 	  		sisProps->numParticles);
+		// Integracao no tempo (atualizacao das posicoes e velocidades)
+		integrateSystem(sortPos,
+			 	  		sortVel,
+			 	  		partValues->acc,
+						sortType,
+			 	  		sisProps->numParticles);
+			 	  		
+		restoreFixPositions(oldPos,
+							sortPos,
+							oldLoc,
+							sortLoc);
 
 		timeCtrl->tempo++;
 	}
