@@ -323,17 +323,17 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc, uint* type)
 #if 1
         if (pos[index].x > sisPropD.cubeDimension.x - radius) {
         	pos[index].x = sisPropD.cubeDimension.x - radius;
-        	vel[index].x *= boundaryDamping; }
+        	vel[index].x *= -boundaryDamping; }
         if (pos[index].x < radius){
         	pos[index].x = radius;
-        	vel[index].x *= boundaryDamping;}
+        	vel[index].x *= -boundaryDamping;}
         if (pos[index].y > sisPropD.cubeDimension.x - radius) { 
         	pos[index].y = sisPropD.cubeDimension.x - radius;
-        	vel[index].y *= boundaryDamping; }
+        	vel[index].y *= -boundaryDamping; }
 #endif  
         if (pos[index].y < radius) {
         	pos[index].y = radius;
-        	vel[index].y *= boundaryDamping;}
+        	vel[index].y *= -boundaryDamping;}
 }
 
 
