@@ -2,7 +2,6 @@
 <simulation>
 	<parameters>
 		<timestep>10.0e-4</timestep>
-		<fps>31</fps>
 	</parameters>
 
 	<environment>

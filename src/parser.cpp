@@ -53,7 +53,6 @@ DEMParameters DEMParser::loadParameters (void)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("timestep")) params.timeStep = atof(node->value());
-		else if (node->name() == string("fps")) params.framesPerSecond = atof(node->value());
 	}
 
 	return params;

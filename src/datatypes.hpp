@@ -26,7 +26,6 @@
 class DEMParameters {
 	public:
 		float timeStep;
-		float framesPerSecond;
 };
 
 class DEMEnvironment {

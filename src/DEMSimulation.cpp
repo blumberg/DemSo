@@ -62,7 +62,6 @@ void DEMSimulation::printConfiguration (void)
 {
 	cout << "-- Parameters" << endl;
 	cout << "timeStep: " << parameters.timeStep << endl;
-	cout << "FPS: " << parameters.framesPerSecond << endl;
 	cout << endl;
 	cout << "-- Environment" << endl;
 	cout << "dimensions: (" << environment.dimension.x;
