@@ -258,7 +258,7 @@ float2 collideCell(int2		gridPos,
     uint startIndex = FETCH(cellStart, gridHash);
 
     float2 force = make_float2(0.0f);
-    if (startIndex != 0xffffffff) {        // cell is not empty
+    if (startIndex != (uint)-1) {        // cell is not empty
         // iterate over particles in this cell
         uint endIndex = FETCH(cellEnd, gridHash);
         for(uint j=startIndex; j<endIndex; j++) {
