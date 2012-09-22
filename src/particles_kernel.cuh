@@ -225,8 +225,8 @@ float2 collideSpheres(float2 posA, float2 posB,
 
         // spring force
         force = -collideStiffness*(collideDist - dist) * norm;
-        // dashpot (damping) force
-        force += collideDamping*relVel;
+        // dashpot (damping) force (not present when particles are moving away from each-other)
+        force += collideDamping * (dot(relVel,norm)>0.0f) ? relVel : make_float2(0);
         // tangential shear force
 //        force += params.shear*tanVel;
     }
