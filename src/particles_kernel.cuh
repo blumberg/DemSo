@@ -211,22 +211,25 @@ float2 collideSpheres(float2 posA, float2 posB,
     float collideDist = radiusA + radiusB;
 
     float2 force = make_float2(0.0f);
-    if (dist < collideDist) {
+    if (dist < collideDist)
+	{
         float2 norm = relPos / dist;
 
 		// relative velocity
         float2 relVel = velB - velA;
+		float relVel_n = dot(relVel, norm);
+        //float2 relVel_t = relVel - relVel_n*norm;
 
-        // relative tangential velocity
-//        float2 tanVel = relVel - (dot(relVel, norm) * norm);
-
-		float collideStiffness = (partPropD[typeA].collideStiffness*partPropD[typeB].collideStiffness)/(partPropD[typeA].collideStiffness+partPropD[typeB].collideStiffness);
-		float collideDamping = (partPropD[typeA].collideDamping*partPropD[typeB].collideDamping)/(partPropD[typeA].collideDamping+partPropD[typeB].collideDamping);
+		// Series association of normal damping and stiffness
+		float normalStiffness = (partPropD[typeA].normalStiffness*partPropD[typeB].normalStiffness)
+							   /(partPropD[typeA].normalStiffness+partPropD[typeB].normalStiffness);
+		float normalDamping = (partPropD[typeA].normalDamping*partPropD[typeB].normalDamping)
+							 /(partPropD[typeA].normalDamping+partPropD[typeB].normalDamping);
 
         // spring force
-        force = -collideStiffness*(collideDist - dist) * norm;
+        force = -normalStiffness*(collideDist - dist) * norm;
         // dashpot (damping) force (not present when particles are moving away from each-other)
-        force += collideDamping * (dot(relVel,norm)>0.0f) ? relVel : make_float2(0);
+        force += normalDamping * (relVel_n>0.0f) ? relVel_n*norm : make_float2(0);
         // tangential shear force
 //        force += params.shear*tanVel;
     }

@@ -23,13 +23,6 @@
 #define MAIN_CUH
 
 #define DIM 800
-#define PARTICLES 10000
-#define BOX_SIZE 10.0f
-#define TIME_STEP 1.0e-3
-#define GRAVITY 9.81f
-#define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 100
-#define Y_PARTICLES 100
 #define FPS 31.0f
 #define USE_TEX 0
 #define MAX_PARTICLES_TYPES 10
@@ -42,8 +35,8 @@ struct ParticleProperties {
 
 	float 	radius;
 	float 	mass;
-	float 	collideStiffness;
-	float 	collideDamping;
+	float 	normalStiffness;
+	float 	normalDamping;
 	float 	boundaryDamping;
 	float 	colorR;
 	float 	colorG;

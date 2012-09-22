@@ -66,8 +66,8 @@ void PrepareSim( const char *filename,
 	{
 		partProps[i].mass = sim.properties.particleTypes[i].mass;
 		partProps[i].radius = sim.properties.particleTypes[i].radius;
-		partProps[i].collideStiffness = sim.properties.particleTypes[i].normalStiffness;
-		partProps[i].collideDamping = sim.properties.particleTypes[i].normalDamping;
+		partProps[i].normalStiffness = sim.properties.particleTypes[i].normalStiffness;
+		partProps[i].normalDamping = sim.properties.particleTypes[i].normalDamping;
 		partProps[i].boundaryDamping = sim.properties.particleTypes[i].boundaryDamping;
 		partProps[i].colorR = sim.properties.particleTypes[i].color.x;
 		partProps[i].colorG = sim.properties.particleTypes[i].color.y;
