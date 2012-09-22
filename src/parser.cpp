@@ -66,7 +66,15 @@ DEMEnvironment DEMParser::loadEnvironment (void)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("dimensions")) env.dimension = readVector(node);
-		if (node->name() == string("gravity")) env.gravity = readVector(node);
+		else if (node->name() == string("gravity")) env.gravity = readVector(node);
+		else if (node->name() == string("stiffness"))
+		{
+			xml_attribute<> *attr = node->first_attribute("dir");
+			if (attr->value() == string("normal")) env.boundaryNormalStiffness = atof(node->value());
+			else if (attr->value() == string("shear")) env.boundaryShearStiffness = atof(node->value());
+			else throw string("Unrecognized stiffness direction");
+		}
+		else if (node->name() == string("damping")) env.boundaryDamping = atof(node->value());
 	}
 	return env;
 }
@@ -109,19 +117,7 @@ DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 			else if (attr->value() == string("shear")) ptype.shearStiffness = atof(node->value());
 			else throw string("Unrecognized stiffness direction");
 		}
-		else if (node->name() == string("damping"))
-		{
-			xml_attribute<> *attr = node->first_attribute("type");
-			if (attr && attr->value() == string("boundary"))
-				ptype.boundaryDamping = atof(node->value()); //FIXME: test if tangent or normal
-			else {
-				attr = node->first_attribute("dir");
-				if (attr->value() == string("normal")) ptype.normalDamping = atof(node->value());
-				//else if (attr->value() == (string) "tangent") ptype.tangentDamping = atof(node->value());
-				else throw string("Unrecognized damping direction");
-			}
-			
-		}
+		else if (node->name() == string("damping")) ptype.normalDamping = atof(node->value());
 		else throw string("Unrecognized tag inside <particletype>");
 	}
 	return ptype;

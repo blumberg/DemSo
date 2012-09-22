@@ -46,7 +46,7 @@ void PrepareSim( const char *filename,
 	/* Usamos a estrutura de dados C++ e carregamos o arquivo de estado */
 	DEMSimulation sim;
 	sim.loadFromFile(filename);
-//	sim.printConfiguration();
+	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
 	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y;
@@ -57,6 +57,10 @@ void PrepareSim( const char *filename,
 	sisProps->timeStep = sim.parameters.timeStep;
 	
 	sisProps->gravity = make_float2(sim.environment.gravity); // Transformando a gravidade de float3 para float2
+
+	sisProps->boundaryNormalStiffness = sim.environment.boundaryNormalStiffness;
+	sisProps->boundaryShearStiffness = sim.environment.boundaryShearStiffness;
+	sisProps->boundaryDamping = sim.environment.boundaryDamping;
 	
 	renderPar->imageDIMx = DIM; //TODO: Fazer uma funcão q pega o ratio do environment e aplica nos imageDIM
 	renderPar->imageDIMy = DIM;
@@ -69,7 +73,6 @@ void PrepareSim( const char *filename,
 		partProps[i].normalStiffness = sim.properties.particleTypes[i].normalStiffness;
 		partProps[i].shearStiffness = sim.properties.particleTypes[i].shearStiffness;
 		partProps[i].normalDamping = sim.properties.particleTypes[i].normalDamping;
-		partProps[i].boundaryDamping = sim.properties.particleTypes[i].boundaryDamping;
 		partProps[i].colorR = sim.properties.particleTypes[i].color.x;
 		partProps[i].colorG = sim.properties.particleTypes[i].color.y;
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;

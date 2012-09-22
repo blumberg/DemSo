@@ -70,6 +70,9 @@ void DEMSimulation::printConfiguration (void)
 	cout << "gravity: (" << environment.gravity.x;
 	cout << ", " << environment.gravity.y;
 	cout << ", " << environment.gravity.z << ")" << endl;
+	cout << "boundaryNormalStiffness: " << environment.boundaryNormalStiffness << endl;
+	cout << "boundaryShearStiffness: " << environment.boundaryShearStiffness << endl;
+	cout << "boundaryDamping: " << environment.boundaryDamping << endl;
 	cout << endl;
 	cout << "-- Properties" << endl;
 	cout << "numParticleTypes: " << properties.particleTypes.size() << endl;
@@ -87,7 +90,6 @@ void DEMSimulation::printConfiguration (void)
 		cout << "\tnormalStiffness: " << properties.particleTypes[i].normalStiffness << endl;
 		cout << "\tshearStiffness: " << properties.particleTypes[i].shearStiffness << endl;
 		cout << "\tnormalDamping: " << properties.particleTypes[i].normalDamping << endl;
-		cout << "\tboundaryDamping: " << properties.particleTypes[i].boundaryDamping << endl;
 		cout << endl;
 	}
 	cout << "numParticles: " << particles.positions.size() << endl;

@@ -32,6 +32,9 @@ class DEMEnvironment {
 	public:
 		float3 dimension;
 		float3 gravity;
+		float boundaryNormalStiffness;
+		float boundaryShearStiffness;
+		float boundaryDamping;
 };
 
 class DEMParticleType {
@@ -43,7 +46,6 @@ class DEMParticleType {
 		float normalStiffness;
 		float shearStiffness;
 		float normalDamping;
-		float boundaryDamping;
 		float3 color;
 		DEMParticleType () {};
 };

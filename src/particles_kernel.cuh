@@ -308,12 +308,12 @@ float2 collideBoundary(float2 &pos, float2 &vel,
         float2 relVel_t = relVel - relVel_n*norm;
 
 		// Series association of normal damping and stiffness TODO: read from XML
-		float normalStiffness = (partPropD[type].normalStiffness*5000)
-							   /(partPropD[type].normalStiffness+5000);
-		float shearStiffness = (partPropD[type].shearStiffness*2000)
-							  /(partPropD[type].shearStiffness+2000);
-		float normalDamping = (partPropD[type].normalDamping*1.5)
-							 /(partPropD[type].normalDamping+1.5);
+		float normalStiffness = (partPropD[type].normalStiffness*sisPropD.boundaryNormalStiffness)
+							   /(partPropD[type].normalStiffness+sisPropD.boundaryNormalStiffness);
+		float shearStiffness = (partPropD[type].shearStiffness*sisPropD.boundaryShearStiffness)
+							  /(partPropD[type].shearStiffness+sisPropD.boundaryShearStiffness);
+		float normalDamping = (partPropD[type].normalDamping*sisPropD.boundaryDamping)
+							 /(partPropD[type].normalDamping+sisPropD.boundaryDamping);
 
         // spring force
         force = -normalStiffness*(radius - dist) * norm;
@@ -390,7 +390,7 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc, uint* type)
     pos[index] += vel[index] * sisPropD.timeStep;
     
     float radius = partPropD[type[index]].radius;
-    float boundaryDamping = partPropD[type[index]].boundaryDamping;
+    //float boundaryDamping = partPropD[type[index]].boundaryDamping;
     
         // set this to zero to disable collisions with cube sides
 #if 0
