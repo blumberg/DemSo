@@ -388,25 +388,6 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc, uint* type)
     
     vel[index] += (sisPropD.gravity + acc[index]) * sisPropD.timeStep;
     pos[index] += vel[index] * sisPropD.timeStep;
-    
-    float radius = partPropD[type[index]].radius;
-    //float boundaryDamping = partPropD[type[index]].boundaryDamping;
-    
-        // set this to zero to disable collisions with cube sides
-#if 0
-        if (pos[index].x > sisPropD.cubeDimension.x - radius) {
-        	pos[index].x = sisPropD.cubeDimension.x - radius;
-        	vel[index].x *= -boundaryDamping; }
-        if (pos[index].x < radius){
-        	pos[index].x = radius;
-        	vel[index].x *= -boundaryDamping;}
-        if (pos[index].y > sisPropD.cubeDimension.x - radius) { 
-        	pos[index].y = sisPropD.cubeDimension.x - radius;
-        	vel[index].y *= -boundaryDamping; }
-        if (pos[index].y < radius) {
-        	pos[index].y = radius;
-        	vel[index].y *= -boundaryDamping;}
-#endif
 }
 
 
