@@ -85,6 +85,7 @@ void DEMSimulation::printConfiguration (void)
 		cout << "\tmass: " << properties.particleTypes[i].mass << endl;
 		cout << "\tradius: " << properties.particleTypes[i].radius << endl;
 		cout << "\tnormalStiffness: " << properties.particleTypes[i].normalStiffness << endl;
+		cout << "\tshearStiffness: " << properties.particleTypes[i].shearStiffness << endl;
 		cout << "\tnormalDamping: " << properties.particleTypes[i].normalDamping << endl;
 		cout << "\tboundaryDamping: " << properties.particleTypes[i].boundaryDamping << endl;
 		cout << endl;

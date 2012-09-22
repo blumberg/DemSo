@@ -217,21 +217,30 @@ float2 collideSpheres(float2 posA, float2 posB,
 
 		// relative velocity
         float2 relVel = velB - velA;
-		float relVel_n = dot(relVel, norm);
-        //float2 relVel_t = relVel - relVel_n*norm;
+		float  relVel_n = dot(relVel, norm);
+        float2 relVel_t = relVel - relVel_n*norm;
 
 		// Series association of normal damping and stiffness
 		float normalStiffness = (partPropD[typeA].normalStiffness*partPropD[typeB].normalStiffness)
 							   /(partPropD[typeA].normalStiffness+partPropD[typeB].normalStiffness);
+		float shearStiffness = (partPropD[typeA].shearStiffness*partPropD[typeB].shearStiffness)
+							  /(partPropD[typeA].shearStiffness+partPropD[typeB].shearStiffness);
 		float normalDamping = (partPropD[typeA].normalDamping*partPropD[typeB].normalDamping)
 							 /(partPropD[typeA].normalDamping+partPropD[typeB].normalDamping);
 
         // spring force
         force = -normalStiffness*(collideDist - dist) * norm;
+
         // dashpot (damping) force (not present when particles are moving away from each-other)
         force += normalDamping * (relVel_n>0.0f) ? relVel_n*norm : make_float2(0);
-        // tangential shear force
-//        force += params.shear*tanVel;
+
+        // tangential shear force -- TODO: include rotations
+		float2 Ft = shearStiffness*relVel_t*sisPropD.timeStep;
+	
+		// Max tangential friction force
+		float Ftmax = 0.3*length(force); // TODO: read mu from xml
+
+		force += (length(Ft) <= Ftmax) ? Ft : Ftmax * relVel_t / length(relVel_t);
     }
 
     return force;

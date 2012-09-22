@@ -106,7 +106,7 @@ DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 		{
 			xml_attribute<> *attr = node->first_attribute("dir");
 			if (attr->value() == string("normal")) ptype.normalStiffness = atof(node->value());
-			//else if (attr->value() == (string) "tangent") ptype.tangentStiffness = atof(node->value());
+			else if (attr->value() == string("shear")) ptype.shearStiffness = atof(node->value());
 			else throw string("Unrecognized stiffness direction");
 		}
 		else if (node->name() == string("damping"))

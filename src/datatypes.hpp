@@ -41,6 +41,7 @@ class DEMParticleType {
 		float mass;
 		float radius;
 		float normalStiffness;
+		float shearStiffness;
 		float normalDamping;
 		float boundaryDamping;
 		float3 color;
