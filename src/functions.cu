@@ -74,7 +74,7 @@ void desAllocateVectors(ParticlesValues* partValues)
 }
 
 // Função para retornar o maior inteiro da divisão a/b
-uint iDivUp(uint a, uint b){
+inline uint iDivUp(uint a, uint b){
     return (a % b != 0) ? (a / b + 1) : (a / b);
 }
 
