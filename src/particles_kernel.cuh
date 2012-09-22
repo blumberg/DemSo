@@ -285,6 +285,60 @@ float2 collideCell(int2		gridPos,
 }
 
 
+__device__
+float2 collideBoundary(float2 &pos, float2 &vel,
+                       uint type, float2 boundPos)
+{
+	// Getting radius
+	float radius = partPropD[type].radius;
+	
+	// calculate relative position
+    float2 relPos = boundPos - pos;
+
+    float dist = length(relPos);
+
+    float2 force = make_float2(0.0f);
+    if (dist < radius)
+	{
+        float2 norm = relPos / dist;
+
+		// relative velocity
+        float2 relVel = -vel;
+		float  relVel_n = dot(relVel, norm);
+        float2 relVel_t = relVel - relVel_n*norm;
+
+		// Series association of normal damping and stiffness TODO: read from XML
+		float normalStiffness = (partPropD[type].normalStiffness*5000)
+							   /(partPropD[type].normalStiffness+5000);
+		float shearStiffness = (partPropD[type].shearStiffness*2000)
+							  /(partPropD[type].shearStiffness+2000);
+		float normalDamping = (partPropD[type].normalDamping*1.5)
+							 /(partPropD[type].normalDamping+1.5);
+
+        // spring force
+        force = -normalStiffness*(radius - dist) * norm;
+
+        // dashpot (damping) force (not present when particles are moving away from each-other)
+        force += normalDamping * (relVel_n>0.0f) ? relVel_n*norm : make_float2(0);
+
+        // tangential shear force -- TODO: include rotations
+		float2 Ft = shearStiffness*relVel_t*sisPropD.timeStep;
+	
+		// Max tangential friction force
+		float Ftmax = 0.3*length(force); // TODO: read mu from xml
+
+		force += (length(Ft) <= Ftmax) ? Ft : Ftmax * relVel_t / length(relVel_t);
+
+		// Fixing position and velocity
+		if (pos.x > sisPropD.cubeDimension.x || pos.x < 0.0f) vel.y *= -1;
+		if (pos.y > sisPropD.cubeDimension.y || pos.y < 0.0f) vel.x *= -1;
+		pos = boundPos;
+    }
+
+    return force;
+}
+
+
 __global__
 void collideD(float2* oldPos,               // input: sorted positions
               float2* oldVel,               // input: sorted velocities
@@ -312,6 +366,16 @@ void collideD(float2* oldPos,               // input: sorted positions
             force += collideCell(neighbourPos, index, pos, vel, type, oldPos, oldVel, oldType, cellStart, cellEnd);
         }
     }
+	// Check if cell is next to boundary
+	if (gridPos.x <= 0)
+		force += collideBoundary(pos, vel, type, make_float2(0.0f, pos.y));
+	else if(gridPos.x >= sisPropD.gridSize.x-1)
+		force += collideBoundary(pos, vel, type, make_float2(sisPropD.cubeDimension.x, pos.y));
+
+	if (gridPos.y <= 0)
+		force += collideBoundary(pos, vel, type, make_float2(pos.x, 0.0f));
+	else if(gridPos.y >= sisPropD.gridSize.y-1)
+		force += collideBoundary(pos, vel, type, make_float2(pos.x, sisPropD.cubeDimension.y));
 
 	newAcc[index] = force / partPropD[type].mass;
 }
@@ -329,7 +393,7 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc, uint* type)
     float boundaryDamping = partPropD[type[index]].boundaryDamping;
     
         // set this to zero to disable collisions with cube sides
-#if 1
+#if 0
         if (pos[index].x > sisPropD.cubeDimension.x - radius) {
         	pos[index].x = sisPropD.cubeDimension.x - radius;
         	vel[index].x *= -boundaryDamping; }
@@ -339,10 +403,10 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc, uint* type)
         if (pos[index].y > sisPropD.cubeDimension.x - radius) { 
         	pos[index].y = sisPropD.cubeDimension.x - radius;
         	vel[index].y *= -boundaryDamping; }
-#endif  
         if (pos[index].y < radius) {
         	pos[index].y = radius;
         	vel[index].y *= -boundaryDamping;}
+#endif
 }
 
 
