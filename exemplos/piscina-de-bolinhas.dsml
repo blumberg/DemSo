@@ -11,7 +11,7 @@
 		</dimensions>
 		<gravity><y>-9.81</y></gravity>
 		<stiffness dir="normal">5000</stiffness>
-		<stiffness dir="shear">2000</stiffness>
+		<stiffness dir="shear">100</stiffness>
 		<damping>1.5</damping>
 	</environment>
 
@@ -20,71 +20,22 @@
 			<mass>1e-2</mass>
 			<radius>20e-3</radius>
 			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">2000</stiffness>
+			<stiffness dir="shear">100</stiffness>
 			<damping>1.5</damping>
 		</particletype>
-
-		<particletype id="verde" name="Partículas Verdes" color="000255000">
-			<mass>1e-2</mass>
-			<radius>35e-3</radius>
-			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">2000</stiffness>
-			<damping>1.5</damping>
-		</particletype>
-
 		<particletype id="azul" name="Partículas Azuis" color="000000255">
-			<mass>1e-2</mass>
-			<radius>30e-3</radius>
+			<mass>2e-2</mass>
+			<radius>40e-3</radius>
 			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">2000</stiffness>
-			<damping>1.5</damping>
-		</particletype>
-
-		<particletype id="branca" name="Partículas Brancas" color="255255255">
-			<mass>1e-2</mass>
-			<radius>25e-3</radius>
-			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">2000</stiffness>
-			<damping>1.5</damping>
-		</particletype>
-		
-		<particletype id="vermelha2" name="Partículas Vermelhas2" color="255255000">
-			<mass>1e-2</mass>
-			<radius>20e-3</radius>
-			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">2000</stiffness>
-			<damping>1.1</damping>
-		</particletype>
-
-		<particletype id="verde2" name="Partículas Verdes2" color="000255255">
-			<mass>1e-2</mass>
-			<radius>35e-3</radius>
-			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">2000</stiffness>
-			<damping>1.5</damping>
-		</particletype>
-
-		<particletype id="azul2" name="Partículas Azuis2" color="255000255">
-			<mass>1e-2</mass>
-			<radius>80e-3</radius>
-			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">2000</stiffness>
-			<damping>10.5</damping>
-		</particletype>
-
-		<particletype id="branca2" name="Partículas Brancas2" color="100100100">
-			<mass>1e-2</mass>
-			<radius>25e-3</radius>
-			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">2000</stiffness>
+			<stiffness dir="shear">100</stiffness>
 			<damping>1.5</damping>
 		</particletype>
 	</properties>
 
 	<particles>
 		<block id="1" particletype="vermelha">
-			<start><x>3.1</x><y>0.1</y></start>
-			<end><x>5.9</x><y>9.9</y></end>
+			<start><x>3.1</x><y>1.1</y></start>
+			<end><x>5.9</x><y>8.9</y></end>
 			<num><x>20</x><y>100</y></num>
 		</block>
 	</particles>

@@ -127,6 +127,9 @@ void PrepareSim( const char *filename,
 	initializeParticlePosition(partValues->pos1,
 							   partValues->vel1,
 							   partValues->acc,
+							   partValues->theta1,
+							   partValues->omega1,
+							   partValues->alpha,
 							   partValues->ID1,
 							   partValues->type1,
 							   sim.particles.start,
@@ -136,8 +139,8 @@ void PrepareSim( const char *filename,
 							   sim.properties.particleTypes.size());
 
 	// Screen output	
-	printf("\nNumero de Particulas = %d\n",sisProps->numParticles);
-	printf("grid %d x %d\n\n",sisProps->gridSize.x,sisProps->gridSize.y);
+	printf("\nNumero de Particulas = %d\n", sisProps->numParticles);
+	printf("grid %d x %d\n\n", sisProps->gridSize.x, sisProps->gridSize.y);
 #if USE_TEX
 	printf("Memoria de textura: UTILIZADA\n\n");
 #else
@@ -163,6 +166,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// operação de cópia
 	float  *oldPos,  *oldVel;
 	float *sortPos, *sortVel;
+	float *oldTheta, *oldOmega;
+	float *sortTheta, *sortOmega;
 	uint  *oldID,  *oldType;
 	uint *sortID, *sortType;
 	
@@ -173,19 +178,27 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		{	
 			oldPos = partValues->pos1;
 			oldVel = partValues->vel1;
+			oldTheta = partValues->theta1;
+			oldOmega = partValues->omega1;
 			oldID = partValues->ID1;
 			oldType = partValues->type1;
 			sortPos = partValues->pos2;
 			sortVel = partValues->vel2;
+			sortTheta = partValues->theta2;
+			sortOmega = partValues->omega2;
 			sortID = partValues->ID2;
 			sortType = partValues->type2;
 		} else {
 			oldPos = partValues->pos2;
 			oldVel = partValues->vel2;
+			oldTheta = partValues->theta2;
+			oldOmega = partValues->omega2;
 			oldID = partValues->ID2;
 			oldType = partValues->type2;
 			sortPos = partValues->pos1;
 			sortVel = partValues->vel1;
+			sortTheta = partValues->theta1;
+			sortOmega = partValues->omega1;
 			sortID = partValues->ID1;
 			sortType = partValues->type1;
 		}
@@ -194,6 +207,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		integrateSystem(oldPos,
 			 	  		oldVel,
 			 	  		partValues->acc,
+						oldTheta,
+						oldOmega,
+						partValues->alpha,
 			 	  		oldType,
 			 	  		sisProps->numParticles);
 
@@ -216,12 +232,16 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 									partValues->cellEnd,
 									sortPos,
 									sortVel,
+									sortTheta,
+									sortOmega,
 									sortID,
 									sortType,
 									partValues->gridParticleHash,
 									partValues->gridParticleIndex,
 									oldPos,
 									oldVel,
+									oldTheta,
+									oldOmega,
 									oldID,
 									oldType,
 									sisProps->numParticles,
@@ -232,6 +252,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		collide(sortPos,
 				sortVel,
 				partValues->acc,
+				sortOmega,
+				partValues->alpha,
 				sortType,
 				partValues->cellStart,
 				partValues->cellEnd,

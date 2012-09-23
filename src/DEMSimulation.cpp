@@ -92,5 +92,4 @@ void DEMSimulation::printConfiguration (void)
 		cout << "\tnormalDamping: " << properties.particleTypes[i].normalDamping << endl;
 		cout << endl;
 	}
-	cout << "numParticles: " << particles.positions.size() << endl;
 }

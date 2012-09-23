@@ -46,10 +46,12 @@ struct ParticleProperties {
 
 // Estrutura com os valores armazenados de cada partícula. Todas as
 // variáveis dessa estrutura serão alocadas na GPU.
-struct ParticlesValues {
-
+struct ParticlesValues
+{
 	float *pos1, *vel1, *acc;
 	float *pos2, *vel2;
+	float *theta1, *omega1, *alpha;
+	float *theta2, *omega2;
 	uint *ID1, *type1;
 	uint *ID2, *type2;
 	uint *cellStart, *cellEnd;

@@ -45,6 +45,11 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMalloc((void**)&partValues->vel1, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->vel2, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->acc, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->theta1, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->theta2, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->omega1, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->omega2, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->alpha, sizeof(float) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->cellStart, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
@@ -67,6 +72,11 @@ void desAllocateVectors(ParticlesValues* partValues)
     cudaFree( partValues->vel1 );
     cudaFree( partValues->vel2 );
     cudaFree( partValues->acc );
+    cudaFree( partValues->theta1 );
+    cudaFree( partValues->theta2 );
+    cudaFree( partValues->omega1 );
+    cudaFree( partValues->omega2 );
+    cudaFree( partValues->alpha );
     cudaFree( partValues->cellStart );
     cudaFree( partValues->cellEnd );
     cudaFree( partValues->gridParticleIndex );
@@ -90,6 +100,9 @@ void computeGridSize(uint n, uint blockSize, uint &numBlocks, uint &numThreads)
 void initializeParticlePosition (float* 		pos,
 								 float* 		vel,
 								 float* 		acc,
+								 float*			theta,
+								 float*			omega,
+								 float*			alpha,
 								 uint*			ID,
 								 uint*			type,
 								 float*			corner1,
@@ -123,6 +136,9 @@ void initializeParticlePosition (float* 		pos,
 	initializeParticlePositionD<<<numBlocks,numThreads>>>((float2*)pos,
 														  (float2*)vel,
 														  (float2*)acc,
+														  theta,
+														  omega,
+														  alpha,
 														  ID,
 														  type,
 														  d_corner1,
@@ -175,12 +191,16 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 							     uint*  cellEnd,
 							     float* sortedPos,
 							     float* sortedVel,
+								 float* sortedTheta,
+								 float* sortedOmega,
 							     uint* 	sortedID,
 							     uint* 	sortedType,
                                  uint*  gridParticleHash,
                                  uint*  gridParticleIndex,
 							     float* oldPos,
 							     float* oldVel,
+								 float* oldTheta,
+								 float* oldOmega,
 							     uint*	oldID,
 							     uint* 	oldType,
 							     uint   numParticles,
@@ -206,12 +226,16 @@ void reorderDataAndFindCellStart(uint*  cellStart,
         cellEnd,
         (float2*)sortedPos,
         (float2*)sortedVel,
+		sortedTheta,
+		sortedOmega,
         sortedID,
         sortedType,
 		gridParticleHash,
 		gridParticleIndex,
         (float2*)oldPos,
         (float2*)oldVel,
+		oldTheta,
+		oldOmega,
         oldID,
         oldType);
     
@@ -231,6 +255,8 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 void collide(float* 	oldPos,
              float* 	oldVel,
              float* 	newAcc,
+			 float*		oldOmega,
+			 float*		newAlpha,
              uint*		oldType,
              uint*  	cellStart,
              uint*  	cellEnd,
@@ -257,6 +283,8 @@ void collide(float* 	oldPos,
     collideD<<< numBlocks, numThreads >>>((float2*)oldPos,
                                           (float2*)oldVel,
                                           (float2*)newAcc,
+										  oldOmega,
+										  newAlpha,
                                           oldType,
                                           cellStart,
                                           cellEnd);
@@ -279,6 +307,9 @@ void collide(float* 	oldPos,
 void integrateSystem(float*	pos,
 					 float*	vel,
 					 float*	acc,
+					 float* theta,
+					 float* omega,
+					 float* alpha,
 					 uint*	type,
 					 uint	numParticles)
 {
@@ -289,6 +320,9 @@ void integrateSystem(float*	pos,
 	integrateSystemD<<<numBlocks,numThreads>>>((float2*)pos,
 				 							   (float2*)vel,
 				 							   (float2*)acc,
+											   theta,
+											   omega,
+											   alpha,
 				 							   type);
 }
 
