@@ -75,6 +75,7 @@ DEMEnvironment DEMParser::loadEnvironment (void)
 			else throw string("Unrecognized stiffness direction");
 		}
 		else if (node->name() == string("damping")) env.boundaryDamping = atof(node->value());
+		else if (node->name() == string("friction")) env.frictionCoefficient = atof(node->value());
 	}
 	return env;
 }

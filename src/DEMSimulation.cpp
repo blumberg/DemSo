@@ -73,6 +73,7 @@ void DEMSimulation::printConfiguration (void)
 	cout << "boundaryNormalStiffness: " << environment.boundaryNormalStiffness << endl;
 	cout << "boundaryShearStiffness: " << environment.boundaryShearStiffness << endl;
 	cout << "boundaryDamping: " << environment.boundaryDamping << endl;
+	cout << "frictionCoefficient: " << environment.frictionCoefficient << endl;
 	cout << endl;
 	cout << "-- Properties" << endl;
 	cout << "numParticleTypes: " << properties.particleTypes.size() << endl;

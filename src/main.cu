@@ -61,6 +61,7 @@ void PrepareSim( const char *filename,
 	sisProps->boundaryNormalStiffness = sim.environment.boundaryNormalStiffness;
 	sisProps->boundaryShearStiffness = sim.environment.boundaryShearStiffness;
 	sisProps->boundaryDamping = sim.environment.boundaryDamping;
+	sisProps->frictionCoefficient = sim.environment.frictionCoefficient;
 	
 	renderPar->imageDIMx = DIM; //TODO: Fazer uma funcão q pega o ratio do environment e aplica nos imageDIM
 	renderPar->imageDIMy = DIM;

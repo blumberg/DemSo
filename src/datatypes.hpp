@@ -35,6 +35,7 @@ class DEMEnvironment {
 		float boundaryNormalStiffness;
 		float boundaryShearStiffness;
 		float boundaryDamping;
+		float frictionCoefficient;
 };
 
 class DEMParticleType {

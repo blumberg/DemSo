@@ -13,6 +13,7 @@
 		<stiffness dir="normal">1000</stiffness>
 		<stiffness dir="shear">100</stiffness>
 		<damping>15</damping>
+		<friction>0.3</friction>
 	</environment>
 
 	<properties>

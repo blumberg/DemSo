@@ -257,7 +257,7 @@ float2 collideSpheres(float2 posA, float2 posB,
 		float2 Ft = shearStiffness * contactVel_t * sisPropD.timeStep;
 	
 		// Max tangential friction force
-		float Ftmax = 0.3*length(force); // TODO: read mu from xml
+		float Ftmax = sisPropD.frictionCoefficient*length(force); // TODO: read mu from xml
 
 		force += (length(Ft) <= Ftmax) ? Ft : Ftmax * relVel_t / length(relVel_t);
 
@@ -352,7 +352,7 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		float2 Ft = shearStiffness * contactVel_t * sisPropD.timeStep;
 	
 		// Max tangential friction force
-		float Ftmax = 0.3*length(force); // TODO: read mu from xml
+		float Ftmax = sisPropD.frictionCoefficient*length(force); // TODO: read mu from xml
 
 		force += (length(Ft) <= Ftmax) ? Ft : Ftmax * relVel_t / length(relVel_t);
 
@@ -446,7 +446,7 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 	//colidir com a borda, calcula as forcas/momentos, atualiza as
 	//aceleracões mas reverte as velocidades e trava a posicão
 	float radius = partPropD[type[index]].radius;
-#if 0
+#if 1
 	if (pos[index].x > sisPropD.cubeDimension.x - radius) {
 		pos[index].x = sisPropD.cubeDimension.x - radius;
 		vel[index].x *= -0.5; }

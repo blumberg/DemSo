@@ -76,6 +76,7 @@ struct SystemProperties {
 	float boundaryNormalStiffness;
 	float boundaryShearStiffness;
 	float boundaryDamping;
+	float frictionCoefficient;
 };
 
 struct RenderParameters {
