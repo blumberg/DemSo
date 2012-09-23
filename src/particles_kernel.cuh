@@ -360,8 +360,8 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		moment += cross(radius*make_float3(norm), make_float3(Ft));
 
 		// Fixing position and velocity
-		if (pos.x > sisPropD.cubeDimension.x || pos.x < 0.0f) vel.y *= -1;
-		if (pos.y > sisPropD.cubeDimension.y || pos.y < 0.0f) vel.x *= -1;
+		if (pos.x >= sisPropD.cubeDimension.x || pos.x <= 0.0f) vel.y *= -1;
+		if (pos.y >= sisPropD.cubeDimension.y || pos.y <= 0.0f) vel.x *= -1;
 		pos = boundPos;
     }
 
@@ -435,6 +435,29 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 	omega[index] += alpha[index] * sisPropD.timeStep;
 	theta[index] += omega[index] * sisPropD.timeStep;
 	theta[index] = (theta[index] < 2*M_PI) ? theta[index] : 0.0f;
+
+
+	//TODO: implementar o contato com a borda aqui. É o único jeito de
+	//garantir que as partículas não vão sair do universo...
+	//
+	//Seria como um fator de "correcão". Se a partícula sair, faz ela
+	//colidir com a borda, calcula as forcas/momentos, atualiza as
+	//aceleracões mas reverte as velocidades e trava a posicão
+	float radius = partPropD[type[index]].radius;
+#if 1
+	if (pos[index].x > sisPropD.cubeDimension.x - radius) {
+		pos[index].x = sisPropD.cubeDimension.x - radius;
+		vel[index].x *= -1; }
+	if (pos[index].x < radius) {
+		pos[index].x = radius;
+		vel[index].x *= -1; }
+	if (pos[index].y > sisPropD.cubeDimension.y - radius) {
+		pos[index].y = sisPropD.cubeDimension.y - radius;
+		vel[index].y *= -1; }
+#endif
+	if (pos[index].y < radius) {
+		pos[index].y = radius;
+		vel[index].y *= -1; }
 }
 
 

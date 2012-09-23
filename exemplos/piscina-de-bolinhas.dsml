@@ -10,24 +10,24 @@
 			<y>10</y>
 		</dimensions>
 		<gravity><y>-9.81</y></gravity>
-		<stiffness dir="normal">5000</stiffness>
-		<stiffness dir="shear">100</stiffness>
-		<damping>1.5</damping>
+		<stiffness dir="normal">1</stiffness>
+		<stiffness dir="shear">1</stiffness>
+		<damping>15</damping>
 	</environment>
 
 	<properties>
 		<particletype id="vermelha" name="Partículas Vermelhas" color="255000000">
 			<mass>1e-2</mass>
 			<radius>20e-3</radius>
-			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">100</stiffness>
+			<stiffness dir="normal">1000</stiffness>
+			<stiffness dir="shear">10000</stiffness>
 			<damping>1.5</damping>
 		</particletype>
 		<particletype id="azul" name="Partículas Azuis" color="000000255">
 			<mass>2e-2</mass>
 			<radius>40e-3</radius>
-			<stiffness dir="normal">5000</stiffness>
-			<stiffness dir="shear">100</stiffness>
+			<stiffness dir="normal">1000</stiffness>
+			<stiffness dir="shear">10000</stiffness>
 			<damping>1.5</damping>
 		</particletype>
 	</properties>
