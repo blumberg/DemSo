@@ -273,11 +273,15 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// Saida grarica quando necessario
 	plotParticles(image,
 				  sortPos,
+				  sortTheta,
 				  sortType,
 				  sisProps->numParticles,
 				  renderPar->imageDIMx,
 				  renderPar->imageDIMy);
 
+	float blah;
+	cudaMemcpy (&blah, &sortTheta[1], sizeof(float), cudaMemcpyDeviceToHost);
+	cout << "Theta[1]: " << blah << endl;
 	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;

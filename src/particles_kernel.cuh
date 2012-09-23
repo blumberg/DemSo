@@ -434,8 +434,10 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 
 	omega[index] += alpha[index] * sisPropD.timeStep;
 	theta[index] += omega[index] * sisPropD.timeStep;
-	theta[index] = (theta[index] < 2*M_PI) ? theta[index] : 0.0f;
 
+	// Correct the value of angular position
+	while (theta[index] > 2*M_PI) theta[index] -= 2*M_PI;
+	while (theta[index] < -2*M_PI) theta[index] += 2*M_PI;
 
 	//TODO: implementar o contato com a borda aqui. É o único jeito de
 	//garantir que as partículas não vão sair do universo...
@@ -444,20 +446,20 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 	//colidir com a borda, calcula as forcas/momentos, atualiza as
 	//aceleracões mas reverte as velocidades e trava a posicão
 	float radius = partPropD[type[index]].radius;
-#if 1
+#if 0
 	if (pos[index].x > sisPropD.cubeDimension.x - radius) {
 		pos[index].x = sisPropD.cubeDimension.x - radius;
-		vel[index].x *= -1; }
+		vel[index].x *= -0.5; }
 	if (pos[index].x < radius) {
 		pos[index].x = radius;
-		vel[index].x *= -1; }
+		vel[index].x *= -0.5; }
 	if (pos[index].y > sisPropD.cubeDimension.y - radius) {
 		pos[index].y = sisPropD.cubeDimension.y - radius;
-		vel[index].y *= -1; }
-#endif
+		vel[index].y *= -0.5; }
 	if (pos[index].y < radius) {
 		pos[index].y = radius;
-		vel[index].y *= -1; }
+		vel[index].y *= -0.5; }
+#endif
 }
 
 
@@ -465,6 +467,7 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 __global__
 void plotSpheresD(uchar4*	ptr,
 				  float2* 	sortPos,
+				  float*	sortTheta,
 				  uint*		type)
 {
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -472,6 +475,7 @@ void plotSpheresD(uchar4*	ptr,
 	if (index >= sisPropD.numParticles) return;
 	
 	float2 pos = sortPos[index];
+	float theta = sortTheta[index];
 	
 	uint currentType = type[index];
 	float pRadius = renderParD.imageDIMy/sisPropD.cubeDimension.y*partPropD[currentType].radius;
@@ -505,5 +509,23 @@ void plotSpheresD(uchar4*	ptr,
 			}
 		}
 	}
+	// Drawing line to view rotations
+	for(register int r = 0; r < pRadius; r++)
+	{
+		// posição do ponto atual (em pixel)
+		uint gPixelx = cPixelx + r * cosf(theta);
+		uint gPixely = cPixely + r * sinf(theta);
+		
+		// posição do pixel no vetor da imagem
+		uint pixel = gPixelx + gPixely*renderParD.imageDIMx;
+		if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
+
+		// define a cor do pixel
+		ptr[pixel].x = 0.0f;
+		ptr[pixel].y = 0.0f;
+		ptr[pixel].z = 0.0f;
+		ptr[pixel].w = 0.0f;
+	}
+	
 }
 #endif

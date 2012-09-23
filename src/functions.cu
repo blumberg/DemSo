@@ -332,6 +332,7 @@ void integrateSystem(float*	pos,
 // 256 threads por bloco.
 void plotParticles(uchar4*	ptr,
 				   float* 	pos,
+				   float*	theta,
 				   uint*	type,
 				   uint 	numParticles,
 				   int 		DIMx,
@@ -346,6 +347,7 @@ void plotParticles(uchar4*	ptr,
 	// execute the kernel
 	plotSpheresD<<<numBlocks,numThreads>>>(ptr,
 									 	   (float2*)pos,
+										   theta,
 									 	   type);
 
 }

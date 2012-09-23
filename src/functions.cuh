@@ -46,6 +46,6 @@ void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, 
 
 void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, uint);
 
-void plotParticles(uchar4*, float*, uint*, uint, int, int);
+void plotParticles(uchar4*, float*, float*, uint*, uint, int, int);
 
 #endif /* FUNCTIONS_CUH */
