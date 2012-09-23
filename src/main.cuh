@@ -22,6 +22,8 @@
 #ifndef MAIN_CUH
 #define MAIN_CUH
 
+#include <stdio.h>
+
 #define DIM 800
 #define FPS 31.0f
 #define USE_TEX 0
@@ -103,7 +105,7 @@ struct DataBlock {
 	SystemProperties sisProps;
 	RenderParameters renderPar;
 	TimeControl timeCtrl;
-
+	FILE * outputFile;
 };
 
 #endif /* MAIN_CUH */

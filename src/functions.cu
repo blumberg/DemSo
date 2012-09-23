@@ -351,3 +351,62 @@ void plotParticles(uchar4*	ptr,
 									 	   type);
 
 }
+
+// Escreve no arquivo de saída os dados desejados.
+// O arquivo de saída é do tipo texto. Na primeira linha encontra-se
+// o valor do timeStep. Em seguida, cada linha apresenta, separados
+// por vírgulas, o número da iteracão, e cada um dos dados de saída
+// desejados.
+// TODO:
+//  - Seguir uma dada partícula (por enquanto ele se perde no sort)
+//  - Checar: Aparecimento de varios NaN quando shearStiffness = 1000
+void writeOutputFile (DataBlock *simBlock, int ticks)
+{
+	// Shortcuts
+    ParticlesValues *partValues = &simBlock->partValues;
+	TimeControl *timeCtrl = &simBlock->timeCtrl;
+	FILE * outputFile = simBlock->outputFile;
+
+	// Chosen particle's index
+	const int chosenOne = 10;
+
+	// Copying data from the GPU
+	// Iteration number
+	int h_iteration;
+	h_iteration = timeCtrl->tempo;
+	//cudaMemcpy (&h_iteration, &timeCtrl->tempo, sizeof(int), cudaMemcpyDeviceToHost);
+	
+	// Particle Data
+	float h_pos[2], h_vel[2], h_acc[2];
+	float h_theta, h_omega, h_alpha;
+	uint h_id, h_type;
+
+	// Geting the right particle data
+	if (ticks & 1) // quando par (FALSE) quando impar (TRUE)
+	{	
+		cudaMemcpy (&h_pos,   &partValues->pos2[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_vel,   &partValues->vel2[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_theta, &partValues->theta2[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_omega, &partValues->omega2[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_id,	  &partValues->ID2[chosenOne],    sizeof(uint),    cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_type,  &partValues->type2[chosenOne],  sizeof(uint),    cudaMemcpyDeviceToHost);
+	} else {
+		cudaMemcpy (&h_pos,   &partValues->pos1[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_vel,   &partValues->vel1[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_theta, &partValues->theta1[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_omega, &partValues->omega1[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_id,	  &partValues->ID1[chosenOne],    sizeof(uint),    cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_type,  &partValues->type1[chosenOne],  sizeof(uint),	   cudaMemcpyDeviceToHost);
+	}
+	cudaMemcpy (&h_acc,   &partValues->acc[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_alpha, &partValues->alpha[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+
+	// Printing to file
+	// Iteration number
+	fprintf (outputFile, "%d,", h_iteration); // Don't print newline
+
+	// Particle Data
+	fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", h_id, h_type,
+			 h_pos[0], h_pos[1], h_vel[0], h_vel[1], h_acc[0], h_acc[1],
+			 h_theta, h_omega, h_alpha);
+}

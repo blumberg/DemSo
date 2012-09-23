@@ -48,4 +48,6 @@ void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, uint
 
 void plotParticles(uchar4*, float*, float*, uint*, uint, int, int);
 
+void writeOutputFile (DataBlock *, int);
+
 #endif /* FUNCTIONS_CUH */

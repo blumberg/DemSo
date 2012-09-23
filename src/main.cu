@@ -19,6 +19,7 @@
 
 // Input and Output include
 #include <iostream>								  // entra e saída de dados
+#include <stdio.h>
 #include <ctime> 		   // biblioteca de tempo para criar o seed do rand
 
 // CUDA includes
@@ -280,9 +281,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  renderPar->imageDIMx,
 				  renderPar->imageDIMy);
 
-	float blah;
-	cudaMemcpy (&blah, &sortTheta[1], sizeof(float), cudaMemcpyDeviceToHost);
-	cout << "Theta[1]: " << blah << endl;
+	// Escreve no arquivo de output os dados de saída
+	writeOutputFile (simBlock, ticks);
 	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;
@@ -322,7 +322,7 @@ int main(int argc, char **argv) {
     
     // declarando as subestruturas (apenas por facilidade)
     SystemProperties *sisProps = &simBlock.sisProps;
-//    ParticleProperties *partProps = &simBlock.partProps;
+	// ParticleProperties *partProps = &simBlock.partProps;
     ParticlesValues *partValues = &simBlock.partValues;
 	RenderParameters *renderPar = &simBlock.renderPar;
 	TimeControl *timeCtrl = &simBlock.timeCtrl;
@@ -341,8 +341,17 @@ int main(int argc, char **argv) {
 	// Prepara a simulacao, define as condicoes iniciais do problema
 	PrepareSim(argv[1], sisProps, partValues, partProps, renderPar);
 	
+	// Abre arquivo de output
+	simBlock.outputFile = fopen ("output.txt", "w");
+	// Grava o passo de tempo
+	fprintf (simBlock.outputFile, "%f\n", sisProps->timeStep);
+
 	// Executa o looping até que a tecla ESC seja pressionada
     bitmap.anim_and_exit(
         (void (*)(uchar4*,void*,int))SimLooping, (void (*)(void*))FinalizingSim );
 
+	// Fecha arquivo de output
+	fclose (simBlock.outputFile);
+	
+	return 0;
 }

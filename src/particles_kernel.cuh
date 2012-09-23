@@ -257,7 +257,7 @@ float2 collideSpheres(float2 posA, float2 posB,
 		float2 Ft = shearStiffness * contactVel_t * sisPropD.timeStep;
 	
 		// Max tangential friction force
-		float Ftmax = sisPropD.frictionCoefficient*length(force); // TODO: read mu from xml
+		float Ftmax = sisPropD.frictionCoefficient*length(force);
 
 		force += (length(Ft) <= Ftmax) ? Ft : Ftmax * relVel_t / length(relVel_t);
 
@@ -352,7 +352,7 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		float2 Ft = shearStiffness * contactVel_t * sisPropD.timeStep;
 	
 		// Max tangential friction force
-		float Ftmax = sisPropD.frictionCoefficient*length(force); // TODO: read mu from xml
+		float Ftmax = sisPropD.frictionCoefficient*length(force);
 
 		force += (length(Ft) <= Ftmax) ? Ft : Ftmax * relVel_t / length(relVel_t);
 
