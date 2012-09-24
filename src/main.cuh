@@ -37,6 +37,7 @@ struct ParticleProperties {
 
 	float 	radius;
 	float 	mass;
+	float	inertia;
 	float 	normalStiffness;
 	float	shearStiffness;
 	float 	normalDamping;

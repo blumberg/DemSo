@@ -406,7 +406,7 @@ void writeOutputFile (DataBlock *simBlock, int ticks)
 	fprintf (outputFile, "%d,", h_iteration); // Don't print newline
 
 	// Particle Data
-	fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", h_id, h_type,
+	fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", h_id, h_type,
 			 h_pos[0], h_pos[1], h_vel[0], h_vel[1], h_acc[0], h_acc[1],
 			 h_theta, h_omega, h_alpha);
 }

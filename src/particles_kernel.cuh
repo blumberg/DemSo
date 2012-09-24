@@ -419,7 +419,7 @@ void collideD(float2* oldPos,               // input: sorted positions
 
 	newAcc[index] = force / partPropD[type].mass;
 	// moment / momentOfInertia
-	newAlpha[index] = moment.z * 2 / (partPropD[type].mass*partPropD[type].radius*partPropD[type].radius);
+	newAlpha[index] = moment.z / partPropD[type].inertia;
 }
 
 __global__
