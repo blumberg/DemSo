@@ -80,7 +80,7 @@ void PrepareSim( const char *filename,
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
 
 		partProps[i].inertia = partProps[i].mass*partProps[i].radius*partProps[i].radius / 2;
-		cout << "inertia: " << partProps[i].inertia << endl;
+		cout << "inertia[" << i << "]: " << partProps[i].inertia << endl; // DEBUG
 	}
 
 	float maxRadius = 0;

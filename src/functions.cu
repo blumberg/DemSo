@@ -368,7 +368,13 @@ void writeOutputFile (DataBlock *simBlock, int ticks)
 	FILE * outputFile = simBlock->outputFile;
 
 	// Chosen particle's index
-	const int chosenOne = 10;
+//	const int blah = 10;
+//	for (register int i = 0; i < simBlock->sisProps.numParticles; i++)
+//	{
+//		if (partValues[i].ID)
+//	}
+
+	int chosenOne = 10;
 
 	// Copying data from the GPU
 	// Iteration number
