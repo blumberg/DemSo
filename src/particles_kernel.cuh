@@ -83,24 +83,6 @@ void initializeParticlePositionD(float2*			pos,
 	type[particle] = (x+y) % numParticleTypes;
 }
 
-__global__
-void initializeBigParticlePositionD(float2*			pos,
-					   			    float2*			vel,
-								    float2*			acc,
-								    uint*			ID,
-								    uint*			loc,
-								    uint*			type,
-								    float2			pPos,
-								    float2			pVel,
-								    uint			particleType) {
-	uint particleID = sisPropD.numParticles-1;
-	pos[particleID] = pPos;
-	vel[particleID] = pVel;
-	ID[particleID] = particleID;
-	loc[particleID] = particleID;
-	type[particleID] = particleType;
-}
-
 // calculate position in uniform grid
 __device__
 int2 calcGridPos(float2 p)
@@ -160,7 +142,7 @@ void reorderDataAndFindCellStartD(uint*   	cellStart,        // output: cell sta
 							      uint*		oldType)		  // input: sorted Type array
 {
 	extern __shared__ uint sharedHash[];    // blockSize + 1 elements
-    uint index = __umul24(blockIdx.x,blockDim.x) + threadIdx.x;
+    uint index = blockIdx.x * blockDim.x + threadIdx.x;
 	
     uint hash;
     // handle case when no. of particles not multiple of block size
@@ -295,12 +277,17 @@ float2 collideCell(int2		gridPos,
 
 
 __global__
-void collideD(float2* oldPos,               // input: sorted positions
-              float2* oldVel,               // input: sorted velocities
-              float2* newAcc,                // output: new acceleration
-              uint*	  oldType,
-              uint*   cellStart,
-              uint*   cellEnd)
+void collideD(float2*	oldPos,               // input: sorted positions
+              float2*	oldVel,               // input: sorted velocities
+              float2*	newAcc,                // output: new acceleration
+              uint*		oldType,
+              uint*		cellStart,
+              uint*		cellEnd
+#if USE_BIG_PARTICLE
+			  , float2	controlPos,
+			  uint		controlType
+#endif
+			  )
 {	
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index >= sisPropD.numParticles) return;    
@@ -321,6 +308,10 @@ void collideD(float2* oldPos,               // input: sorted positions
             force += collideCell(neighbourPos, index, pos, vel, type, oldPos, oldVel, oldType, cellStart, cellEnd);
         }
     }
+    
+#if USE_BIG_PARTICLE
+    force += collideSpheres(pos, controlPos, vel, make_float2(0), type, controlType);
+#endif
 
 	newAcc[index] = force / partPropD[type].mass;
 }
@@ -409,6 +400,44 @@ void plotSpheresD(uchar4*	ptr,
 				
 			}
 		}
+	}
+}
+
+__global__
+void plotControlParticleD(uchar4*	ptr,
+				  		  float2 	pos,
+				  		  uint		type)
+{
+    int x = threadIdx.x + blockIdx.x * blockDim.x;
+    int y = threadIdx.y + blockIdx.y * blockDim.y;
+	
+	int halfSidex = blockDim.x*gridDim.x/2.0f;
+	int halfSidey = blockDim.y*gridDim.y/2.0f;
+	
+	float rx = x - halfSidex;
+	float ry = y - halfSidey;
+	
+	float pRadius = renderParD.imageDIMy/sisPropD.cubeDimension.y*partPropD[type].radius;
+	
+	if ((rx*rx + ry*ry) < (halfSidex*halfSidey)){
+		
+		int cPixelx = renderParD.imageDIMx/sisPropD.cubeDimension.x*pos.x;
+		int cPixely = renderParD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
+	
+		int gPixelx = cPixelx + x - blockDim.x*gridDim.x/2;
+		int gPixely = cPixely + y - blockDim.y*gridDim.y/2;
+		
+		float fscale = sqrtf((pRadius*pRadius - rx*rx - ry*ry)/(pRadius*pRadius));
+		
+		uint pixel = gPixelx + gPixely*renderParD.imageDIMx;
+		if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
+		
+		// define a cor do pixel
+		ptr[pixel].x = partPropD[type].colorR * fscale;
+		ptr[pixel].y = partPropD[type].colorG * fscale;
+		ptr[pixel].z = partPropD[type].colorB * fscale;
+		ptr[pixel].w = 255.0f * fscale;
+	
 	}
 }
 #endif

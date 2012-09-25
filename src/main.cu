@@ -59,7 +59,7 @@ void PrepareSim( const char *filename,
 //	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
-	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y + 1; // Esse 1 é devido a partícula controlada ************************************************************
+	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y;
 
 	sisProps->cubeDimension = make_float2(sim.environment.dimension);
 	
@@ -87,19 +87,32 @@ void PrepareSim( const char *filename,
 	// Se existir uma única partícula gigante (TUBULAÇÃO) talvez seja
 	// interessante desprezar esse valor e no lugar, fazer com que essa
 	// única partícula teste com todas as outras.
-	float maxRadius = 0;
-	for (int i = 0; i < sim.properties.particleTypes.size(); i++){
+	float maxRadius = 0, plotRadius;
+	for (int i = 0; i < sim.properties.particleTypes.size()
+#if USE_BIG_PARTICLE
+	-1
+#endif
+	; i++){
 		if (maxRadius < partProps[i].radius) maxRadius = partProps[i].radius;
 	}
-	
+
+#if USE_BIG_PARTICLE
+	if (maxRadius < partProps[sim.properties.particleTypes.size()-1].radius){
+		plotRadius = partProps[sim.properties.particleTypes.size()-1].radius;
+	}else{
+#endif
+		plotRadius = maxRadius;
+#if USE_BIG_PARTICLE
+	}
+#endif
 	// tamanho do quadrado que contem a esfera em PIXEL (para a saida grafica)
-	renderPar->dimx = ceil(renderPar->imageDIMx/sisProps->cubeDimension.x*maxRadius)*2;
+	renderPar->dimx = ceil(renderPar->imageDIMx/sisProps->cubeDimension.x*plotRadius)*2;
 	if (renderPar->dimx < 2) renderPar->dimx = 2;
-	renderPar->dimy = ceil(renderPar->imageDIMy/sisProps->cubeDimension.y*maxRadius)*2;
+	renderPar->dimy = ceil(renderPar->imageDIMy/sisProps->cubeDimension.y*plotRadius)*2;
 	if (renderPar->dimy < 2) renderPar->dimy = 2;
 	
 	// raio da esfera em PIXEL (para a saída grafica)
-	renderPar->pRadius = renderPar->imageDIMy/sisProps->cubeDimension.y*maxRadius;
+//	renderPar->pRadius = renderPar->imageDIMy/sisProps->cubeDimension.y*maxRadius;
 
 	// Calcula o tamanho do grid arredondando para um valor que seja
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera
@@ -143,22 +156,23 @@ void PrepareSim( const char *filename,
 							   sideLenght,
 							   side,
 							   time(NULL),
+#if USE_BIG_PARTICLE
 							   sim.properties.particleTypes.size()-1); // subraindo 1 para não fazer o sorteio com a partícula controlada ********************************************
+#else
+							   sim.properties.particleTypes.size());
+#endif
 
+#if USE_BIG_PARTICLE
 	float2 bigParticlePos = make_float2(5,9.5);
-	float2 bigParticleVel = make_float2(0,0);
 
-	// Adicionar partícula externa gigante
-	initializeBigParticlePosition(partValues->pos1,
-								  partValues->vel1,
-								  partValues->acc,
-								  partValues->ID1,
-								  partValues->loc1,
-								  partValues->type1,
-								  bigParticlePos,
-								  bigParticleVel,
-								  sim.properties.particleTypes.size()-1); // Tipo da partícula, por enquanto ela é a última **************************************************************
-	
+//	// Adicionar partícula externa gigante
+//	initializeBigParticlePosition(partValues->controlPos,
+//								  bigParticlePos);
+								  
+	partValues->controlPos = bigParticlePos;
+	partValues->controlType = sim.properties.particleTypes.size()-1; // Tipo da partícula, por enquanto ela é a última **************************************************************
+#endif
+
 	// Screen output	
 	printf("Numero de Particulas = %d\n",sisProps->numParticles);
 	printf("grid %d x %d\n\n",sisProps->gridSize.x,sisProps->gridSize.y);
@@ -265,7 +279,12 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				partValues->cellStart,
 				partValues->cellEnd,
 				sisProps->numParticles,
-				sisProps->numCells);
+				sisProps->numCells
+#if USE_BIG_PARTICLE
+				, partValues->controlPos,
+				partValues->controlType
+#endif
+				);
 
 		// Integracao no tempo (atualizacao das posicoes e velocidades)
 		integrateSystem(sortPos,
@@ -273,11 +292,18 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 			 	  		partValues->acc,
 						sortType,
 			 	  		sisProps->numParticles);
-			 	  		
-		restoreFixPositions(oldPos,
-							sortPos,
-							oldLoc,
-							sortLoc);
+
+//#if USE_BIG_PARTICLE
+//		restoreFixPositions(oldPos,
+//							sortPos,
+//							oldLoc,
+//							sortLoc);
+//#endif
+
+#if USE_BIG_PARTICLE
+		partValues->controlPos.y += -.005;
+		if (partValues->controlPos.y < -1) partValues->controlPos.y = 9.5;
+#endif
 
 		timeCtrl->tempo++;
 	}
@@ -288,7 +314,14 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  sortType,
 				  sisProps->numParticles,
 				  renderPar->imageDIMx,
-				  renderPar->imageDIMy);
+				  renderPar->imageDIMy
+#if USE_BIG_PARTICLE
+				  , partValues->controlPos,
+				  partValues->controlType,
+				  renderPar->dimx,
+				  renderPar->dimy
+#endif
+				  );
 
 	
 	// calcula o tempo de exibição do frame

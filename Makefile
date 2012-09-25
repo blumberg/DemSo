@@ -1,8 +1,8 @@
-NVCC      = nvcc
+NVCC      := nvcc
 
-TARGET    = DemSo	
-SRC_DIR   = src
-OBJ_DIR   = obj
+TARGET    := DemSo	
+SRC_DIR   := src
+OBJ_DIR   := obj
 
 NVCCFLAGS	:= -arch=sm_11 -I includes
 LIBS		:= -lglut -lpthread -lGL

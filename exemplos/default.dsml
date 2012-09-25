@@ -26,15 +26,15 @@
 			<damping dir="normal">0.2</damping>
 			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
-		
-		<particletype id="MOVE" name="Partículas Verdes" color="8888ff">
+
+		<particletype id="MOVE" name="Partículas Verdes" color="ff8888">
 			<mass>100e-2</mass>
 			<radius>500e-3</radius>
 			<stiffness dir="normal">1e20</stiffness>
 			<damping dir="normal">0</damping>
 			<damping type="boundary" dir="normal">-1</damping>
 		</particletype>
-		
+
 	</properties>
 
 	<particles>

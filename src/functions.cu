@@ -145,26 +145,11 @@ void initializeParticlePosition (float* 		pos,
     cudaFree( d_side );													  
 }
 
-void initializeBigParticlePosition(float* 		pos,
-								   float* 		vel,
-								   float* 		acc,
-								   uint*		ID,
-								   uint*		loc,
-								   uint*		type,
-							       float2		pPos,
-							       float2		pVel,
-							       uint			particleType)
-{
-	initializeBigParticlePositionD<<<1,1>>>((float2*)pos,
-											(float2*)vel,
-											(float2*)acc,
-											ID,
-											loc,
-											type,
-											pPos,
-											pVel,
-											particleType);
-}
+//void initializeBigParticlePosition(float* 		controlPos,
+//							       float2		pPos)
+//{
+//	cudaMemcpy( controlPos, pPos, sizeof( float ) * 2 , cudaMemcpyHostToDevice );
+//}
 
 // Calcula o numero da celula de cada particula. Esse kernel é executado
 // em um grid 1D com um número máximo de 256 threads por bloco
@@ -266,16 +251,18 @@ void collide(float* 	oldPos,
              uint*  	cellStart,
              uint*  	cellEnd,
              uint   	numParticles,
-             uint 		numCells)
+             uint 		numCells
+#if USE_BIG_PARTICLE
+			 , float2		controlPos,
+			 uint		controlType
+#endif
+			 )
 {
 	// Declarando como memória de textura
 	#if USE_TEX
 		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
 		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
-<<<<<<< HEAD
-=======
 		cudaBindTexture(0, oldTypeTex, oldType, numParticles*sizeof(uint));
->>>>>>> master
 		cudaBindTexture(0, cellStartTex, cellStart, numCells*sizeof(uint));
 		cudaBindTexture(0, cellEndTex, cellEnd, numCells*sizeof(uint));    
 	#endif
@@ -290,7 +277,13 @@ void collide(float* 	oldPos,
                                           (float2*)newAcc,
                                           oldType,
                                           cellStart,
-                                          cellEnd);
+                                          cellEnd
+#if USE_BIG_PARTICLE
+			 							  , controlPos,
+										  controlType
+#endif
+										  );
+										  
     // Retirando da memória de textura 
 	#if USE_TEX
 		cudaUnbindTexture(oldPosTex);
@@ -343,7 +336,14 @@ void plotParticles(uchar4*	ptr,
 				   uint*	type,
 				   uint 	numParticles,
 				   int 		DIMx,
-				   int		DIMy){
+				   int		DIMy
+#if USE_BIG_PARTICLE
+				   ,float2 	controlPos,
+				   uint		controlType,
+				   int		dimx,
+				   int		dimy
+#endif
+				   ){
 
 	// pinta o fundo de preto
 	cudaMemset(ptr, 0, DIMx*DIMy*sizeof(uchar4));
@@ -356,4 +356,17 @@ void plotParticles(uchar4*	ptr,
 									 	   (float2*)pos,
 									 	   type);
 
+#if USE_BIG_PARTICLE
+	uint numBlocksx, numBlocksy, numThreadsx, numThreadsy;
+	computeGridSize(dimx, 16, numBlocksx, numThreadsx);
+	computeGridSize(dimy, 16, numBlocksy, numThreadsy);
+	
+	dim3 numBlocks2(numBlocksx,numBlocksy);
+	dim3 numThreads2(numThreadsx,numThreadsy);
+
+	// execute the kernel
+	plotControlParticleD<<<numBlocks2,numThreads2>>>(ptr,
+													 controlPos,
+													 controlType);
+#endif
 }
