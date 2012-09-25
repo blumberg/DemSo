@@ -163,7 +163,7 @@ void PrepareSim( const char *filename,
 #endif
 
 #if USE_BIG_PARTICLE
-	float2 bigParticlePos = make_float2(5,9.5);
+	float2 bigParticlePos = make_float2(5,1.5);
 
 //	// Adicionar partícula externa gigante
 //	initializeBigParticlePosition(partValues->controlPos,
@@ -302,7 +302,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 
 #if USE_BIG_PARTICLE
 		partValues->controlPos.y += -.005;
+		partValues->controlPos.x += .000;
 		if (partValues->controlPos.y < -1) partValues->controlPos.y = 9.5;
+		if (partValues->controlPos.x > sisProps->cubeDimension.x + 25.5) partValues->controlPos.x = -25.5;
 #endif
 
 		timeCtrl->tempo++;

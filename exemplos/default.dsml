@@ -12,24 +12,40 @@
 
 	<properties>
 		<particletype id="vermelha" name="Partículas Vermelhas" color="ffffff">
-			<mass>1e-2</mass>
-			<radius>30e-3</radius>
+			<mass>1e-3</mass>
+			<radius>40e-3</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<damping dir="normal">0.2</damping>
 			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
 
 		<particletype id="verde" name="Partículas Verdes" color="8888ff">
-			<mass>1e-2</mass>
-			<radius>30e-3</radius>
+			<mass>1e-3</mass>
+			<radius>40e-3</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<damping dir="normal">0.2</damping>
 			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
 
-		<particletype id="MOVE" name="Partículas Verdes" color="ff8888">
-			<mass>100e-2</mass>
-			<radius>500e-3</radius>
+		<particletype id="verde" name="Partículas Verdes" color="88ff88">
+			<mass>1e-3</mass>
+			<radius>40e-3</radius>
+			<stiffness dir="normal">1000</stiffness>
+			<damping dir="normal">0.2</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+		
+		<particletype id="verde" name="Partículas Verdes" color="ff8888">
+			<mass>1e-3</mass>
+			<radius>40e-3</radius>
+			<stiffness dir="normal">1000</stiffness>
+			<damping dir="normal">0.2</damping>
+			<damping type="boundary" dir="normal">-0.5</damping>
+		</particletype>
+
+		<particletype id="MOVE" color="1a3311">
+			<mass>100</mass>
+			<radius>2000e-3</radius>
 			<stiffness dir="normal">1e20</stiffness>
 			<damping dir="normal">0</damping>
 			<damping type="boundary" dir="normal">-1</damping>

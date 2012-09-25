@@ -377,8 +377,10 @@ void plotSpheresD(uchar4*	ptr,
 	int cPixely = renderParD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
 	
 	// percorre o quadrado ocupado pela partícula (em pixel)
-	for (int x = -renderParD.dimx/2; x < renderParD.dimx/2; x++ ) {
-		for (int y = -renderParD.dimy/2; y < renderParD.dimy/2; y++) {
+//	for (int x = -renderParD.dimx/2; x < renderParD.dimx/2; x++ ) {
+	for (int x = -ceil(pRadius); x < ceil(pRadius); x++ ) {
+//		for (int y = -renderParD.dimy/2; y < renderParD.dimy/2; y++) {
+		for (int y = -ceil(pRadius); y < ceil(pRadius); y++) {
 			if (x*x + y*y < pRadius*pRadius) {
 				
 				// posição do ponto atual (em pixel)
