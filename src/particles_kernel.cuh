@@ -249,6 +249,9 @@ float2 collideSpheres(float2 posA, float2 posB,
         // dashpot (damping) force (not present when particles are moving away from each-other)
         force += normalDamping * (relVel_n>0.0f) ? relVel_n*norm : make_float2(0);
 
+		// Making sure the viscous damping doesn't exceed the elastic force // FROM Spheres
+		//if (dot(force,norm) > 0.0f) force = make_float2(0.0f);
+
         // tangential shear force
 		float2 contactVel_t = relVel_t - make_float2(
 										 cross((radiusA*omegaA+radiusB*omegaB)*make_float3(0,0,1),
@@ -403,19 +406,19 @@ void collideD(float2* oldPos,               // input: sorted positions
         }
     }
 	// Check if cell is next to boundary
-	if (gridPos.x <= 0)
-		force += collideBoundary(pos, vel, omega, type,
-								 make_float2(0.0f, pos.y), moment);
-	else if(gridPos.x >= sisPropD.gridSize.x-1)
-		force += collideBoundary(pos, vel, omega, type,
-								 make_float2(sisPropD.cubeDimension.x, pos.y), moment);
-
-	if (gridPos.y <= 0)
-		force += collideBoundary(pos, vel, omega, type,
-								 make_float2(pos.x, 0.0f), moment);
-	else if(gridPos.y >= sisPropD.gridSize.y-1)
-		force += collideBoundary(pos, vel, omega, type,
-								 make_float2(pos.x, sisPropD.cubeDimension.y), moment);
+//	if (gridPos.x <= 0)
+//		force += collideBoundary(pos, vel, omega, type,
+//								 make_float2(0.0f, pos.y), moment);
+//	else if(gridPos.x >= sisPropD.gridSize.x-1)
+//		force += collideBoundary(pos, vel, omega, type,
+//								 make_float2(sisPropD.cubeDimension.x, pos.y), moment);
+//
+//	if (gridPos.y <= 0)
+//		force += collideBoundary(pos, vel, omega, type,
+//								 make_float2(pos.x, 0.0f), moment);
+//	else if(gridPos.y >= sisPropD.gridSize.y-1)
+//		force += collideBoundary(pos, vel, omega, type,
+//								 make_float2(pos.x, sisPropD.cubeDimension.y), moment);
 
 	newAcc[index] = force / partPropD[type].mass;
 	// moment / momentOfInertia
