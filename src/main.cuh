@@ -24,8 +24,10 @@
 
 #include <stdio.h>
 
-#define FPS 31.0f
 #define USE_TEX 0
+#define USE_BIG_PARTICLE 1
+
+#define FPS 31.0f
 #define MAX_PARTICLES_TYPES 10
 
 
@@ -52,12 +54,19 @@ struct ParticlesValues
 {
 	float *pos1, *vel1, *acc;
 	float *pos2, *vel2;
+
 	float *theta1, *omega1, *alpha;
 	float *theta2, *omega2;
-	uint *ID1, *type1;
-	uint *ID2, *type2;
+
+	uint *ID1, *type1, *loc1;
+	uint *ID2, *type2, *loc2;
+
 	uint *cellStart, *cellEnd;
 	uint *gridParticleIndex, *gridParticleHash;
+	uint *fixParticleIndex, *ctrlParticleIndex;
+	
+	float2 controlPos;
+	uint controlType;
 
 };
 

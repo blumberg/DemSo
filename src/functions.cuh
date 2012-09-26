@@ -31,22 +31,34 @@ uint iDivUp(uint, uint);
 
 void computeGridSize(uint, uint, uint &, uint &);
 
-void initializeParticlePosition (float*, float*, float*, float*, float*, float*,
-								 uint*, uint*, float*, float*, uint*, unsigned long, int);
+void initializeParticlePosition (float*, float*, float*, float*, float*,
+								 float*, uint*, uint*, uint*, float*,
+								 float*, uint*, unsigned long, int);
+
+void initializeBigParticlePosition(float*, float2);
 
 void calcHash(float*, uint*, uint*, uint);
 
 void sortParticles(uint*, uint*, uint);
 
-void reorderDataAndFindCellStart(uint*, uint*, float*, float*, float*, float*,
-								 uint*, uint*, uint*, uint*, float*, float*,
-                                 float*, float*, uint*, uint*, uint, uint);
+void reorderDataAndFindCellStart(uint*, uint*, float*, float*, float*,
+                                 float*, uint*, uint*, uint*, uint*, uint*,
+                                 float*, float*, float*, float*, uint*,
+                                 uint*, uint, uint);
 
-void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint);
+void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint
+#if USE_BIG_PARTICLE
+	, float2, uint
+#endif
+	);
 
 void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, uint);
 
-void plotParticles(uchar4*, float*, float*, uint*, uint, int, int);
+void plotParticles(uchar4*, float*, float*, uint*, uint, int, int
+#if USE_BIG_PARTICLE
+				  , float2, uint, int, int
+#endif
+				  );
 
 void writeOutputFile (DataBlock *, int);
 

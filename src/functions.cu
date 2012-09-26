@@ -40,6 +40,8 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMalloc((void**)&partValues->type2, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->ID1, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->ID2, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->loc1, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->loc2, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->pos1, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->pos2, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->vel1, sizeof(float) * sisProps->numParticles * 2);
@@ -60,6 +62,8 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * MAX_PARTICLES_TYPES);
 }
 
+
+
 // Desaloca o espaço reservado na GPU
 void desAllocateVectors(ParticlesValues* partValues)
 {
@@ -67,6 +71,8 @@ void desAllocateVectors(ParticlesValues* partValues)
 	cudaFree( partValues->type2 );
 	cudaFree( partValues->ID1 );
 	cudaFree( partValues->ID2 );
+	cudaFree( partValues->loc1 );
+	cudaFree( partValues->loc2 );
     cudaFree( partValues->pos1 );
     cudaFree( partValues->pos2 );
     cudaFree( partValues->vel1 );
@@ -104,6 +110,7 @@ void initializeParticlePosition (float* 		pos,
 								 float*			omega,
 								 float*			alpha,
 								 uint*			ID,
+								 uint*			loc,
 								 uint*			type,
 								 float*			corner1,
 								 float*			sideLenght,
@@ -140,6 +147,7 @@ void initializeParticlePosition (float* 		pos,
 														  omega,
 														  alpha,
 														  ID,
+														  loc,
 														  type,
 														  d_corner1,
 														  d_sideLenght,
@@ -152,6 +160,12 @@ void initializeParticlePosition (float* 		pos,
     cudaFree( d_sideLenght );
     cudaFree( d_side );													  
 }
+
+//void initializeBigParticlePosition(float* 		controlPos,
+//							       float2		pPos)
+//{
+//	cudaMemcpy( controlPos, pPos, sizeof( float ) * 2 , cudaMemcpyHostToDevice );
+//}
 
 // Calcula o numero da celula de cada particula. Esse kernel é executado
 // em um grid 1D com um número máximo de 256 threads por bloco
@@ -194,6 +208,7 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 								 float* sortedTheta,
 								 float* sortedOmega,
 							     uint* 	sortedID,
+							     uint* 	sortedLoc,
 							     uint* 	sortedType,
                                  uint*  gridParticleHash,
                                  uint*  gridParticleIndex,
@@ -229,6 +244,7 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 		sortedTheta,
 		sortedOmega,
         sortedID,
+        sortedLoc,
         sortedType,
 		gridParticleHash,
 		gridParticleIndex,
@@ -261,16 +277,18 @@ void collide(float* 	oldPos,
              uint*  	cellStart,
              uint*  	cellEnd,
              uint   	numParticles,
-             uint 		numCells)
+             uint 		numCells
+#if USE_BIG_PARTICLE
+			 , float2		controlPos,
+			 uint		controlType
+#endif
+			 )
 {
 	// Declarando como memória de textura
 	#if USE_TEX
 		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
 		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
-<<<<<<< HEAD
-=======
 		cudaBindTexture(0, oldTypeTex, oldType, numParticles*sizeof(uint));
->>>>>>> master
 		cudaBindTexture(0, cellStartTex, cellStart, numCells*sizeof(uint));
 		cudaBindTexture(0, cellEndTex, cellEnd, numCells*sizeof(uint));    
 	#endif
@@ -287,7 +305,13 @@ void collide(float* 	oldPos,
 										  newAlpha,
                                           oldType,
                                           cellStart,
-                                          cellEnd);
+                                          cellEnd
+#if USE_BIG_PARTICLE
+			 							  , controlPos,
+										  controlType
+#endif
+										  );
+										  
     // Retirando da memória de textura 
 	#if USE_TEX
 		cudaUnbindTexture(oldPosTex);
@@ -336,7 +360,14 @@ void plotParticles(uchar4*	ptr,
 				   uint*	type,
 				   uint 	numParticles,
 				   int 		DIMx,
-				   int		DIMy){
+				   int		DIMy
+#if USE_BIG_PARTICLE
+				   ,float2 	controlPos,
+				   uint		controlType,
+				   int		dimx,
+				   int		dimy
+#endif
+				   ){
 
 	// pinta o fundo de preto
 	cudaMemset(ptr, 0, DIMx*DIMy*sizeof(uchar4));
@@ -350,6 +381,19 @@ void plotParticles(uchar4*	ptr,
 										   theta,
 									 	   type);
 
+#if USE_BIG_PARTICLE
+	uint numBlocksx, numBlocksy, numThreadsx, numThreadsy;
+	computeGridSize(dimx, 16, numBlocksx, numThreadsx);
+	computeGridSize(dimy, 16, numBlocksy, numThreadsy);
+	
+	dim3 numBlocks2(numBlocksx,numBlocksy);
+	dim3 numThreads2(numThreadsx,numThreadsy);
+
+	// execute the kernel
+	plotControlParticleD<<<numBlocks2,numThreads2>>>(ptr,
+													 controlPos,
+													 controlType);
+#endif
 }
 
 // Escreve no arquivo de saída os dados desejados.
