@@ -54,6 +54,7 @@ DEMParameters DEMParser::loadParameters (void)
 	{
 		if (node->name() == string("timestep")) params.timeStep = atof(node->value());
 		else if (node->name() == string("fps")) params.framesPerSecond = atof(node->value());
+		else if (node->name() == string("imageHeight")) params.imageDIMy = atoi(node->value());
 	}
 
 	return params;

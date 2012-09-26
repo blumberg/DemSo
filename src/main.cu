@@ -58,8 +58,8 @@ void PrepareSim( const char *filename,
 	
 	sisProps->gravity = make_float2(sim.environment.gravity); // Transformando a gravidade de float3 para float2
 	
-	renderPar->imageDIMx = DIM; //TODO: Fazer uma funcão q pega o ratio do environment e aplica nos imageDIM
-	renderPar->imageDIMy = DIM;
+	renderPar->imageDIMy = sim.parameters.imageDIMy;
+	renderPar->imageDIMx = sisProps->cubeDimension.x/sisProps->cubeDimension.y*renderPar->imageDIMy;
 
 	//PARSER: copiando as propriedades de partículas
 	for (register int i = 0; i < sim.properties.particleTypes.size(); i++)
@@ -302,13 +302,13 @@ int main(int argc, char **argv) {
     timeCtrl->IPS = 1;
 	timeCtrl->totalStart = clock();
 	timeCtrl->tempo = 0;
-    
-    // função que define o tamanho da imagem e a estrutura que será
-    // repassada para dentro do looping
-    GPUAnimBitmap bitmap(DIM, DIM, &simBlock );
 	
 	// Prepara a simulacao, define as condicoes iniciais do problema
 	PrepareSim(argv[1], sisProps, partValues, partProps, renderPar);
+	
+    // função que define o tamanho da imagem e a estrutura que será
+    // repassada para dentro do looping
+    GPUAnimBitmap bitmap(renderPar->imageDIMx, renderPar->imageDIMy, &simBlock );
 	
 	// Executa o looping até que a tecla ESC seja pressionada
     bitmap.anim_and_exit(

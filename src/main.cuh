@@ -22,7 +22,7 @@
 #ifndef MAIN_CUH
 #define MAIN_CUH
 
-#define DIM 800
+//#define DIM 800
 #define PARTICLES 10000
 #define BOX_SIZE 10.0f
 #define TIME_STEP 1.0e-3

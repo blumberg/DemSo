@@ -3,13 +3,13 @@
 	<parameters>
 		<timestep>10.0e-4</timestep>
 		<fps>31</fps>
+		<imageHeight>800</imageHeight>
 	</parameters>
 
 	<environment>
 		<dimensions>
-			<x>10</x>
+			<x>17</x>
 			<y>10</y>
-			<z>10</z><!-- Not used in 2D -->
 		</dimensions>
 		<gravity><y>-9.81</y></gravity>
 	</environment>
