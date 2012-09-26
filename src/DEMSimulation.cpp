@@ -65,11 +65,9 @@ void DEMSimulation::printConfiguration (void)
 	cout << endl;
 	cout << "-- Environment" << endl;
 	cout << "dimensions: (" << environment.dimension.x;
-	cout << ", " << environment.dimension.y;
-	cout << ", " << environment.dimension.z << ")" << endl;
+	cout << ", " << environment.dimension.y << ")" << endl;
 	cout << "gravity: (" << environment.gravity.x;
-	cout << ", " << environment.gravity.y;
-	cout << ", " << environment.gravity.z << ")" << endl;
+	cout << ", " << environment.gravity.y << ")" << endl;
 	cout << "boundaryNormalStiffness: " << environment.boundaryNormalStiffness << endl;
 	cout << "boundaryShearStiffness: " << environment.boundaryShearStiffness << endl;
 	cout << "boundaryDamping: " << environment.boundaryDamping << endl;
@@ -80,7 +78,7 @@ void DEMSimulation::printConfiguration (void)
 	cout << endl;
 	for (register int i = 0;i < properties.particleTypes.size();i++)
 	{
-		cout << "\t---- Particle Type " << i+1 << endl;
+		cout << "\t---- Particle Type " << i << endl;
 		cout << "\tid: " << properties.particleTypes[i].id << endl;
 		cout << "\tname: " << properties.particleTypes[i].name << endl;
 		cout << "\tcolor: (" << properties.particleTypes[i].color.x;
@@ -91,6 +89,18 @@ void DEMSimulation::printConfiguration (void)
 		cout << "\tnormalStiffness: " << properties.particleTypes[i].normalStiffness << endl;
 		cout << "\tshearStiffness: " << properties.particleTypes[i].shearStiffness << endl;
 		cout << "\tnormalDamping: " << properties.particleTypes[i].normalDamping << endl;
+		cout << endl;
+	}
+	cout << "-- Single Particles" << endl;
+	cout << "numSingleParticles: " << particles.pos.size () << endl;
+	for (register int i = 0; i < particles.pos.size(); i++)
+	{
+		cout << "\t---- Particle " << i << endl;
+		cout << "\ttype: " << particles.type[i] << endl;
+		cout << "\tpos: (" << particles.pos[i].x << ", " << particles.pos[i].y << ")" << endl;
+		cout << "\tvel: (" << particles.vel[i].x << ", " << particles.vel[i].y << ")" << endl;
+		cout << "\ttheta: " << particles.theta[i] << endl;
+		cout << "\tomega: " << particles.omega[i] << endl;
 		cout << endl;
 	}
 }

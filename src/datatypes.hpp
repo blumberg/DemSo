@@ -23,6 +23,8 @@
 #include <math.h>
 #include "../includes/cutil_math.h"
 
+using std::vector;
+
 class DEMParameters {
 	public:
 		float timeStep;
@@ -30,8 +32,8 @@ class DEMParameters {
 
 class DEMEnvironment {
 	public:
-		float3 dimension;
-		float3 gravity;
+		float2 dimension;
+		float2 gravity;
 		float boundaryNormalStiffness;
 		float boundaryShearStiffness;
 		float boundaryDamping;
@@ -58,19 +60,24 @@ class DEMProperties {
 		int particleTypeIndexById (std::string);
 };
 
+// Classe dos valores de inicialização das partículas
 class DEMParticles {
 	public:
-		float start[2];
-		float end[2];
-		float3 num;
-		std::vector<float3> positions;
-		std::vector<float3> velocities;
-		std::vector<float3> accelerations;
-		std::vector<int> typeIndexes;	// Se para uma partícula i, typeIndexes[i] == 1, então
-										// o tipo desta partícula será o que estiver na posição
-										// 1 no vetor particleTypes[]
-		void addParticles (DEMParticles);
-		void generateBlock (int, float3, float3, float3, DEMProperties *);
+		// Para blocos de partículas
+		float2 start;	// Coordenadas do canto inferior-esquerdo
+		float2 end;		// Coordenadas do canto superior-direito
+		float2 num;		// Número de partículas desejado em x, y
+
+		// Para partículas avulsas
+		vector<float2>	pos;	// Posições x, y
+		vector<float2>	vel;	// Velocidades x, y
+		vector<float>	theta;	// Posições angulares
+		vector<float>	omega;	// Velocidades angulares
+		vector<int>		type;	// Se para uma partícula i, type[i] == 1, então
+								// o tipo desta partícula será o que estiver na posição
+								// 1 no vetor particleTypes[]
+		//void addParticles (DEMParticles);
+		//void generateBlock (int, float3, float3, float3, DEMProperties *);
 };
 
 class DEMSimulation {

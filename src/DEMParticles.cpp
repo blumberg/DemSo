@@ -25,7 +25,7 @@
 #include "cutil_math.h"
 #include "datatypes.hpp"
 #include "parser.hpp"
-
+/*
 using namespace std;
 
 void DEMParticles::addParticles (DEMParticles newparts)
@@ -43,7 +43,8 @@ void DEMParticles::generateBlock (int typeIndex, float3 start, float3 end, float
 
 	long int numParticles = (long int) floor((cubeSize.x + spacing.x)/(2*radius + spacing.x))
 									  *floor((cubeSize.y + spacing.y)/(2*radius + spacing.y))
-/*									  *floor((cubeSize.z + spacing.z)/(2*radius + spacing.z))*/; 
+//									  *floor((cubeSize.z + spacing.z)/(2*radius + spacing.z))/
+										; 
 										// Descomentar a linha acima para o caso 3D
 
 	cout << "Bloco tipo: " << properties->particleTypes[typeIndex].id << endl;
@@ -71,3 +72,4 @@ void DEMParticles::generateBlock (int typeIndex, float3 start, float3 end, float
 	cout << "counter: " << counter << endl;	// DEBUG
 	cout << "positions size: " << positions.size() << endl;
 }
+*/

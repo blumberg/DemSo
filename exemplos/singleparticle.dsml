@@ -1,0 +1,55 @@
+<?xml version="1.0" xmlns="http://fem.unicamp.br/ns/dsml"?>
+<simulation>
+	<parameters>
+		<timestep>10.0e-4</timestep>
+	</parameters>
+
+	<environment>
+		<dimensions>
+			<x>10</x>
+			<y>10</y>
+		</dimensions>
+		<gravity><y>-9.81</y></gravity>
+		<stiffness dir="normal">1000</stiffness>
+		<stiffness dir="shear">100</stiffness>
+		<damping>15</damping>
+		<friction>0.4</friction>
+	</environment>
+
+	<properties>
+		<particletype id="vermelha" name="Partículas Vermelhas" color="255000000">
+			<mass>1</mass>
+			<radius>100e-3</radius>
+			<stiffness dir="normal">1e5</stiffness>
+			<stiffness dir="shear">1e5</stiffness>
+			<damping>268.32</damping>
+		</particletype>
+	</properties>
+
+	<particles>
+		<particle particletype="vermelha">
+			<pos><x>5</x><y>5</y></pos>
+			<vel><x>0</x><y>0</y></vel>
+			<theta>0</theta>
+			<omega>3.1415</omega>
+		</particle>
+		<particle particletype="vermelha">
+			<pos><x>4</x><y>4</y></pos>
+			<vel><x>-1</x><y>-1</y></vel>
+			<theta>123</theta>
+			<omega>2.34</omega>
+		</particle>
+		<particle particletype="vermelha">
+			<pos><x>2</x><y>2</y></pos>
+			<vel><x>10</x><y>1</y></vel>
+			<theta>4</theta>
+			<omega>80</omega>
+		</particle>
+		<particle particletype="vermelha">
+			<pos><x>9</x><y>5</y></pos>
+			<vel><x>7</x><y>2</y></vel>
+			<theta>42</theta>
+			<omega>314.15</omega>
+		</particle>
+	</particles>
+</simulation>

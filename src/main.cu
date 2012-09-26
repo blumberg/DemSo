@@ -50,14 +50,16 @@ void PrepareSim( const char *filename,
 	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
-	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y;
+	// Número de partículas no sistema é o número de partículas do bloco
+	// mais o número de partículas avulsas
+	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y
+							 + sim.particles.pos.size();
 
-	sisProps->cubeDimension.x = sim.environment.dimension.x;
-	sisProps->cubeDimension.y = sim.environment.dimension.y;
+	sisProps->cubeDimension = sim.environment.dimension;
 	
 	sisProps->timeStep = sim.parameters.timeStep;
 	
-	sisProps->gravity = make_float2(sim.environment.gravity); // Transformando a gravidade de float3 para float2
+	sisProps->gravity = sim.environment.gravity;
 
 	sisProps->boundaryNormalStiffness = sim.environment.boundaryNormalStiffness;
 	sisProps->boundaryShearStiffness = sim.environment.boundaryShearStiffness;
@@ -99,12 +101,16 @@ void PrepareSim( const char *filename,
 
 	// Bloco inicial de esferas
 	float sideLenght[2];
-	sideLenght[0] = sim.particles.end[0] - sim.particles.start[0]; 			   // dimensao em X
-	sideLenght[1] = sim.particles.end[1] - sim.particles.start[1]; 			   // dimensao em Y
+	sideLenght[0] = sim.particles.end.x - sim.particles.start.x;  // dimensao em X
+	sideLenght[1] = sim.particles.end.y - sim.particles.start.y;  // dimensao em Y
 	
 	uint side[2];
 	side[0] = sim.particles.num.x;
 	side[1] = sim.particles.num.y;
+
+	float start[2];
+	start[0] = sim.particles.start.x;
+	start[1] = sim.particles.start.y;
 
 	// Calcula o tamanho do grid arredondando para um valor que seja
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera
@@ -137,7 +143,7 @@ void PrepareSim( const char *filename,
 							   partValues->alpha,
 							   partValues->ID1,
 							   partValues->type1,
-							   sim.particles.start,
+							   start,
 							   sideLenght,
 							   side,
 							   time(NULL),
