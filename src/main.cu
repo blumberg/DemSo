@@ -19,6 +19,7 @@
 
 // Input and Output include
 #include <iostream>								  // entra e saída de dados
+#include <stdio.h>
 #include <ctime> 		   // biblioteca de tempo para criar o seed do rand
 
 // CUDA includes
@@ -46,17 +47,24 @@ void PrepareSim( const char *filename,
 	/* Usamos a estrutura de dados C++ e carregamos o arquivo de estado */
 	DEMSimulation sim;
 	sim.loadFromFile(filename);
-//	sim.printConfiguration();
+	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
-	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y;
+	// Número de partículas no sistema é o número de partículas do bloco
+	// mais o número de partículas avulsas
+	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y
+							 + sim.particles.pos.size();
 
-	sisProps->cubeDimension.x = sim.environment.dimension.x;
-	sisProps->cubeDimension.y = sim.environment.dimension.y;
+	sisProps->cubeDimension = sim.environment.dimension;
 	
 	sisProps->timeStep = sim.parameters.timeStep;
 	
-	sisProps->gravity = make_float2(sim.environment.gravity); // Transformando a gravidade de float3 para float2
+	sisProps->gravity = sim.environment.gravity;
+
+	sisProps->boundaryNormalStiffness = sim.environment.boundaryNormalStiffness;
+	sisProps->boundaryShearStiffness = sim.environment.boundaryShearStiffness;
+	sisProps->boundaryDamping = sim.environment.boundaryDamping;
+	sisProps->frictionCoefficient = sim.environment.frictionCoefficient;
 	
 	renderPar->imageDIMy = sim.parameters.imageDIMy;
 	renderPar->imageDIMx = sisProps->cubeDimension.x/sisProps->cubeDimension.y*renderPar->imageDIMy;
@@ -66,12 +74,15 @@ void PrepareSim( const char *filename,
 	{
 		partProps[i].mass = sim.properties.particleTypes[i].mass;
 		partProps[i].radius = sim.properties.particleTypes[i].radius;
-		partProps[i].collideStiffness = sim.properties.particleTypes[i].normalStiffness;
-		partProps[i].collideDamping = sim.properties.particleTypes[i].normalDamping;
-		partProps[i].boundaryDamping = sim.properties.particleTypes[i].boundaryDamping;
+		partProps[i].normalStiffness = sim.properties.particleTypes[i].normalStiffness;
+		partProps[i].shearStiffness = sim.properties.particleTypes[i].shearStiffness;
+		partProps[i].normalDamping = sim.properties.particleTypes[i].normalDamping;
 		partProps[i].colorR = sim.properties.particleTypes[i].color.x;
 		partProps[i].colorG = sim.properties.particleTypes[i].color.y;
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
+
+		partProps[i].inertia = partProps[i].mass*partProps[i].radius*partProps[i].radius / 2;
+		cout << "inertia[" << i << "]: " << partProps[i].inertia << endl; // DEBUG
 	}
 
 	float maxRadius = 0;
@@ -90,12 +101,16 @@ void PrepareSim( const char *filename,
 
 	// Bloco inicial de esferas
 	float sideLenght[2];
-	sideLenght[0] = sim.particles.end[0] - sim.particles.start[0]; 			   // dimensao em X
-	sideLenght[1] = sim.particles.end[1] - sim.particles.start[1]; 			   // dimensao em Y
+	sideLenght[0] = sim.particles.end.x - sim.particles.start.x;  // dimensao em X
+	sideLenght[1] = sim.particles.end.y - sim.particles.start.y;  // dimensao em Y
 	
 	uint side[2];
 	side[0] = sim.particles.num.x;
 	side[1] = sim.particles.num.y;
+
+	float start[2];
+	start[0] = sim.particles.start.x;
+	start[1] = sim.particles.start.y;
 
 	// Calcula o tamanho do grid arredondando para um valor que seja
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera
@@ -123,17 +138,20 @@ void PrepareSim( const char *filename,
 	initializeParticlePosition(partValues->pos1,
 							   partValues->vel1,
 							   partValues->acc,
+							   partValues->theta1,
+							   partValues->omega1,
+							   partValues->alpha,
 							   partValues->ID1,
 							   partValues->type1,
-							   sim.particles.start,
+							   start,
 							   sideLenght,
 							   side,
 							   time(NULL),
 							   sim.properties.particleTypes.size());
 
 	// Screen output	
-	printf("\nNumero de Particulas = %d\n",sisProps->numParticles);
-	printf("grid %d x %d\n\n",sisProps->gridSize.x,sisProps->gridSize.y);
+	printf("\nNumero de Particulas = %d\n", sisProps->numParticles);
+	printf("grid %d x %d\n\n", sisProps->gridSize.x, sisProps->gridSize.y);
 #if USE_TEX
 	printf("Memoria de textura: UTILIZADA\n\n");
 #else
@@ -159,6 +177,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// operação de cópia
 	float  *oldPos,  *oldVel;
 	float *sortPos, *sortVel;
+	float *oldTheta, *oldOmega;
+	float *sortTheta, *sortOmega;
 	uint  *oldID,  *oldType;
 	uint *sortID, *sortType;
 	
@@ -169,19 +189,27 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		{	
 			oldPos = partValues->pos1;
 			oldVel = partValues->vel1;
+			oldTheta = partValues->theta1;
+			oldOmega = partValues->omega1;
 			oldID = partValues->ID1;
 			oldType = partValues->type1;
 			sortPos = partValues->pos2;
 			sortVel = partValues->vel2;
+			sortTheta = partValues->theta2;
+			sortOmega = partValues->omega2;
 			sortID = partValues->ID2;
 			sortType = partValues->type2;
 		} else {
 			oldPos = partValues->pos2;
 			oldVel = partValues->vel2;
+			oldTheta = partValues->theta2;
+			oldOmega = partValues->omega2;
 			oldID = partValues->ID2;
 			oldType = partValues->type2;
 			sortPos = partValues->pos1;
 			sortVel = partValues->vel1;
+			sortTheta = partValues->theta1;
+			sortOmega = partValues->omega1;
 			sortID = partValues->ID1;
 			sortType = partValues->type1;
 		}
@@ -190,6 +218,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		integrateSystem(oldPos,
 			 	  		oldVel,
 			 	  		partValues->acc,
+						oldTheta,
+						oldOmega,
+						partValues->alpha,
 			 	  		oldType,
 			 	  		sisProps->numParticles);
 
@@ -212,12 +243,16 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 									partValues->cellEnd,
 									sortPos,
 									sortVel,
+									sortTheta,
+									sortOmega,
 									sortID,
 									sortType,
 									partValues->gridParticleHash,
 									partValues->gridParticleIndex,
 									oldPos,
 									oldVel,
+									oldTheta,
+									oldOmega,
 									oldID,
 									oldType,
 									sisProps->numParticles,
@@ -228,6 +263,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		collide(sortPos,
 				sortVel,
 				partValues->acc,
+				sortOmega,
+				partValues->alpha,
 				sortType,
 				partValues->cellStart,
 				partValues->cellEnd,
@@ -247,11 +284,14 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// Saida grarica quando necessario
 	plotParticles(image,
 				  sortPos,
+				  sortTheta,
 				  sortType,
 				  sisProps->numParticles,
 				  renderPar->imageDIMx,
 				  renderPar->imageDIMy);
 
+	// Escreve no arquivo de output os dados de saída
+	writeOutputFile (simBlock, ticks);
 	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;
@@ -291,7 +331,7 @@ int main(int argc, char **argv) {
     
     // declarando as subestruturas (apenas por facilidade)
     SystemProperties *sisProps = &simBlock.sisProps;
-//    ParticleProperties *partProps = &simBlock.partProps;
+	// ParticleProperties *partProps = &simBlock.partProps;
     ParticlesValues *partValues = &simBlock.partValues;
 	RenderParameters *renderPar = &simBlock.renderPar;
 	TimeControl *timeCtrl = &simBlock.timeCtrl;
@@ -306,12 +346,23 @@ int main(int argc, char **argv) {
 	// Prepara a simulacao, define as condicoes iniciais do problema
 	PrepareSim(argv[1], sisProps, partValues, partProps, renderPar);
 	
+
     // função que define o tamanho da imagem e a estrutura que será
     // repassada para dentro do looping
     GPUAnimBitmap bitmap(renderPar->imageDIMx, renderPar->imageDIMy, &simBlock );
 	
+
+	// Abre arquivo de output
+	simBlock.outputFile = fopen ("output.txt", "w");
+	// Grava o passo de tempo
+	fprintf (simBlock.outputFile, "%f\n", sisProps->timeStep);
+
 	// Executa o looping até que a tecla ESC seja pressionada
     bitmap.anim_and_exit(
         (void (*)(uchar4*,void*,int))SimLooping, (void (*)(void*))FinalizingSim );
 
+	// Fecha arquivo de output
+	fclose (simBlock.outputFile);
+	
+	return 0;
 }

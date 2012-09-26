@@ -45,6 +45,11 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMalloc((void**)&partValues->vel1, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->vel2, sizeof(float) * sisProps->numParticles * 2);
 	cudaMalloc((void**)&partValues->acc, sizeof(float) * sisProps->numParticles * 2);
+	cudaMalloc((void**)&partValues->theta1, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->theta2, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->omega1, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->omega2, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->alpha, sizeof(float) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->cellStart, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
@@ -67,6 +72,11 @@ void desAllocateVectors(ParticlesValues* partValues)
     cudaFree( partValues->vel1 );
     cudaFree( partValues->vel2 );
     cudaFree( partValues->acc );
+    cudaFree( partValues->theta1 );
+    cudaFree( partValues->theta2 );
+    cudaFree( partValues->omega1 );
+    cudaFree( partValues->omega2 );
+    cudaFree( partValues->alpha );
     cudaFree( partValues->cellStart );
     cudaFree( partValues->cellEnd );
     cudaFree( partValues->gridParticleIndex );
@@ -90,6 +100,9 @@ void computeGridSize(uint n, uint blockSize, uint &numBlocks, uint &numThreads)
 void initializeParticlePosition (float* 		pos,
 								 float* 		vel,
 								 float* 		acc,
+								 float*			theta,
+								 float*			omega,
+								 float*			alpha,
 								 uint*			ID,
 								 uint*			type,
 								 float*			corner1,
@@ -123,6 +136,9 @@ void initializeParticlePosition (float* 		pos,
 	initializeParticlePositionD<<<numBlocks,numThreads>>>((float2*)pos,
 														  (float2*)vel,
 														  (float2*)acc,
+														  theta,
+														  omega,
+														  alpha,
 														  ID,
 														  type,
 														  d_corner1,
@@ -175,12 +191,16 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 							     uint*  cellEnd,
 							     float* sortedPos,
 							     float* sortedVel,
+								 float* sortedTheta,
+								 float* sortedOmega,
 							     uint* 	sortedID,
 							     uint* 	sortedType,
                                  uint*  gridParticleHash,
                                  uint*  gridParticleIndex,
 							     float* oldPos,
 							     float* oldVel,
+								 float* oldTheta,
+								 float* oldOmega,
 							     uint*	oldID,
 							     uint* 	oldType,
 							     uint   numParticles,
@@ -206,12 +226,16 @@ void reorderDataAndFindCellStart(uint*  cellStart,
         cellEnd,
         (float2*)sortedPos,
         (float2*)sortedVel,
+		sortedTheta,
+		sortedOmega,
         sortedID,
         sortedType,
 		gridParticleHash,
 		gridParticleIndex,
         (float2*)oldPos,
         (float2*)oldVel,
+		oldTheta,
+		oldOmega,
         oldID,
         oldType);
     
@@ -231,6 +255,8 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 void collide(float* 	oldPos,
              float* 	oldVel,
              float* 	newAcc,
+			 float*		oldOmega,
+			 float*		newAlpha,
              uint*		oldType,
              uint*  	cellStart,
              uint*  	cellEnd,
@@ -257,6 +283,8 @@ void collide(float* 	oldPos,
     collideD<<< numBlocks, numThreads >>>((float2*)oldPos,
                                           (float2*)oldVel,
                                           (float2*)newAcc,
+										  oldOmega,
+										  newAlpha,
                                           oldType,
                                           cellStart,
                                           cellEnd);
@@ -279,6 +307,9 @@ void collide(float* 	oldPos,
 void integrateSystem(float*	pos,
 					 float*	vel,
 					 float*	acc,
+					 float* theta,
+					 float* omega,
+					 float* alpha,
 					 uint*	type,
 					 uint	numParticles)
 {
@@ -289,6 +320,9 @@ void integrateSystem(float*	pos,
 	integrateSystemD<<<numBlocks,numThreads>>>((float2*)pos,
 				 							   (float2*)vel,
 				 							   (float2*)acc,
+											   theta,
+											   omega,
+											   alpha,
 				 							   type);
 }
 
@@ -298,6 +332,7 @@ void integrateSystem(float*	pos,
 // 256 threads por bloco.
 void plotParticles(uchar4*	ptr,
 				   float* 	pos,
+				   float*	theta,
 				   uint*	type,
 				   uint 	numParticles,
 				   int 		DIMx,
@@ -312,6 +347,72 @@ void plotParticles(uchar4*	ptr,
 	// execute the kernel
 	plotSpheresD<<<numBlocks,numThreads>>>(ptr,
 									 	   (float2*)pos,
+										   theta,
 									 	   type);
 
+}
+
+// Escreve no arquivo de saída os dados desejados.
+// O arquivo de saída é do tipo texto. Na primeira linha encontra-se
+// o valor do timeStep. Em seguida, cada linha apresenta, separados
+// por vírgulas, o número da iteracão, e cada um dos dados de saída
+// desejados.
+// TODO:
+//  - Seguir uma dada partícula (por enquanto ele se perde no sort)
+//  - Checar: Aparecimento de varios NaN quando shearStiffness = 1000
+void writeOutputFile (DataBlock *simBlock, int ticks)
+{
+	// Shortcuts
+    ParticlesValues *partValues = &simBlock->partValues;
+	TimeControl *timeCtrl = &simBlock->timeCtrl;
+	FILE * outputFile = simBlock->outputFile;
+
+	// Chosen particle's index
+//	const int blah = 10;
+//	for (register int i = 0; i < simBlock->sisProps.numParticles; i++)
+//	{
+//		if (partValues[i].ID)
+//	}
+
+	int chosenOne = 10;
+
+	// Copying data from the GPU
+	// Iteration number
+	int h_iteration;
+	h_iteration = timeCtrl->tempo;
+	//cudaMemcpy (&h_iteration, &timeCtrl->tempo, sizeof(int), cudaMemcpyDeviceToHost);
+	
+	// Particle Data
+	float h_pos[2], h_vel[2], h_acc[2];
+	float h_theta, h_omega, h_alpha;
+	uint h_id, h_type;
+
+	// Geting the right particle data
+	if (ticks & 1) // quando par (FALSE) quando impar (TRUE)
+	{	
+		cudaMemcpy (&h_pos,   &partValues->pos2[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_vel,   &partValues->vel2[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_theta, &partValues->theta2[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_omega, &partValues->omega2[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_id,	  &partValues->ID2[chosenOne],    sizeof(uint),    cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_type,  &partValues->type2[chosenOne],  sizeof(uint),    cudaMemcpyDeviceToHost);
+	} else {
+		cudaMemcpy (&h_pos,   &partValues->pos1[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_vel,   &partValues->vel1[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_theta, &partValues->theta1[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_omega, &partValues->omega1[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_id,	  &partValues->ID1[chosenOne],    sizeof(uint),    cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_type,  &partValues->type1[chosenOne],  sizeof(uint),	   cudaMemcpyDeviceToHost);
+	}
+	cudaMemcpy (&h_acc,   &partValues->acc[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_alpha, &partValues->alpha[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+
+	// Printing to file
+	// Iteration number
+	fprintf (outputFile, "%d,", h_iteration); // Don't print newline
+
+	// Particle Data
+	fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", h_id, h_type,
+			 h_pos[0], h_pos[1], h_vel[0], h_vel[1], h_acc[0], h_acc[1],
+			 h_theta, h_omega, h_alpha);
 }

@@ -22,14 +22,8 @@
 #ifndef MAIN_CUH
 #define MAIN_CUH
 
-//#define DIM 800
-#define PARTICLES 10000
-#define BOX_SIZE 10.0f
-#define TIME_STEP 1.0e-3
-#define GRAVITY 9.81f
-#define BOUNDARYDAMPING -0.5f
-#define X_PARTICLES 100
-#define Y_PARTICLES 100
+#include <stdio.h>
+
 #define FPS 31.0f
 #define USE_TEX 0
 #define MAX_PARTICLES_TYPES 10
@@ -42,9 +36,10 @@ struct ParticleProperties {
 
 	float 	radius;
 	float 	mass;
-	float 	collideStiffness;
-	float 	collideDamping;
-	float 	boundaryDamping;
+	float	inertia;
+	float 	normalStiffness;
+	float	shearStiffness;
+	float 	normalDamping;
 	float 	colorR;
 	float 	colorG;
 	float 	colorB;
@@ -53,10 +48,12 @@ struct ParticleProperties {
 
 // Estrutura com os valores armazenados de cada partícula. Todas as
 // variáveis dessa estrutura serão alocadas na GPU.
-struct ParticlesValues {
-
+struct ParticlesValues
+{
 	float *pos1, *vel1, *acc;
 	float *pos2, *vel2;
+	float *theta1, *omega1, *alpha;
+	float *theta2, *omega2;
 	uint *ID1, *type1;
 	uint *ID2, *type2;
 	uint *cellStart, *cellEnd;
@@ -78,6 +75,10 @@ struct SystemProperties {
     
     float2 gravity;
 
+	float boundaryNormalStiffness;
+	float boundaryShearStiffness;
+	float boundaryDamping;
+	float frictionCoefficient;
 };
 
 struct RenderParameters {
@@ -104,7 +105,7 @@ struct DataBlock {
 	SystemProperties sisProps;
 	RenderParameters renderPar;
 	TimeControl timeCtrl;
-
+	FILE * outputFile;
 };
 
 #endif /* MAIN_CUH */

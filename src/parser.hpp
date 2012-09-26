@@ -28,7 +28,7 @@ using namespace rapidxml;
 class DEMParser {
 	private:
 		xml_node<> *rootTag;
-		float3 readVector (xml_node<> *);
+		float2 readVector (xml_node<> *);
 		DEMParticleType loadParticleType (xml_node<> *);
 		DEMParticles loadBlock (xml_node<> *, DEMProperties *);
 	public:

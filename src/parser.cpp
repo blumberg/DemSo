@@ -53,8 +53,8 @@ DEMParameters DEMParser::loadParameters (void)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("timestep")) params.timeStep = atof(node->value());
-		else if (node->name() == string("fps")) params.framesPerSecond = atof(node->value());
 		else if (node->name() == string("imageHeight")) params.imageDIMy = atoi(node->value());
+
 	}
 
 	return params;
@@ -68,7 +68,16 @@ DEMEnvironment DEMParser::loadEnvironment (void)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("dimensions")) env.dimension = readVector(node);
-		if (node->name() == string("gravity")) env.gravity = readVector(node);
+		else if (node->name() == string("gravity")) env.gravity = readVector(node);
+		else if (node->name() == string("stiffness"))
+		{
+			xml_attribute<> *attr = node->first_attribute("dir");
+			if (attr->value() == string("normal")) env.boundaryNormalStiffness = atof(node->value());
+			else if (attr->value() == string("shear")) env.boundaryShearStiffness = atof(node->value());
+			else throw string("Unrecognized stiffness direction");
+		}
+		else if (node->name() == string("damping")) env.boundaryDamping = atof(node->value());
+		else if (node->name() == string("friction")) env.frictionCoefficient = atof(node->value());
 	}
 	return env;
 }
@@ -108,22 +117,10 @@ DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 		{
 			xml_attribute<> *attr = node->first_attribute("dir");
 			if (attr->value() == string("normal")) ptype.normalStiffness = atof(node->value());
-			//else if (attr->value() == (string) "tangent") ptype.tangentStiffness = atof(node->value());
+			else if (attr->value() == string("shear")) ptype.shearStiffness = atof(node->value());
 			else throw string("Unrecognized stiffness direction");
 		}
-		else if (node->name() == string("damping"))
-		{
-			xml_attribute<> *attr = node->first_attribute("type");
-			if (attr && attr->value() == string("boundary"))
-				ptype.boundaryDamping = atof(node->value()); //FIXME: test if tangent or normal
-			else {
-				attr = node->first_attribute("dir");
-				if (attr->value() == string("normal")) ptype.normalDamping = atof(node->value());
-				//else if (attr->value() == (string) "tangent") ptype.tangentDamping = atof(node->value());
-				else throw string("Unrecognized damping direction");
-			}
-			
-		}
+		else if (node->name() == string("damping")) ptype.normalDamping = atof(node->value());
 		else throw string("Unrecognized tag inside <particletype>");
 	}
 	return ptype;
@@ -134,70 +131,86 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 	DEMParticles parts;
 	xml_node<> *root = rootTag->first_node("particles");
 
+	// Se não foram definidos típos de partículas, abortar.
+	if (properties->particleTypes.empty())
+		throw string("No particle types defined, aborting.");
+
+	// Percorre os nós filhos de <particles> de 1 em 1
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
-		if (node->name() == string("block")) {
-			float3 start = make_float3(0);
-			float3 end = make_float3(0);
-			parts.num = make_float3(0);
-			if (node->first_node("start")) start = readVector(node->first_node("start"));
-			if (node->first_node("end")) end = readVector(node->first_node("end"));
+		// Caso for encontrado um bloco de partículas
+		if (node->name() == string("block"))
+		{
+			parts.start = make_float2(0);
+			parts.end = make_float2(0);
+			parts.num = make_float2(0);
+			if (node->first_node("start")) parts.start = readVector(node->first_node("start"));
+			if (node->first_node("end")) parts.end = readVector(node->first_node("end"));
 			if (node->first_node("num")) parts.num = readVector(node->first_node("num"));
-			parts.start[0] = start.x;
-			parts.start[1] = start.y;
-			parts.end[0] = end.x;
-			parts.end[1] = end.y;
-			//parts.addParticles(loadBlock(node, properties));
-			//cout << "Achei o bloco " << node->first_attribute("id")->value() << endl;
+		}
+
+		// Caso for encontrada uma partícula avulsa (tag <particle>)
+		if (node->name() == string("particle"))
+		{
+			// Tipo da partícula
+			int type;
+
+			// Tenta recuperar o atributo particletype
+			xml_attribute<> *attr = node->first_attribute("particletype");
+
+			// Se ele está presente, seu valor contém o ID do tipo da partícula,
+			// então, procuramos qual é o index do típo de partícula a partir do ID
+			if (attr) type = properties->particleTypeIndexById(attr->value());
+
+			// Senão utilizamos o primeiro típo de partículas definido
+			else {
+				type = 0;
+				cout << "Particle type not specified, defaulting to first one: "
+					 << properties->particleTypes[type].id << endl;
+			}
+			parts.type.push_back(type);
+
+			// Se a posição inicial (tag <pos>) foi definida, adiciona ao vetor
+			// de posições, senão, aborta.
+			xml_node<> *node_pos = node->first_node("pos");
+			if (node_pos)
+				parts.pos.push_back(readVector(node_pos));			
+			else
+				throw "Missing <pos> tag on particle definition.";
+
+			// Lê a velocidade inicial (tag <vel>)
+			xml_node<> *node_vel = node->first_node("vel");
+			if (node_vel)
+				parts.vel.push_back(readVector(node_vel));
+			else
+				parts.vel.push_back(make_float2(0.0f));
+
+			// Lê a posição angular inicial (tag <theta>)
+			xml_node<> *node_theta = node->first_node("theta");
+			if (node_theta)
+				parts.theta.push_back(atof(node_theta->value()));
+			else
+				parts.theta.push_back(0.0f);
+
+			// Lê a velocidade angular inicial (tag <omega>)
+			xml_node<> *node_omega = node->first_node("omega");
+			if (node_omega)
+				parts.omega.push_back(atof(node_omega->value()));
+			else
+				parts.omega.push_back(0.0f);
 		}
 	}
 
 	return parts;
 }
 
-DEMParticles DEMParser::loadBlock (xml_node<> *root, DEMProperties *properties)
+float2 DEMParser::readVector (xml_node<> *root)
 {
-	int typeindex;
-	float3 start, end, spacing;
-	DEMParticles parts;
-
-	xml_attribute<> *attr = root->first_attribute("particletype");
-	
-	if (attr)
-		typeindex = properties->particleTypeIndexById(attr->value());
-	else {
-		if (properties->particleTypes.empty()) throw string("No particle types defined, aborting.");
-		else {
-			typeindex = 0;
-			cout << "Particle type not specified, defaulting to first one: " << properties->particleTypes[typeindex].id << endl;
-		}
-	}
-
-	try {
-		xml_node<> *node = root->first_node("start");
-		if (node) start = readVector(node); else throw string("<start>");
-
-		node = root->first_node("end");
-		if (node) end = readVector(node); else throw string("<end>");
-
-		node = root->first_node("spacing");
-		if (node) spacing = readVector(node); else throw string("<spacing>");
-	}
-	catch (string tag) { throw "Missing " + tag + " tag on block: " + root->first_attribute("id")->value(); }
-
-	parts.generateBlock(typeindex, start, end, spacing, properties);
-
-	return parts;
-}
-
-float3 DEMParser::readVector (xml_node<> *root)
-{
-	float3 vect = make_float3(0.0f);
+	float2 vect = make_float2(0.0f);
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("x")) vect.x = atof(node->value());
 		else if (node->name() == string("y")) vect.y = atof(node->value());
-		else if (node->name() == string("z")) vect.z = atof(node->value());
 	}
 	return vect;
 }

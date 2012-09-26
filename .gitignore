@@ -11,3 +11,6 @@
 # ignore the executable particles
 DemSo
 parser
+
+# ignore output files
+output.txt
