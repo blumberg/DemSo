@@ -32,6 +32,10 @@
 #include "datatypes.hpp"
 #include "parser.hpp"
 
+#if USE_BIG_PARTICLE
+// Comunicação com o MATLAB
+#include "engine.h"
+#endif
 
 #define log2( x ) log(x)/log(2)
 
@@ -52,7 +56,8 @@ void PrepareSim( const char *filename,
 				 SystemProperties *sisProps,
 				 ParticlesValues *partValues,
 				 ParticleProperties *partProps,
-				 RenderParameters *renderPar ) {
+				 RenderParameters *renderPar,
+				 Engine *ep) {
 
 	/* Usamos a estrutura de dados C++ e carregamos o arquivo de estado */
 	DEMSimulation sim;
@@ -193,6 +198,20 @@ void PrepareSim( const char *filename,
 								  
 	partValues->controlPos = bigParticlePos;
 	partValues->controlType = sim.properties.particleTypes.size()-1; // Tipo da partícula, por enquanto ela é a última **************************************************************
+#endif
+
+// Abrindo o matlab, criando uma variável 'pos' e passando a posição
+// inicial da partícula controlada para lá
+#if USE_BIG_PARTICLE
+	partValues->matlabPosArray = mxCreateDoubleMatrix(1,2,mxREAL);
+	mxArray *matlabTick =     mxCreateDoubleMatrix(1,1,mxREAL);
+	double *matPos  = mxGetPr(partValues->matlabPosArray);
+	double *matTick = mxGetPr(matlabTick);
+	matPos[0] = bigParticlePos.x;
+	matPos[1] = bigParticlePos.y;
+	matTick[0] = 0;
+	engPutVariable(ep,"pos" ,partValues->matlabPosArray);
+	engPutVariable(ep,"tick",matlabTick);
 #endif
 
 	// Screen output	
@@ -341,10 +360,15 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 
 
 #if USE_BIG_PARTICLE
-		partValues->controlPos.y += -.005;
-		partValues->controlPos.x += .000;
-		if (partValues->controlPos.y < -1) partValues->controlPos.y = 9.5;
-		if (partValues->controlPos.x > sisProps->cubeDimension.x + 25.5) partValues->controlPos.x = -25.5;
+//		partValues->controlPos.y += -.005;
+//		partValues->controlPos.x += .000;
+//		if (partValues->controlPos.y < -1) partValues->controlPos.y = 9.5;
+//		if (partValues->controlPos.x > sisProps->cubeDimension.x + 25.5) partValues->controlPos.x = -25.5;
+		engEvalString(simBlock->ep,"ControlParticle");
+		partValues->matlabPosArray = engGetVariable(simBlock->ep,"pos");
+		double *matPos  = mxGetPr(partValues->matlabPosArray);
+		partValues->controlPos.x = matPos[0];
+		partValues->controlPos.y = matPos[1];
 #endif
 
 		timeCtrl->tempo++;
@@ -365,6 +389,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  renderPar->dimy
 #endif
 				  );
+				  
+	engEvalString(simBlock->ep,"PlotParticle");
 
 	// Escreve no arquivo de output os dados de saída
 	writeOutputFile (simBlock, ticks);
@@ -385,9 +411,12 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 void FinalizingSim( DataBlock *simBlock) {
 
 	TimeControl *timeCtrl = &simBlock->timeCtrl;
+	Engine *ep = simBlock->ep;
 
     // Limpe aqui o que tiver que ser limpo
 	desAllocateVectors( &simBlock->partValues );
+
+	engClose(ep);
     
    	printf("Integracoes por plot = %d\n\n",timeCtrl->IPS);
 	double elapsedTime = ((double)clock() - timeCtrl->totalStart)/CLOCKS_PER_SEC;
@@ -445,8 +474,13 @@ int main(int argc, char **argv) {
 	timeCtrl->totalStart = clock();
 	timeCtrl->tempo = 0;
 	
+	if (!(simBlock.ep = engOpen(""))) {
+		fprintf(stderr, "\nCan't start MATLAB engine\n");
+	}
+	engEvalString(simBlock.ep,"addpath('src');");
+	
 	// Prepara a simulacao, define as condicoes iniciais do problema
-	PrepareSim(filename, sisProps, partValues, partProps, renderPar);
+	PrepareSim(filename, sisProps, partValues, partProps, renderPar, simBlock.ep);
 	
 
     // função que define o tamanho da imagem e a estrutura que será

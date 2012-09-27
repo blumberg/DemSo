@@ -268,7 +268,7 @@ float2 collideSpheres(float2 posA, float2 posB,
 		force += (length(Ft) <= Ftmax) ? Ft : Ftmax * relVel_t / length(relVel_t);
 
 		// Moment
-		moment += cross(radiusA*make_float3(norm), make_float3(Ft));
+//		moment += cross(radiusA*make_float3(norm), make_float3(Ft));
     }
 
     return force;

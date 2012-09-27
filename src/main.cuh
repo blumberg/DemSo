@@ -23,6 +23,7 @@
 #define MAIN_CUH
 
 #include <stdio.h>
+#include "engine.h"
 
 #define USE_TEX 0
 #define USE_BIG_PARTICLE 1
@@ -67,6 +68,7 @@ struct ParticlesValues
 	
 	float2 controlPos;
 	uint controlType;
+	mxArray *matlabPosArray;
 
 };
 
@@ -115,6 +117,7 @@ struct DataBlock {
 	RenderParameters renderPar;
 	TimeControl timeCtrl;
 	FILE * outputFile;
+	Engine *ep;
 };
 
 #endif /* MAIN_CUH */

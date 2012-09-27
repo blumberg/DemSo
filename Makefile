@@ -4,8 +4,8 @@ TARGET    := DemSo
 SRC_DIR   := src
 OBJ_DIR   := obj
 
-NVCCFLAGS	:= -O3 -arch=sm_11 -I includes
-LIBS		:= -lglut -lpthread -lGL
+NVCCFLAGS	:= -O3 -arch=sm_11 -Iincludes -I/opt/MATLAB/R2012a/extern/include
+LIBS		:= -lglut -lpthread -lGL -L/opt/MATLAB/R2012a/bin/glnxa64 -leng -lmx
 
 CPP_FILES = $(wildcard $(SRC_DIR)/*.cpp)
 CU_FILES  = $(wildcard $(SRC_DIR)/*.cu)
