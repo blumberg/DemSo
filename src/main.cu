@@ -67,8 +67,8 @@ void PrepareSim( const char *filename,
 
 	sisProps->cubeDimension = sim.environment.dimension;
 
-	
 	sisProps->timeStep = sim.parameters.timeStep;
+	sisProps->followedParticle = sim.parameters.followedParticle;
 	
 	sisProps->gravity = sim.environment.gravity;
 
@@ -226,7 +226,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	float *sortPos, *sortVel;
 	float *oldTheta, *oldOmega;
 	float *sortTheta, *sortOmega;
-	uint  *oldID,  *oldType,  *oldLoc;
+	uint  *oldID,  *oldType;
 	uint *sortID, *sortType, *sortLoc;
 
 	
@@ -240,7 +240,6 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 			oldTheta = partValues->theta1;
 			oldOmega = partValues->omega1;
 			oldID = partValues->ID1;
-			oldLoc = partValues->loc1;
 			oldType = partValues->type1;
 			sortPos = partValues->pos2;
 			sortVel = partValues->vel2;
@@ -255,7 +254,6 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 			oldTheta = partValues->theta2;
 			oldOmega = partValues->omega2;
 			oldID = partValues->ID2;
-			oldLoc = partValues->loc2;
 			oldType = partValues->type2;
 			sortPos = partValues->pos1;
 			sortVel = partValues->vel1;
@@ -347,6 +345,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		if (partValues->controlPos.x > sisProps->cubeDimension.x + 25.5) partValues->controlPos.x = -25.5;
 #endif
 
+		// Escreve no arquivo de output os dados de saída
+		if (sisProps->followedParticle != -1) writeOutputFile (simBlock, ticks);
+	
 		timeCtrl->tempo++;
 	}
 
@@ -366,9 +367,6 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 #endif
 				  );
 
-	// Escreve no arquivo de output os dados de saída
-	writeOutputFile (simBlock, ticks);
-	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;
 	if (time < 0.003f) time = 0.03f;
@@ -456,8 +454,6 @@ int main(int argc, char **argv) {
 
 	// Abre arquivo de output
 	simBlock.outputFile = fopen ("output.txt", "w");
-	// Grava o passo de tempo
-	fprintf (simBlock.outputFile, "%f\n", sisProps->timeStep);
 
 	// Executa o looping até que a tecla ESC seja pressionada
     bitmap.anim_and_exit(

@@ -84,6 +84,8 @@ struct SystemProperties {
     
     float2 gravity;
 
+	int followedParticle;
+
 	float boundaryNormalStiffness;
 	float boundaryShearStiffness;
 	float boundaryDamping;

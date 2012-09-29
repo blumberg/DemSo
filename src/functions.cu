@@ -411,49 +411,53 @@ void writeOutputFile (DataBlock *simBlock, int ticks)
 	TimeControl *timeCtrl = &simBlock->timeCtrl;
 	FILE * outputFile = simBlock->outputFile;
 
-	// Chosen particle's index
-//	const int blah = 10;
-//	for (register int i = 0; i < simBlock->sisProps.numParticles; i++)
-//	{
-//		if (partValues[i].ID)
-//	}
+	// Time step
+	const float h_timeStep = simBlock->sisProps.timeStep;
 
-	int chosenOne = 10;
-
-	// Copying data from the GPU
 	// Iteration number
-	int h_iteration;
-	h_iteration = timeCtrl->tempo;
-	//cudaMemcpy (&h_iteration, &timeCtrl->tempo, sizeof(int), cudaMemcpyDeviceToHost);
+	const uint h_iteration = timeCtrl->tempo;
+
+	// Current elapsed time
+	const float h_elapsedTime = h_iteration * h_timeStep;
 	
+	// Chosen particle's index
+	const uint chosenOne = simBlock->sisProps.followedParticle;
+
+	// Chosen particle's location in arrays
+	uint h_loc;
+	if (ticks & 1)
+		cudaMemcpy (&h_loc, &partValues->loc2[chosenOne], sizeof(uint), cudaMemcpyDeviceToHost);
+	else 
+		cudaMemcpy (&h_loc, &partValues->loc1[chosenOne], sizeof(uint), cudaMemcpyDeviceToHost);
+
 	// Particle Data
 	float h_pos[2], h_vel[2], h_acc[2];
 	float h_theta, h_omega, h_alpha;
 	uint h_id, h_type;
 
-	// Geting the right particle data
+	// Geting the right particle data from GPU
 	if (ticks & 1) // quando par (FALSE) quando impar (TRUE)
 	{	
-		cudaMemcpy (&h_pos,   &partValues->pos2[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_vel,   &partValues->vel2[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_theta, &partValues->theta2[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_omega, &partValues->omega2[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_id,	  &partValues->ID2[chosenOne],    sizeof(uint),    cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_type,  &partValues->type2[chosenOne],  sizeof(uint),    cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_pos,   &partValues->pos2[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_vel,   &partValues->vel2[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_theta, &partValues->theta2[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_omega, &partValues->omega2[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_id,	  &partValues->ID2[h_loc],    sizeof(uint),    cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_type,  &partValues->type2[h_loc],  sizeof(uint),    cudaMemcpyDeviceToHost);
 	} else {
-		cudaMemcpy (&h_pos,   &partValues->pos1[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_vel,   &partValues->vel1[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_theta, &partValues->theta1[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_omega, &partValues->omega1[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_id,	  &partValues->ID1[chosenOne],    sizeof(uint),    cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_type,  &partValues->type1[chosenOne],  sizeof(uint),	   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_pos,   &partValues->pos1[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_vel,   &partValues->vel1[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_theta, &partValues->theta1[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_omega, &partValues->omega1[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_id,	  &partValues->ID1[h_loc],    sizeof(uint),    cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_type,  &partValues->type1[h_loc],  sizeof(uint),	   cudaMemcpyDeviceToHost);
 	}
-	cudaMemcpy (&h_acc,   &partValues->acc[chosenOne],   2*sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_alpha, &partValues->alpha[chosenOne], sizeof(float),   cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_acc,   &partValues->acc[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_alpha, &partValues->alpha[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
 
 	// Printing to file
-	// Iteration number
-	fprintf (outputFile, "%d,", h_iteration); // Don't print newline
+	// Current elapsed time
+	fprintf (outputFile, "%f,", h_elapsedTime); // Don't print newline
 
 	// Particle Data
 	fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", h_id, h_type,

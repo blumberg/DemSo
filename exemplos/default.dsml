@@ -2,6 +2,7 @@
 <simulation>
 	<parameters>
 		<timestep>1e-3</timestep>
+		<follow>0</follow>
 		<imageHeight>800</imageHeight>
 	</parameters>
 
@@ -17,7 +18,7 @@
 	<properties>
 		<particletype id="vermelha" name="Partículas Vermelhas" color="ffffff">
 			<mass>1e-2</mass>
-			<radius>40e-3</radius>
+			<radius>40e-2</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
@@ -26,7 +27,7 @@
 
 		<particletype id="verde" name="Partículas Verdes" color="8888ff">
 			<mass>1e-2</mass>
-			<radius>40e-3</radius>
+			<radius>40e-2</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
@@ -48,7 +49,7 @@
 		<block id="1" particletype="vermelha">
 			<start><x>2.0</x><y>2.0</y></start>
 			<end><x>8.0</x><y>8.0</y></end>
-			<num><x>100</x><y>100</y></num>
+			<num><x>2</x><y>2</y></num>
 		</block>
 	</particles>
 </simulation>
