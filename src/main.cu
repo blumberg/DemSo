@@ -366,7 +366,19 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  );
 
 	// Escreve no arquivo de output os dados de saída
-	if (sisProps->followedParticle != -1) writeOutputFile (simBlock, ticks);
+	if (sisProps->followedParticle != -1)
+		writeOutputFile (simBlock->outputFile,
+						 sisProps->followedParticle,
+						 sisProps->timeStep * timeCtrl->tempo, // Current elapsed time
+						 (float2*)sortPos,
+						 (float2*)sortVel,
+						 (float2*)partValues->acc,
+						 sortTheta,
+						 sortOmega,
+						 partValues->alpha,
+						 sortID,
+						 sortType,
+						 sortLoc);
 	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;

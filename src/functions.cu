@@ -403,56 +403,40 @@ void plotParticles(uchar4*	ptr,
 // desejados.
 // TODO:
 //  - Checar: Aparecimento de varios NaN quando shearStiffness = 1000
-void writeOutputFile (DataBlock *simBlock, int ticks)
+void writeOutputFile (FILE*		outputFile,
+					  uint		chosenOne,
+					  float		h_elapsedTime,
+					  float2* 	pos,
+					  float2*	vel,
+					  float2*	acc,
+					  float*	theta,
+					  float*	omega,
+					  float*	alpha,
+					  uint*		ID,
+					  uint*		type,
+					  uint*		loc)
 {
-	// Shortcuts
-    ParticlesValues *partValues = &simBlock->partValues;
-	TimeControl *timeCtrl = &simBlock->timeCtrl;
-	FILE * outputFile = simBlock->outputFile;
-
-	// Time step
-	const float h_timeStep = simBlock->sisProps.timeStep;
-
-	// Iteration number
-	const uint h_iteration = timeCtrl->tempo;
-
-	// Current elapsed time
-	const float h_elapsedTime = h_iteration * h_timeStep;
-	
-	// Chosen particle's index
-	const uint chosenOne = simBlock->sisProps.followedParticle;
-
 	// Chosen particle's location in arrays
 	uint h_loc;
-	if (ticks & 1)
-		cudaMemcpy (&h_loc, &partValues->loc2[chosenOne], sizeof(uint), cudaMemcpyDeviceToHost);
-	else 
-		cudaMemcpy (&h_loc, &partValues->loc1[chosenOne], sizeof(uint), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_loc, &loc[chosenOne], sizeof(uint), cudaMemcpyDeviceToHost);
 
 	// Particle Data
-	float h_pos[2], h_vel[2], h_acc[2];
+	float2 h_pos, h_vel, h_acc;
 	float h_theta, h_omega, h_alpha;
 	uint h_id, h_type;
 
-	// Geting the right particle data from GPU
-	if (ticks & 1) // quando par (FALSE) quando impar (TRUE)
-	{	
-		cudaMemcpy (&h_pos,   &partValues->pos2[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_vel,   &partValues->vel2[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_theta, &partValues->theta2[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_omega, &partValues->omega2[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_id,	  &partValues->ID2[h_loc],    sizeof(uint),    cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_type,  &partValues->type2[h_loc],  sizeof(uint),    cudaMemcpyDeviceToHost);
-	} else {
-		cudaMemcpy (&h_pos,   &partValues->pos1[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_vel,   &partValues->vel1[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_theta, &partValues->theta1[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_omega, &partValues->omega1[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_id,	  &partValues->ID1[h_loc],    sizeof(uint),    cudaMemcpyDeviceToHost);
-		cudaMemcpy (&h_type,  &partValues->type1[h_loc],  sizeof(uint),	   cudaMemcpyDeviceToHost);
-	}
-	cudaMemcpy (&h_acc,   &partValues->acc[h_loc],   2*sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_alpha, &partValues->alpha[h_loc], sizeof(float),   cudaMemcpyDeviceToHost);
+	// Geting particle data from GPU
+	cudaMemcpy (&h_pos.x, &pos[h_loc].x, sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_pos.y, &pos[h_loc].y, sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_vel.x, &vel[h_loc].x, sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_vel.y, &vel[h_loc].y, sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_acc.x, &acc[h_loc].x, sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_acc.y, &acc[h_loc].y, sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_theta, &theta[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_omega, &omega[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_alpha, &alpha[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_id,	  &ID[h_loc],    sizeof(uint),  cudaMemcpyDeviceToHost);
+	cudaMemcpy (&h_type,  &type[h_loc],  sizeof(uint),  cudaMemcpyDeviceToHost);
 
 	// Printing to file
 	// Current elapsed time
@@ -460,6 +444,6 @@ void writeOutputFile (DataBlock *simBlock, int ticks)
 
 	// Particle Data
 	fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", h_id, h_type,
-			 h_pos[0], h_pos[1], h_vel[0], h_vel[1], h_acc[0], h_acc[1],
+			 h_pos.x, h_pos.y, h_vel.x, h_vel.y, h_acc.x, h_acc.y,
 			 h_theta, h_omega, h_alpha);
 }
