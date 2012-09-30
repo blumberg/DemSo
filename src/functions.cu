@@ -402,7 +402,6 @@ void plotParticles(uchar4*	ptr,
 // por vírgulas, o número da iteracão, e cada um dos dados de saída
 // desejados.
 // TODO:
-//  - Seguir uma dada partícula (por enquanto ele se perde no sort)
 //  - Checar: Aparecimento de varios NaN quando shearStiffness = 1000
 void writeOutputFile (DataBlock *simBlock, int ticks)
 {

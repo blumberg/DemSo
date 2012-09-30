@@ -38,12 +38,13 @@
 using std::cout;
 using std::endl;
 
-bool file_exist(const char *filename){
-	
-	if (FILE *file = fopen(filename,"r")){
+bool file_exist (const char *filename)
+{
+	if (FILE *file = fopen(filename, "r"))
+	{
 		fclose(file);
 		return true;
-	}else{
+	} else {
 		return false;
 	}
 }
@@ -345,9 +346,6 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		if (partValues->controlPos.x > sisProps->cubeDimension.x + 25.5) partValues->controlPos.x = -25.5;
 #endif
 
-		// Escreve no arquivo de output os dados de saída
-		if (sisProps->followedParticle != -1) writeOutputFile (simBlock, ticks);
-	
 		timeCtrl->tempo++;
 	}
 
@@ -367,6 +365,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 #endif
 				  );
 
+	// Escreve no arquivo de output os dados de saída
+	if (sisProps->followedParticle != -1) writeOutputFile (simBlock, ticks);
+	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;
 	if (time < 0.003f) time = 0.03f;
@@ -398,10 +399,10 @@ void FinalizingSim( DataBlock *simBlock) {
 }
 
 
-int main(int argc, char **argv) {
-	
+int main(int argc, char **argv)
+{	
 	// Verificando arquivo de entrada (Parametros da simulacao)
-	const char *filename;
+	char *filename;
 	
 	if (argc == 2){
 		if (file_exist(argv[1])){
@@ -453,7 +454,7 @@ int main(int argc, char **argv) {
 	
 
 	// Abre arquivo de output
-	simBlock.outputFile = fopen ("output.txt", "w");
+	simBlock.outputFile = fopen ("output.csv", "w");
 
 	// Executa o looping até que a tecla ESC seja pressionada
     bitmap.anim_and_exit(
