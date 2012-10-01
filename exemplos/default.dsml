@@ -22,7 +22,6 @@
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
 
 		<particletype id="verde" name="Partículas Verdes" color="8888ff">
@@ -31,7 +30,6 @@
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
 
 		<particletype id="MOVE" color="1a3311">
@@ -40,7 +38,6 @@
 			<stiffness dir="normal">1e20</stiffness>
 			<stiffness dir="shear">1e20</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary" dir="normal">-0.5</damping>
 		</particletype>
 
 	</properties>

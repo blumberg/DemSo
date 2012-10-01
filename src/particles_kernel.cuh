@@ -468,8 +468,8 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 	theta[index] += omega[index] * sisPropD.timeStep;
 
 	// Correct the value of angular position
-	while (theta[index] > 2*M_PI) theta[index] -= 2*M_PI;
-	while (theta[index] < -2*M_PI) theta[index] += 2*M_PI;
+	if (theta[index] > 2*M_PI) theta[index] -= 2*M_PI*floor(theta[index]/(2*M_PI));
+	if (theta[index] < 0) theta[index] -= 2*M_PI*floor(theta[index]/(2*M_PI));
 
 	//TODO: implementar o contato com a borda aqui. É o único jeito de
 	//garantir que as partículas não vão sair do universo...

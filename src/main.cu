@@ -58,7 +58,7 @@ void PrepareSim( const char *filename,
 	/* Usamos a estrutura de dados C++ e carregamos o arquivo de estado */
 	DEMSimulation sim;
 	sim.loadFromFile(filename);
-//	sim.printConfiguration();
+	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
 	// Número de partículas no sistema é o número de partículas do bloco
