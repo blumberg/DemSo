@@ -216,7 +216,7 @@ __device__
 float2 collideSpheres(float2 posA, float2 posB,
                       float2 velA, float2 velB,
 					  float omegaA, float omegaB,
-                      uint typeA, uint typeB, float3 &moment)
+                      uint typeA, uint typeB, float &moment)
 {
 	// Getting radius
 	float radiusA = partPropD[typeA].radius;
@@ -231,7 +231,13 @@ float2 collideSpheres(float2 posA, float2 posB,
     float2 force = make_float2(0.0f);
     if (dist < collideDist)
 	{
+		// Normal contact vector
         float2 norm = relPos / dist;
+
+		// Tangential contact vector
+		float2 tang;
+		tang.x = -norm.y;
+		tang.y = norm.x;
 
 		// relative velocity
         float2 relVel = velB - velA;
@@ -250,25 +256,23 @@ float2 collideSpheres(float2 posA, float2 posB,
         force = -normalStiffness*(collideDist - dist) * norm;
 
         // dashpot (damping) force (not present when particles are moving away from each-other)
-        force += normalDamping * (relVel_n>0.0f) ? relVel_n*norm : make_float2(0);
-
-		// Making sure the viscous damping doesn't exceed the elastic force // FROM Spheres
-		//if (dot(force,norm) > 0.0f) force = make_float2(0.0f);
+        if (relVel_n < 0.0f) force += normalDamping * relVel_n*norm;
 
         // tangential shear force
-		float2 contactVel_t = relVel_t - make_float2(
-										 cross((radiusA*omegaA+radiusB*omegaB)*make_float3(0,0,1),
-											   make_float3(norm))
-										 );
-		float2 Ft = shearStiffness * contactVel_t * sisPropD.timeStep;
+		float2 contactVel_t = relVel_t - (radiusA*omegaA + radiusB*omegaB) * tang;
+		float2 Ftrial = shearStiffness * contactVel_t * sisPropD.timeStep;
 	
 		// Max tangential friction force
 		float Ftmax = sisPropD.frictionCoefficient*length(force);
 
-		force += (length(Ft) <= Ftmax) ? Ft : Ftmax * relVel_t / length(relVel_t);
+		float2 Ft = make_float2(0.0f);
+		if (length(Ftrial) < Ftmax) Ft = Ftrial;
+		else Ft = Ftmax * contactVel_t / length(contactVel_t);
 
+		// Shear force
+		force += Ft;
 		// Moment
-		moment += cross(radiusA*make_float3(norm), make_float3(Ft));
+		moment += radiusA * dot(Ft, tang); 
     }
 
     return force;
@@ -290,7 +294,7 @@ float2 collideCell(int2		gridPos,
                    uint*	oldType,
                    uint*	cellStart,
                    uint*	cellEnd,
-				   float3	&moment)
+				   float	&moment)
 {
     uint gridHash = calcGridHash(gridPos);
 
@@ -319,7 +323,7 @@ float2 collideCell(int2		gridPos,
 
 __device__
 float2 collideBoundary(float2 &pos, float2 &vel, float omega,
-                       uint type, float2 boundPos, float3 &moment)
+                       uint type, float2 boundPos, float &moment)
 {
 	// Getting radius
 	float radius = partPropD[type].radius;
@@ -332,7 +336,13 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
     float2 force = make_float2(0.0f);
     if (dist < radius)
 	{
+		// Normal contact vector
         float2 norm = relPos / dist;
+
+		// Tangential contact vector
+		float2 tang;
+		tang.x = -norm.y;
+		tang.y = norm.x;
 
 		// relative velocity
         float2 relVel = -vel;
@@ -351,19 +361,23 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
         force = -normalStiffness*(radius - dist) * norm;
 
         // dashpot (damping) force (not present when particles are moving away from each-other)
-        force += normalDamping * (relVel_n>0.0f) ? relVel_n*norm : make_float2(0);
+        if (relVel_n < 0.0f) force += normalDamping * relVel_n*norm;
 
         // tangential shear force
-		float2 contactVel_t = relVel_t - make_float2(cross(radius*omega*make_float3(0,0,1), make_float3(norm)));
-		float2 Ft = shearStiffness * contactVel_t * sisPropD.timeStep;
+		float2 contactVel_t = relVel_t - radius*omega*tang;
+		float2 Ftrial = shearStiffness * contactVel_t * sisPropD.timeStep;
 	
 		// Max tangential friction force
 		float Ftmax = sisPropD.frictionCoefficient*length(force);
 
-		force += (length(Ft) <= Ftmax) ? Ft : Ftmax * relVel_t / length(relVel_t);
+		float2 Ft = make_float2(0.0f);
+		if (length(Ftrial) < Ftmax) Ft = Ftrial;
+		else Ft = Ftmax * contactVel_t / length(contactVel_t);
 
+		// Shear force
+		force += Ft;
 		// Moment
-		moment += cross(radius*make_float3(norm), make_float3(Ft));
+		moment += radius * dot(Ft, tang); 
 
 		// Fixing position and velocity
 		if (pos.x >= sisPropD.cubeDimension.x || pos.x <= 0.0f) vel.y *= -1;
@@ -405,7 +419,7 @@ void collideD(float2*	oldPos,               // input: sorted positions
 
     // examine neighbouring cells
     float2 force = make_float2(0.0f);
-	float3 moment = make_float3(0.0f);
+	float moment = 0.0f;
     for(int y=-1; y<=1; y++) {
         for(int x=-1; x<=1; x++) {
             int2 neighbourPos = gridPos + make_int2(x, y);
@@ -437,7 +451,7 @@ void collideD(float2*	oldPos,               // input: sorted positions
 
 	newAcc[index] = force / partPropD[type].mass;
 	// moment / momentOfInertia
-	newAlpha[index] = moment.z / partPropD[type].inertia;
+	newAlpha[index] = moment / partPropD[type].inertia;
 }
 
 __global__

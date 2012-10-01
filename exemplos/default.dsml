@@ -49,7 +49,7 @@
 		<block id="1" particletype="vermelha">
 			<start><x>2.0</x><y>2.0</y></start>
 			<end><x>8.0</x><y>8.0</y></end>
-			<num><x>2</x><y>2</y></num>
+			<num><x>4</x><y>4</y></num>
 		</block>
 	</particles>
 </simulation>
