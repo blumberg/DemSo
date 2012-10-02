@@ -317,6 +317,7 @@ void PrepareSim( const char *filename,
 	
 /*************************************************************************/
 /*************************************************************************/	
+
 #if USE_BIG_PARTICLE
 	partValues->controlPos = ctrlParticle.pos;
 	partValues->controlType = ctrlParticle.type;
@@ -331,6 +332,22 @@ void PrepareSim( const char *filename,
 #else
 	printf("Memoria de textura: NAO\n\n");
 #endif 
+
+/*************************************************************************/
+/*************************************************************************/	
+// Liberando as variáveis alocadas
+
+free( retangle[0].typeVec );
+free( retangle[1].typeVec );
+free( usrDfn.pos );
+free( usrDfn.vel );
+free( usrDfn.theta );
+free( usrDfn.omega );
+free( usrDfn.type );
+
+/*************************************************************************/
+/*************************************************************************/	
+
 }
 
 void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
