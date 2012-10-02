@@ -72,8 +72,8 @@ void PrepareSim( const char *filename,
 	// verifica quantos blocos de cada tipo existe
 	qtd.retangle = 2;
 	qtd.triangle = 0;
-	qtd.userDefine = 1;
-	qtd.controlParticle = 1;
+	qtd.userDefine = 1; // Quantidade máxima igual a 1 (booleano)
+	qtd.controlParticle = USE_BIG_PARTICLE; // Quantidade máxima igual a 1
 	
 	Retangle retangle[qtd.retangle];
 	Triangle triangle[qtd.triangle];
@@ -318,10 +318,8 @@ void PrepareSim( const char *filename,
 /*************************************************************************/
 /*************************************************************************/	
 #if USE_BIG_PARTICLE
-	float2 bigParticlePos = make_float2(5,1.5);
-								  
-	partValues->controlPos = bigParticlePos;
-	partValues->controlType = sim.properties.particleTypes.size()-1; // Tipo da partícula, por enquanto ela é a última **************************************************************
+	partValues->controlPos = ctrlParticle.pos;
+	partValues->controlType = ctrlParticle.type;
 #endif
 
 	// Screen output	
