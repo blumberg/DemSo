@@ -34,6 +34,10 @@ void computeGridSize(uint, uint, uint &, uint &);
 void createRetangleBlock (float*, uint*, uint*, uint*, float2, float2, 
 						  uint2, uint, uint, uint*, unsigned long);
 
+void createUserDefineBlock (float*, float*, float*, float*, uint*, 
+							uint*, uint*, float2*, float2*, float*, 
+							float*, uint*, uint, uint);
+
 void calcHash(float*, uint*, uint*, uint);
 
 void sortParticles(uint*, uint*, uint);

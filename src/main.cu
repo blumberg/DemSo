@@ -72,7 +72,7 @@ void PrepareSim( const char *filename,
 	// verifica quantos blocos de cada tipo existe
 	qtd.retangle = 2;
 	qtd.triangle = 0;
-	qtd.userDefine = 0;
+	qtd.userDefine = 1;
 	qtd.controlParticle = 1;
 	
 	Retangle retangle[qtd.retangle];
@@ -123,7 +123,7 @@ void PrepareSim( const char *filename,
 		usrDfn.omega = (float*)malloc(sizeof(float) * usrDfn.num);
 		usrDfn.type = (uint*)malloc(sizeof(uint) * usrDfn.num);
 		
-		usrDfn.pos[0] = make_float2( 5, 1);
+		usrDfn.pos[0] = make_float2( 2, 0.5);
 		usrDfn.pos[1] = make_float2( 5, 3);
 		usrDfn.pos[2] = make_float2( 5, 5);
 		usrDfn.pos[3] = make_float2( 5, 7);
@@ -141,7 +141,7 @@ void PrepareSim( const char *filename,
 		usrDfn.theta[3] = 0;
 		usrDfn.theta[4] = 0;
 		
-		usrDfn.omega[0] = 1;
+		usrDfn.omega[0] = 10;
 		usrDfn.omega[1] = 10;
 		usrDfn.omega[2] = -1;
 		usrDfn.omega[3] = -10;
@@ -292,6 +292,27 @@ void PrepareSim( const char *filename,
 			startParticle += blockSize;
 		
 		}
+	}
+	
+	// bloco definido pelo usuário
+	if (qtd.userDefine > 0){
+		
+		createUserDefineBlock(partValues->pos1 + startParticle*2,
+							  partValues->vel1 + startParticle*2,
+							  partValues->theta1 + startParticle,
+							  partValues->omega1 + startParticle,
+							  partValues->ID1 + startParticle,
+							  partValues->loc1 + startParticle,
+							  partValues->type1	+ startParticle,
+							  usrDfn.pos,
+							  usrDfn.vel,
+							  usrDfn.theta,
+							  usrDfn.omega,
+							  usrDfn.type,
+							  usrDfn.num,
+							  startParticle);
+		
+		startParticle += usrDfn.num;
 	}
 	
 /*************************************************************************/

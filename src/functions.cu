@@ -172,6 +172,36 @@ void createRetangleBlock (float* 		pos,
     cudaFree( d_particleTypeVec );													  
 }
 
+void createUserDefineBlock (float*	pos,
+							float*	vel,
+							float*	theta,
+							float*	omega,
+							uint*	ID,
+							uint*	loc,
+							uint*	type,
+							float2*	usrPos,
+							float2* usrVel,
+							float*	usrTheta,
+							float*	usrOmega,
+							uint*	usrType,
+							uint	numParticles,
+							uint	startID){
+
+	uint IDvec[numParticles];
+	for (int i = 0; i < numParticles ; i++){
+		IDvec[i] = i + startID;
+	}
+	
+	cudaMemcpy(pos,usrPos,sizeof(float)*numParticles*2,cudaMemcpyHostToDevice);
+	cudaMemcpy(vel,usrVel,sizeof(float)*numParticles*2,cudaMemcpyHostToDevice);
+	cudaMemcpy(theta,usrTheta,sizeof(float)*numParticles,cudaMemcpyHostToDevice);
+	cudaMemcpy(omega,usrOmega,sizeof(float)*numParticles,cudaMemcpyHostToDevice);
+	cudaMemcpy(type,usrType,sizeof(uint)*numParticles,cudaMemcpyHostToDevice);
+	cudaMemcpy(ID,IDvec,sizeof(uint)*numParticles,cudaMemcpyHostToDevice);
+	cudaMemcpy(loc,IDvec,sizeof(uint)*numParticles,cudaMemcpyHostToDevice);
+							
+}
+
 // Calcula o numero da celula de cada particula. Esse kernel é executado
 // em um grid 1D com um número máximo de 256 threads por bloco
 void calcHash(float* 	pos,
