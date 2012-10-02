@@ -251,6 +251,7 @@ float2 collideSpheres(float2 posA, float2 posB,
 							  /(partPropD[typeA].shearStiffness+partPropD[typeB].shearStiffness);
 		float normalDamping = (partPropD[typeA].normalDamping*partPropD[typeB].normalDamping)
 							 /(partPropD[typeA].normalDamping+partPropD[typeB].normalDamping);
+		float frictionCoefficient = (partPropD[typeA].boundaryDamping+partPropD[typeB].boundaryDamping)/2;
 
         // spring force
         force = -normalStiffness*(collideDist - dist) * norm;
@@ -263,7 +264,7 @@ float2 collideSpheres(float2 posA, float2 posB,
 		float2 Ftrial = shearStiffness * contactVel_t * sisPropD.timeStep;
 	
 		// Max tangential friction force
-		float Ftmax = sisPropD.frictionCoefficient*length(force);
+		float Ftmax = frictionCoefficient*length(force);
 
 		float2 Ft = make_float2(0.0f);
 		if (length(Ftrial) < Ftmax) Ft = Ftrial;
@@ -354,8 +355,8 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 							   /(partPropD[type].normalStiffness+sisPropD.boundaryNormalStiffness);
 		float shearStiffness = (partPropD[type].shearStiffness*sisPropD.boundaryShearStiffness)
 							  /(partPropD[type].shearStiffness+sisPropD.boundaryShearStiffness);
-		float normalDamping = (partPropD[type].normalDamping*sisPropD.boundaryDamping)
-							 /(partPropD[type].normalDamping+sisPropD.boundaryDamping);
+		float normalDamping = (partPropD[type].normalDamping*partPropD[type].boundaryDamping)
+							 /(partPropD[type].normalDamping+partPropD[type].boundaryDamping);
 
         // spring force
         force = -normalStiffness*(radius - dist) * norm;
@@ -368,7 +369,7 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		float2 Ftrial = shearStiffness * contactVel_t * sisPropD.timeStep;
 	
 		// Max tangential friction force
-		float Ftmax = sisPropD.frictionCoefficient*length(force);
+		float Ftmax = partPropD[type].frictionCoefficient*length(force);
 
 		float2 Ft = make_float2(0.0f);
 		if (length(Ftrial) < Ftmax) Ft = Ftrial;
@@ -481,16 +482,16 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 #if 1
 	if (pos[index].x > sisPropD.cubeDimension.x - radius) {
 		pos[index].x = sisPropD.cubeDimension.x - radius;
-		vel[index].x *= -0.5; }
+		vel[index].x *= -partPropD[type[index]].boundaryDamping; }
 	if (pos[index].x < radius) {
 		pos[index].x = radius;
-		vel[index].x *= -0.5; }
+		vel[index].x *= -partPropD[type[index]].boundaryDamping; }
 	if (pos[index].y > sisPropD.cubeDimension.y - radius) {
 		pos[index].y = sisPropD.cubeDimension.y - radius;
-		vel[index].y *= -0.5; }
+		vel[index].y *= -partPropD[type[index]].boundaryDamping; }
 	if (pos[index].y < radius) {
 		pos[index].y = radius;
-		vel[index].y *= -0.5; }
+		vel[index].y *= -partPropD[type[index]].boundaryDamping; }
 #endif
 }
 

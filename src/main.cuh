@@ -43,6 +43,8 @@ struct ParticleProperties {
 	float 	normalStiffness;
 	float	shearStiffness;
 	float 	normalDamping;
+	float	boundaryDamping;
+	float	frictionCoefficient;
 	float 	colorR;
 	float 	colorG;
 	float 	colorB;
@@ -87,8 +89,6 @@ struct SystemProperties {
 
 	float boundaryNormalStiffness;
 	float boundaryShearStiffness;
-	float boundaryDamping;
-	float frictionCoefficient;
 };
 
 struct RenderParameters {

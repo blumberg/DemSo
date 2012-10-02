@@ -76,8 +76,6 @@ DEMEnvironment DEMParser::loadEnvironment (void)
 			else if (attr->value() == string("shear")) env.boundaryShearStiffness = atof(node->value());
 			else throw string("Unrecognized stiffness direction");
 		}
-		else if (node->name() == string("damping")) env.boundaryDamping = atof(node->value());
-		else if (node->name() == string("friction")) env.frictionCoefficient = atof(node->value());
 	}
 	return env;
 }
@@ -126,11 +124,24 @@ DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 		else if (node->name() == string("stiffness"))
 		{
 			xml_attribute<> *attr = node->first_attribute("dir");
-			if (attr->value() == string("normal")) ptype.normalStiffness = atof(node->value());
-			else if (attr->value() == string("shear")) ptype.shearStiffness = atof(node->value());
-			else throw string("Unrecognized stiffness direction");
+			if (attr)
+			{
+				if (attr->value() == string("normal")) ptype.normalStiffness = atof(node->value());
+				else if (attr->value() == string("shear")) ptype.shearStiffness = atof(node->value());
+				else throw string("Unrecognized stiffness direction");
+			} else throw string("Stiffness direction not specified");
 		}
-		else if (node->name() == string("damping")) ptype.normalDamping = atof(node->value());
+		else if (node->name() == string("damping"))
+		{
+			xml_attribute<> *attr = node->first_attribute("type");
+			if (attr)
+			{
+				if (attr->value() == string("boundary")) ptype.boundaryDamping = atof(node->value());
+				else throw string("Unrecognized damping type");
+			}
+			else ptype.normalDamping = atof(node->value());
+		}
+		else if (node->name() == string("friction")) ptype.frictionCoefficient = atof(node->value());
 		else throw string("Unrecognized tag inside <particletype>");
 	}
 	return ptype;

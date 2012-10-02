@@ -79,8 +79,6 @@ void PrepareSim (const char *filename,
 
 	sisProps->boundaryNormalStiffness = sim.environment.boundaryNormalStiffness;
 	sisProps->boundaryShearStiffness = sim.environment.boundaryShearStiffness;
-	sisProps->boundaryDamping = sim.environment.boundaryDamping;
-	sisProps->frictionCoefficient = sim.environment.frictionCoefficient;
 	
 	renderPar->imageDIMy = sim.parameters.imageDIMy;
 	renderPar->imageDIMx = sisProps->cubeDimension.x/sisProps->cubeDimension.y*renderPar->imageDIMy;
@@ -93,6 +91,8 @@ void PrepareSim (const char *filename,
 		partProps[i].normalStiffness = sim.properties.particleTypes[i].normalStiffness;
 		partProps[i].shearStiffness = sim.properties.particleTypes[i].shearStiffness;
 		partProps[i].normalDamping = sim.properties.particleTypes[i].normalDamping;
+		partProps[i].boundaryDamping = sim.properties.particleTypes[i].boundaryDamping;
+		partProps[i].frictionCoefficient = sim.properties.particleTypes[i].frictionCoefficient;
 		partProps[i].colorR = sim.properties.particleTypes[i].color.x;
 		partProps[i].colorG = sim.properties.particleTypes[i].color.y;
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
@@ -447,8 +447,8 @@ int main(int argc, char **argv)
     DataBlock simBlock;
     
     // declarando as subestruturas (apenas por facilidade)
-    SystemProperties *sisProps = &simBlock.sisProps;
-    ParticlesValues *partValues = &simBlock.partValues;
+    //SystemProperties *sisProps = &simBlock.sisProps;
+    //ParticlesValues *partValues = &simBlock.partValues;
 	RenderParameters *renderPar = &simBlock.renderPar;
 	TimeControl *timeCtrl = &simBlock.timeCtrl;
     

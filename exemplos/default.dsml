@@ -5,19 +5,6 @@
 		<imageHeight>800</imageHeight>
 		<follow>0</follow>
 		<follow>1</follow>
-		<follow>2</follow>
-		<follow>3</follow>
-		<follow>4</follow>
-		<follow>5</follow>
-		<follow>6</follow>
-		<follow>7</follow>
-		<follow>8</follow>
-		<follow>9</follow>
-		<follow>10</follow>
-		<follow>11</follow>
-		<follow>12</follow>
-		<follow>13</follow>
-		<follow>14</follow>
 		<follow>15</follow>
 	</parameters>
 
@@ -26,8 +13,6 @@
 		<gravity><x>0</x><y>-9.81</y></gravity>
 		<stiffness dir="normal">1000</stiffness>
 		<stiffness dir="shear">100</stiffness>
-		<damping>15</damping>
-		<friction>0.4</friction>
 	</environment>
 
 	<properties>
@@ -37,6 +22,8 @@
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
+			<damping type="boundary">0.5</damping>
+			<friction>0.4</friction>
 		</particletype>
 
 		<particletype id="verde" name="Partículas Verdes" color="8888ff">
@@ -45,6 +32,8 @@
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
+			<damping type="boundary">0.5</damping>
+			<friction>0.4</friction>
 		</particletype>
 
 		<particletype id="MOVE" color="1a3311">
@@ -53,6 +42,8 @@
 			<stiffness dir="normal">1e20</stiffness>
 			<stiffness dir="shear">1e20</stiffness>
 			<damping>0.2</damping>
+			<damping type="boundary">0.5</damping>
+			<friction>0.4</friction>
 		</particletype>
 
 	</properties>
