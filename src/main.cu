@@ -49,11 +49,14 @@ bool file_exist (const char *filename)
 	}
 }
 
-void PrepareSim( const char *filename,
-				 SystemProperties *sisProps,
-				 ParticlesValues *partValues,
-				 ParticleProperties *partProps,
-				 RenderParameters *renderPar ) {
+void PrepareSim (const char *filename,
+				 DataBlock *simBlock,
+				 ParticleProperties *partProps)
+{
+	// Estruturas auxiliares
+    SystemProperties *sisProps = &simBlock->sisProps;
+    ParticlesValues *partValues = &simBlock->partValues;
+	RenderParameters *renderPar = &simBlock->renderPar;
 
 	/* Usamos a estrutura de dados C++ e carregamos o arquivo de estado */
 	DEMSimulation sim;
@@ -69,7 +72,8 @@ void PrepareSim( const char *filename,
 	sisProps->cubeDimension = sim.environment.dimension;
 
 	sisProps->timeStep = sim.parameters.timeStep;
-	sisProps->followedParticle = sim.parameters.followedParticle;
+
+	simBlock->followedParticles = sim.parameters.followedParticles;
 	
 	sisProps->gravity = sim.environment.gravity;
 
@@ -94,7 +98,6 @@ void PrepareSim( const char *filename,
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
 
 		partProps[i].inertia = partProps[i].mass*partProps[i].radius*partProps[i].radius / 2;
-		cout << "inertia[" << i << "]: " << partProps[i].inertia << endl; // DEBUG
 	}
 
 	// Definindo o maior raio da simulação
@@ -366,9 +369,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  );
 
 	// Escreve no arquivo de output os dados de saída
-	if (sisProps->followedParticle != -1)
+	if (!simBlock->followedParticles.empty())
 		writeOutputFile (simBlock->outputFile,
-						 sisProps->followedParticle,
+						 simBlock->followedParticles,
 						 sisProps->timeStep * timeCtrl->tempo, // Current elapsed time
 						 (float2*)sortPos,
 						 (float2*)sortVel,
@@ -457,7 +460,7 @@ int main(int argc, char **argv)
 	timeCtrl->tempo = 0;
 	
 	// Prepara a simulacao, define as condicoes iniciais do problema
-	PrepareSim(filename, sisProps, partValues, partProps, renderPar);
+	PrepareSim(filename, &simBlock, partProps);
 	
 
     // função que define o tamanho da imagem e a estrutura que será

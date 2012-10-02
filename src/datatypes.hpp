@@ -28,7 +28,7 @@ using std::vector;
 class DEMParameters {
 	public:
 		float timeStep;
-		int followedParticle;
+		vector<int> followedParticles;
 		uint imageDIMy;
 };
 

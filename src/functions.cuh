@@ -19,6 +19,7 @@
 
 #ifndef FUNCTIONS_CUH
 #define FUNCTIONS_CUH
+#include <vector>
 
 void allocateVectors(ParticleProperties*,
 					 ParticlesValues*,
@@ -60,7 +61,7 @@ void plotParticles(uchar4*, float*, float*, uint*, uint, int, int
 #endif
 				  );
 
-void writeOutputFile (FILE*, uint, float, float2*, float2*, float2*, float*, float*,
+void writeOutputFile (FILE*, std::vector<int>, float, float2*, float2*, float2*, float*, float*,
 					  float*, uint*, uint*, uint*);
 
 #endif /* FUNCTIONS_CUH */

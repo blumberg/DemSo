@@ -23,6 +23,7 @@
 #define MAIN_CUH
 
 #include <stdio.h>
+#include <vector>
 
 #define USE_TEX 0
 #define USE_BIG_PARTICLE 1
@@ -84,8 +85,6 @@ struct SystemProperties {
     
     float2 gravity;
 
-	int followedParticle;
-
 	float boundaryNormalStiffness;
 	float boundaryShearStiffness;
 	float boundaryDamping;
@@ -117,6 +116,7 @@ struct DataBlock {
 	RenderParameters renderPar;
 	TimeControl timeCtrl;
 	FILE * outputFile;
+	std::vector<int> followedParticles;
 };
 
 #endif /* MAIN_CUH */

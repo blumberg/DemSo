@@ -22,6 +22,8 @@
 #include "main.cuh"
 #include "particles_kernel.cuh"
 
+using std::vector;
+
 // Esse arquivo prepara as funções que serão executadas na GPU. Ele define
 // o tamanho do Grid e o número de Threads.
 
@@ -403,47 +405,55 @@ void plotParticles(uchar4*	ptr,
 // desejados.
 // TODO:
 //  - Checar: Aparecimento de varios NaN quando shearStiffness = 1000
-void writeOutputFile (FILE*		outputFile,
-					  uint		chosenOne,
-					  float		h_elapsedTime,
-					  float2* 	pos,
-					  float2*	vel,
-					  float2*	acc,
-					  float*	theta,
-					  float*	omega,
-					  float*	alpha,
-					  uint*		ID,
-					  uint*		type,
-					  uint*		loc)
+void writeOutputFile (FILE*			outputFile,
+					  vector<int>	chosenOnes,
+					  float			h_elapsedTime,
+					  float2* 		pos,
+					  float2*		vel,
+					  float2*		acc,
+					  float*		theta,
+					  float*		omega,
+					  float*		alpha,
+					  uint*			ID,
+					  uint*			type,
+					  uint*			loc)
 {
-	// Chosen particle's location in arrays
-	uint h_loc;
-	cudaMemcpy (&h_loc, &loc[chosenOne], sizeof(uint), cudaMemcpyDeviceToHost);
-
-	// Particle Data
-	float2 h_pos, h_vel, h_acc;
-	float h_theta, h_omega, h_alpha;
-	uint h_id, h_type;
-
-	// Geting particle data from GPU
-	cudaMemcpy (&h_pos.x, &pos[h_loc].x, sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_pos.y, &pos[h_loc].y, sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_vel.x, &vel[h_loc].x, sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_vel.y, &vel[h_loc].y, sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_acc.x, &acc[h_loc].x, sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_acc.y, &acc[h_loc].y, sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_theta, &theta[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_omega, &omega[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_alpha, &alpha[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_id,	  &ID[h_loc],    sizeof(uint),  cudaMemcpyDeviceToHost);
-	cudaMemcpy (&h_type,  &type[h_loc],  sizeof(uint),  cudaMemcpyDeviceToHost);
-
-	// Printing to file
-	// Current elapsed time
+	// Print current elapsed time
 	fprintf (outputFile, "%f,", h_elapsedTime); // Don't print newline
 
-	// Particle Data
-	fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", h_id, h_type,
-			 h_pos.x, h_pos.y, h_vel.x, h_vel.y, h_acc.x, h_acc.y,
-			 h_theta, h_omega, h_alpha);
+	// Loop over followed particles
+	for (register int i = 0; i < chosenOnes.size(); i++)
+	{
+		// Chosen particle's location in arrays
+		uint h_loc;
+		cudaMemcpy (&h_loc, &loc[chosenOnes[i]], sizeof(uint), cudaMemcpyDeviceToHost);
+
+		// Particle Data
+		float2 h_pos, h_vel, h_acc;
+		float h_theta, h_omega, h_alpha;
+		uint h_id, h_type;
+
+		// Geting particle data from GPU
+		cudaMemcpy (&h_pos.x, &pos[h_loc].x, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_pos.y, &pos[h_loc].y, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_vel.x, &vel[h_loc].x, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_vel.y, &vel[h_loc].y, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_acc.x, &acc[h_loc].x, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_acc.y, &acc[h_loc].y, sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_theta, &theta[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_omega, &omega[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_alpha, &alpha[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_id,	  &ID[h_loc],    sizeof(uint),  cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_type,  &type[h_loc],  sizeof(uint),  cudaMemcpyDeviceToHost);
+
+		// Print particle data
+		fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f", h_id, h_type,
+				 h_pos.x, h_pos.y, h_vel.x, h_vel.y, h_acc.x, h_acc.y,
+				 h_theta, h_omega, h_alpha);
+
+		// If we're not at the last particle, print a comma
+		if (i != chosenOnes.size()-1) fprintf (outputFile, ",");
+	}
+	// Go to next line for next time step
+	fprintf (outputFile, "\n");
 }

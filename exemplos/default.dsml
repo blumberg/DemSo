@@ -2,8 +2,23 @@
 <simulation>
 	<parameters>
 		<timestep>1e-3</timestep>
-		<follow>0</follow>
 		<imageHeight>800</imageHeight>
+		<follow>0</follow>
+		<follow>1</follow>
+		<follow>2</follow>
+		<follow>3</follow>
+		<follow>4</follow>
+		<follow>5</follow>
+		<follow>6</follow>
+		<follow>7</follow>
+		<follow>8</follow>
+		<follow>9</follow>
+		<follow>10</follow>
+		<follow>11</follow>
+		<follow>12</follow>
+		<follow>13</follow>
+		<follow>14</follow>
+		<follow>15</follow>
 	</parameters>
 
 	<environment>

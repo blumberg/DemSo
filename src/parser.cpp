@@ -49,13 +49,12 @@ DEMParameters DEMParser::loadParameters (void)
 	DEMParameters params;
 	xml_node<> *root = rootTag->first_node("parameters");
 
-	params.followedParticle = -1;	// Valor indicando que não há partícula a ser seguida
 	// Percorrento os nós filhos do nó principal (<parameters>)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("timestep")) params.timeStep = atof(node->value());
 		else if (node->name() == string("imageHeight")) params.imageDIMy = atoi(node->value());
-		else if (node->name() == string("follow")) params.followedParticle = atoi(node->value());
+		else if (node->name() == string("follow")) params.followedParticles.push_back(atoi(node->value()));
 	}
 
 	return params;
