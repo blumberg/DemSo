@@ -27,6 +27,7 @@
 #include "cutil_math.h" 		      // funções matemáticas de vetores
 
 // Dependece files
+#include "initialStruct.cuh"
 #include "main.cuh"
 #include "functions.cuh" 	 // arquivo de funções de preparação para a GPU
 #include "datatypes.hpp"
@@ -64,10 +65,118 @@ void PrepareSim (const char *filename,
 	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
+/*************************************************************************/
+/*************************************************************************/
+// Escrevendo parametros que serão carregados pelo XML posteriormente
+
+	sisProps->numParticles = 0;
+
+	Quantity qtd;
+	
+	// verifica quantos blocos de cada tipo existe
+	qtd.retangle = 2;
+	qtd.triangle = 0;
+	qtd.userDefine = 1; // Quantidade máxima igual a 1 (booleano)
+	qtd.controlParticle = USE_BIG_PARTICLE; // Quantidade máxima igual a 1
+	
+	Retangle retangle[qtd.retangle];
+	Triangle triangle[qtd.triangle];
+	UserDefine usrDfn;
+	ControlParticle ctrlParticle;
+	
+	// Carrega propriedades dos blocos do tipo retangle
+	if (qtd.retangle > 0) {
+	
+
+		
+		// Bloco 0
+		retangle[0].num = make_uint2( 40 , 100 );
+		retangle[0].start = make_float2( 1 , 1 );
+		retangle[0].end = make_float2( 4.5 , 9 );
+		retangle[0].types = 2;
+		retangle[0].typeVec = (uint*)malloc(sizeof(uint) * retangle[0].types);
+		retangle[0].typeVec[0] = 0;
+		retangle[0].typeVec[1] = 2;
+		
+		sisProps->numParticles += retangle[0].num.x * retangle[0].num.y;
+		
+		// Bloco 1
+		retangle[1].num = make_uint2( 40 , 100 );
+		retangle[1].start = make_float2( 5.5 , 1 );
+		retangle[1].end = make_float2( 9 , 9 );
+		retangle[1].types = 3;
+		retangle[1].typeVec = (uint*)malloc(sizeof(uint) * retangle[1].types);
+		retangle[1].typeVec[0] = 0;
+		retangle[1].typeVec[1] = 1;
+		retangle[1].typeVec[2] = 3;
+		
+		sisProps->numParticles += retangle[1].num.x * retangle[1].num.y;
+	}
+	
+	if (qtd.triangle > 0){
+	
+	}
+	
+	if (qtd.userDefine > 0){
+		
+		usrDfn.num = 5;
+		
+		usrDfn.pos = (float2*)malloc(sizeof(float2) * usrDfn.num);
+		usrDfn.vel = (float2*)malloc(sizeof(float2) * usrDfn.num);
+		usrDfn.theta = (float*)malloc(sizeof(float) * usrDfn.num);
+		usrDfn.omega = (float*)malloc(sizeof(float) * usrDfn.num);
+		usrDfn.type = (uint*)malloc(sizeof(uint) * usrDfn.num);
+		
+		usrDfn.pos[0] = make_float2( 2, 0.5);
+		usrDfn.pos[1] = make_float2( 5, 3);
+		usrDfn.pos[2] = make_float2( 5, 5);
+		usrDfn.pos[3] = make_float2( 5, 7);
+		usrDfn.pos[4] = make_float2( 5, 9);
+		
+		usrDfn.vel[0] = make_float2( 0, 0);
+		usrDfn.vel[1] = make_float2( 0, 0);
+		usrDfn.vel[2] = make_float2( 0, 0);
+		usrDfn.vel[3] = make_float2( 0, 0);
+		usrDfn.vel[4] = make_float2( 0, 0);
+		
+		usrDfn.theta[0] = 0;
+		usrDfn.theta[1] = 0;
+		usrDfn.theta[2] = 0;
+		usrDfn.theta[3] = 0;
+		usrDfn.theta[4] = 0;
+		
+		usrDfn.omega[0] = 10;
+		usrDfn.omega[1] = 10;
+		usrDfn.omega[2] = -1;
+		usrDfn.omega[3] = -10;
+		usrDfn.omega[4] = 0;
+		
+		usrDfn.type[0] = 0;
+		usrDfn.type[1] = 1;
+		usrDfn.type[2] = 2;
+		usrDfn.type[3] = 3;
+		usrDfn.type[4] = 4;
+		
+		sisProps->numParticles += usrDfn.num;
+	}
+	
+	if (qtd.controlParticle > 0){
+		
+		ctrlParticle.pos = make_float2( 5,9.5);
+		ctrlParticle.vel = make_float2( 0 , 0);
+		ctrlParticle.theta = 0;
+		ctrlParticle.omega = 0;
+		ctrlParticle.type = 5;
+	
+	}
+
+/*************************************************************************/
+/*************************************************************************/
+
 	// Número de partículas no sistema é o número de partículas do bloco
 	// mais o número de partículas avulsas
-	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y
-							 + sim.particles.pos.size();
+//	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y
+//							 + sim.particles.pos.size();
 
 	sisProps->cubeDimension = sim.environment.dimension;
 
@@ -127,15 +236,6 @@ void PrepareSim (const char *filename,
 	if (renderPar->dimx < 2) renderPar->dimx = 2;
 	renderPar->dimy = ceil(renderPar->imageDIMy/sisProps->cubeDimension.y*plotRadius)*2;
 	if (renderPar->dimy < 2) renderPar->dimy = 2;
-	
-	// raio da esfera em PIXEL (para a saída grafica)
-
-//	renderPar->pRadius = renderPar->imageDIMy/sisProps->cubeDimension.y*maxRadius;
-
-
-	float start[2];
-	start[0] = sim.particles.start.x;
-	start[1] = sim.particles.start.y;
 
 	// Calcula o tamanho do grid arredondando para um valor que seja
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera
@@ -156,47 +256,75 @@ void PrepareSim (const char *filename,
 	sisProps->gridSize.y = 1 << temp;
 
 	sisProps->numCells = sisProps->gridSize.x * sisProps->gridSize.y;
-	
-	// Bloco inicial de esferas
-	float sideLenght[2];
-	sideLenght[0] = sim.particles.end.x - sim.particles.start.x; 			   // dimensao em X
-	sideLenght[1] = sim.particles.end.y - sim.particles.start.y; 			   // dimensao em Y
-	
-	uint side[2];
-	side[0] = sim.particles.num.x;
-	side[1] = sim.particles.num.y;
-	
+
+
+	// Alocando os vetores necessarios na CPU e GPU	
 	allocateVectors(partProps, partValues, sisProps, renderPar);
+	
+/*************************************************************************/
+/*************************************************************************/
+// criando o vetor de POS, VEL, THETA, OMEGA, TYPE, ID e LOC globais
+	
+	uint startParticle = 0;
+	uint blockSize;
+		
+	// blocos retangulares	
+	if (qtd.retangle > 0) {
+		float2 sideLenght;
+		uint2 side;
+		
+		for (int i = 0; i < qtd.retangle; i++){
 
-	// Função para definir a posição inicial das esferas
-	initializeParticlePosition(partValues->pos1,
-							   partValues->vel1,
-							   partValues->acc,
-							   partValues->theta1,
-							   partValues->omega1,
-							   partValues->alpha,
-							   partValues->ID1,
-							   partValues->loc1,
-							   partValues->type1,
-							   start,
-							   sideLenght,
-							   side,
-							   time(NULL),
+			sideLenght = retangle[i].end - retangle[i].start;
+			side = retangle[i].num;
+			
+			blockSize = side.x * side.y;
+
+			// Função para definir a posição inicial das esferas
+			createRetangleBlock(partValues->pos1 + startParticle*2,
+								partValues->ID1 + startParticle,
+								partValues->loc1 + startParticle,
+								partValues->type1 + startParticle,
+								retangle[i].start,
+								sideLenght,
+								side,
+								startParticle,
+								retangle[i].types,
+								retangle[i].typeVec,
+								time(NULL));
+			
+			startParticle += blockSize;
+		
+		}
+	}
+	
+	// bloco definido pelo usuário
+	if (qtd.userDefine > 0){
+		
+		createUserDefineBlock(partValues->pos1 + startParticle*2,
+							  partValues->vel1 + startParticle*2,
+							  partValues->theta1 + startParticle,
+							  partValues->omega1 + startParticle,
+							  partValues->ID1 + startParticle,
+							  partValues->loc1 + startParticle,
+							  partValues->type1	+ startParticle,
+							  usrDfn.pos,
+							  usrDfn.vel,
+							  usrDfn.theta,
+							  usrDfn.omega,
+							  usrDfn.type,
+							  usrDfn.num,
+							  startParticle);
+		
+		startParticle += usrDfn.num;
+	}
+	
+/*************************************************************************/
+/*************************************************************************/	
+
 #if USE_BIG_PARTICLE
-							   sim.properties.particleTypes.size()-1); // subraindo 1 para não fazer o sorteio com a partícula controlada ********************************************
-#else
-							   sim.properties.particleTypes.size());
-#endif
-
-#if USE_BIG_PARTICLE
-	float2 bigParticlePos = make_float2(5,1.5);
-
-//	// Adicionar partícula externa gigante
-//	initializeBigParticlePosition(partValues->controlPos,
-//								  bigParticlePos);
-								  
-	partValues->controlPos = bigParticlePos;
-	partValues->controlType = sim.properties.particleTypes.size()-1; // Tipo da partícula, por enquanto ela é a última **************************************************************
+	partValues->controlPos = ctrlParticle.pos;
+	partValues->controlType = ctrlParticle.type;
 #endif
 
 	// Screen output	
@@ -208,6 +336,22 @@ void PrepareSim (const char *filename,
 #else
 	printf("Memoria de textura: NAO\n\n");
 #endif 
+
+/*************************************************************************/
+/*************************************************************************/	
+// Liberando as variáveis alocadas
+
+free( retangle[0].typeVec );
+free( retangle[1].typeVec );
+free( usrDfn.pos );
+free( usrDfn.vel );
+free( usrDfn.theta );
+free( usrDfn.omega );
+free( usrDfn.type );
+
+/*************************************************************************/
+/*************************************************************************/	
+
 }
 
 void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
