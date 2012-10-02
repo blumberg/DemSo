@@ -31,11 +31,8 @@ uint iDivUp(uint, uint);
 
 void computeGridSize(uint, uint, uint &, uint &);
 
-void initializeParticlePosition (float*, float*, float*, float*, float*,
-								 float*, uint*, uint*, uint*, float*,
-								 float*, uint*, unsigned long, int);
-
-void initializeBigParticlePosition(float*, float2);
+void createRetangleBlock (float*, uint*, uint*, uint*, float2, float2, 
+						  uint2, uint, uint, uint*, unsigned long);
 
 void calcHash(float*, uint*, uint*, uint);
 

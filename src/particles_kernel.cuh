@@ -50,43 +50,36 @@ __constant__ ParticleProperties partPropD[MAX_PARTICLES_TYPES];
 __constant__ RenderParameters renderParD;
 
 __global__
-void initializeParticlePositionD(float2*			pos,
-								 float2*			vel,
-								 float2*			acc,
-								 float*				theta,
-								 float*				omega,
-								 float*				alpha,
-								 uint*				ID,
-								 uint*				loc,
-								 uint*				type,
-								 float*				corner1,
-								 float*				comp,
-								 uint*				side,
-								 unsigned long 		seed,
-								 int 				numParticleTypes) {
+void createRetangleBlockD(float2*			pos,
+						  uint*				ID,
+						  uint*				loc,
+						  uint*				type,
+						  float2			start,
+						  float2			sideLenght,
+						  uint2				side,
+						  uint				startID,
+						  uint 				numParticleTypes,
+						  uint*				particleTypeVec,
+						  unsigned long 	seed) {
     uint x = threadIdx.x + blockIdx.x * blockDim.x;
     uint y = threadIdx.y + blockIdx.y * blockDim.y;
 	
-	if (x >= side[0]) return;
-	if (y >= side[1]) return;
+	if (x >= side.x) return;
+	if (y >= side.y) return;
 	
-	uint particle = x + y*side[0];
+	uint particle = x + y*side.x;
 
-    if (particle >= side[1]*side[0]) return;
+    if (particle >= side.y*side.x) return;
 
 	curandState state;
 	curand_init( seed, particle, 0, &state );
 
-	pos[particle].x = corner1[0] + comp[0]/(side[0]-1) * (x + (curand_normal(&state)-0.5f)/100);
-	pos[particle].y = corner1[1] + comp[1]/(side[1]-1) * (y + (curand_normal(&state)-0.5f)/100);
-	vel[particle] = make_float2( 0 );
-	acc[particle] = make_float2( 0 );
-	theta[particle] = 0.0f;
-	omega[particle] = 0.0f;
-	alpha[particle] = 0.0f;
-	ID[particle] = particle;
-	loc[particle] = particle;
-	type[particle] = (x+y) % numParticleTypes;
+	pos[particle].x = start.x + sideLenght.x/(side.x-1) * (x + (curand_normal(&state)-0.5f)/100);
+	pos[particle].y = start.y + sideLenght.y/(side.y-1) * (y + (curand_normal(&state)-0.5f)/100);
+	ID[particle] = startID + particle;
+	loc[particle] = startID + particle;
+	int vecPos = (x+y) % numParticleTypes;
+	type[particle] = particleTypeVec[vecPos];
 }
 
 // calculate position in uniform grid
