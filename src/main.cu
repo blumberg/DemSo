@@ -27,6 +27,7 @@
 #include "cutil_math.h" 		      // funções matemáticas de vetores
 
 // Dependece files
+#include "initialStruct.cuh"
 #include "main.cuh"
 #include "functions.cuh" 	 // arquivo de funções de preparação para a GPU
 #include "datatypes.hpp"
@@ -59,6 +60,125 @@ void PrepareSim( const char *filename,
 	sim.loadFromFile(filename);
 //	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
+
+/*************************************************************************/
+/*************************************************************************/
+// Escrevendo parametros que serão carregados pelo XML posteriormente
+
+	sisProps->numParticles = 0;
+
+	Quantity qtd;
+	
+	// verifica quantos blocos de cada tipo existe
+	qtd.retangle = 2;
+	qtd.triangle = 0;
+	qtd.userDefine = 1;
+	qtd.controlParticle = 1;
+	
+	// Carrega propriedades dos blocos do tipo retangle
+	if (qtd.retangle > 0) {
+	
+		Retangle retangle[qtd.retangle];
+		
+		// Bloco 0
+		retangle[0].num = make_uint2( 20 , 100 );
+		retangle[0].start = make_float2( 1 , 1 );
+		retangle[0].end = make_float2( 4.5 , 9 );
+		retangle[0].types = 2;
+		uint tipos0[retangle[0].types];
+		tipos0[0] = 0;
+		tipos0[1] = 2;
+		retangle[0].typeVec = tipos0;
+		
+		sisProps->numParticles += retangle[0].num.x * retangle[0].num.y;
+		
+//		free(tipos);
+		
+		// Bloco 1
+		retangle[1].num = make_uint2( 20 , 100 );
+		retangle[1].start = make_float2( 5.5 , 1 );
+		retangle[1].end = make_float2( 9 , 9 );
+		retangle[1].types = 3;
+		uint tipos1[retangle[1].types];
+		tipos1[0] = 0;
+		tipos1[1] = 1;
+		tipos1[2] = 3;
+		retangle[1].typeVec = tipos1;
+		
+		sisProps->numParticles += retangle[1].num.x * retangle[1].num.y;
+	}
+	
+	if (qtd.triangle > 0){
+	
+	}
+	
+	if (qtd.userDefine > 0){
+	
+		UserDefine usrDfn;
+		
+		usrDfn.num = 5;
+		
+		float2 localPos[usrDfn.num];
+		float2 localVel[usrDfn.num];
+		float localTheta[usrDfn.num];
+		float localOmega[usrDfn.num];
+		uint localType[usrDfn.num];
+		
+		localPos[0] = make_float2( 5, 1);
+		localPos[1] = make_float2( 5, 3);
+		localPos[2] = make_float2( 5, 5);
+		localPos[3] = make_float2( 5, 7);
+		localPos[4] = make_float2( 5, 9);
+		
+		localVel[0] = make_float2( 0, 0);
+		localVel[1] = make_float2( 0, 0);
+		localVel[2] = make_float2( 0, 0);
+		localVel[3] = make_float2( 0, 0);
+		localVel[4] = make_float2( 0, 0);
+		
+		localTheta[0] = 0;
+		localTheta[1] = 0;
+		localTheta[2] = 0;
+		localTheta[3] = 0;
+		localTheta[4] = 0;
+		
+		localOmega[0] = 1;
+		localOmega[1] = 10;
+		localOmega[2] = -1;
+		localOmega[3] = -10;
+		localOmega[4] = 0;
+		
+		localType[0] = 0;
+		localType[1] = 1;
+		localType[2] = 2;
+		localType[3] = 3;
+		localType[4] = 4;
+		
+		usrDfn.pos = localPos;
+		usrDfn.vel = localVel;
+		usrDfn.theta = localTheta;
+		usrDfn.omega = localOmega;
+		usrDfn.type = localType;
+		
+		sisProps->numParticles += usrDfn.num;
+	}
+	
+	if (qtd.controlParticle > 0){
+		
+		ControlParticle ctrlParticle;
+		
+		ctrlParticle.pos = make_float2( 5,9.5);
+		ctrlParticle.vel = make_float2( 0 , 0);
+		ctrlParticle.theta = 0;
+		ctrlParticle.omega = 0;
+		ctrlParticle.type = 5;
+		
+		++sisProps->numParticles;
+	
+	}
+
+/*************************************************************************/
+/*************************************************************************/
 
 	// Número de partículas no sistema é o número de partículas do bloco
 	// mais o número de partículas avulsas

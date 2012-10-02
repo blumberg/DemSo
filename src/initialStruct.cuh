@@ -20,30 +20,43 @@
 #ifndef INITIAL_STRUCT_CUH
 #define INITIAL_STRUCT_CUH
 
+// Estrutura para indicar quantas vezes cada estrutura abaixo aparecerá
+struct Quantity {
+
+	uint retangle;
+	uint triangle;
+	uint userDefine;
+	uint controlParticle;
+
+};
+
+
 // Estrutura para criar um retangulo de partículas
-struct retangle {
+struct Retangle {
 
 	uint2 num; 		// Numero de partículas em X e Y
 	float2 start;	// Coordenada do canto inferior esquerdo do quadrado
 	float2 end;		// Coordenada do canto superior direito do quadrado
 
+	int types;		// numero de partículas diferentes
 	uint *typeVec; 	// Vetor com os tipos de partículas associados
 
 };
 
 // Estrutura para criar um triangulo de partículas
-struct triangle {
+struct Triangle {
 
 	uint num;		// Numero de partículas no lado do triangulo
 	float2 pos;		// Posicao central inferior do triangulo
 	float2 side;	// Comprimento do lado do triangulo
 
+	int types;		// numero de partículas diferentes
 	uint *typeVec; 	// Vetor com os tipos de partículas associados
 	
 };
 
 // Entrada na mão de partículas
-struct userDefine {
+struct UserDefine {
 
 	uint num;		// Numero total de particulas adicionadas
 	float2 *pos;	// Posicao das partículas
@@ -55,7 +68,7 @@ struct userDefine {
 };
 
 // Partícula controlada externamente (Não integrada)
-struct controlParticle {
+struct ControlParticle {
 
 	float2 pos;
 	float2 vel;
@@ -63,7 +76,7 @@ struct controlParticle {
 	float omega;
 	uint type;
 
-}
+};
 
 
 #endif
