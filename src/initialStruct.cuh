@@ -48,7 +48,7 @@ struct Triangle {
 
 	uint num;		// Numero de partículas no lado do triangulo
 	float2 pos;		// Posicao central inferior do triangulo
-	float2 side;	// Comprimento do lado do triangulo
+	float side;	// Comprimento do lado do triangulo
 
 	int types;		// numero de partículas diferentes
 	uint *typeVec; 	// Vetor com os tipos de partículas associados

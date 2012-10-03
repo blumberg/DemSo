@@ -82,6 +82,43 @@ void createRetangleBlockD(float2*			pos,
 	type[particle] = particleTypeVec[vecPos];
 }
 
+__global__
+void createTriangleBlockD (float2*	pos,
+						   uint*	ID,
+						   uint*	loc,
+						   uint*	type,
+						   float2	start,
+						   uint		N,
+						   uint 	numParticleTypes,
+						   uint*	particleTypeVec,
+						   float	space,
+						   float 	height,
+						   uint 	startID,
+						   uint 	numParticles){
+	
+	int index = threadIdx.x + blockIdx.x * blockDim.x;
+	
+	if (index >= numParticles) return;
+	
+	int L1 = (1 + 2*sqrtf(N*N + N -2*(index+1) + 1)) / 2;
+	int L = N - L1;
+	
+	int s = ( L1 + N + N*N - L1*L1 ) / 2;
+	
+	int C = index - s + L1;
+	
+	int A = ( N - 1 );
+	
+	pos[index].x = start.x + (L + 2*C - A)*space/2;
+	pos[index].y = start.y + L*height;
+	
+	ID[index] = startID + index;
+	loc[index] = startID + index;
+	int vecPos = (C + L) % numParticleTypes;
+	type[index] = particleTypeVec[vecPos];
+
+}
+
 // calculate position in uniform grid
 __device__
 int2 calcGridPos(float2 p)
@@ -578,9 +615,12 @@ void plotControlParticleD(uchar4*	ptr,
 		int cPixelx = renderParD.imageDIMx/sisPropD.cubeDimension.x*pos.x;
 		int cPixely = renderParD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
 	
-		int gPixelx = cPixelx + x - blockDim.x*gridDim.x/2;
-		int gPixely = cPixely + y - blockDim.y*gridDim.y/2;
-		
+		uint gPixelx = cPixelx + x - blockDim.x*gridDim.x/2;
+		uint gPixely = cPixely + y - blockDim.y*gridDim.y/2;
+
+		if (gPixelx >= renderParD.imageDIMx) return;
+		if (gPixely >= renderParD.imageDIMy) return;
+
 		float fscale = sqrtf((pRadius*pRadius - rx*rx - ry*ry)/(pRadius*pRadius));
 		
 		uint pixel = gPixelx + gPixely*renderParD.imageDIMx;

@@ -174,6 +174,45 @@ void createRetangleBlock (float* 		pos,
     cudaFree( d_particleTypeVec );													  
 }
 
+void createTriangleBlock (float*	pos,
+						  uint*		ID,
+						  uint*		loc,
+						  uint*		type,
+						  float2	start,
+						  uint		N,
+						  uint		numParticleTypes,
+						  uint*		particleTypeVec,
+						  float 	space,
+						  float		height,
+						  uint 		startID,
+						  uint		numParticles){
+						  
+	uint *d_particleTypeVec;
+
+	cudaMalloc((void**)&d_particleTypeVec, sizeof(uint)*numParticleTypes);
+
+	cudaMemcpy(d_particleTypeVec, particleTypeVec,
+			   sizeof(uint)*numParticleTypes, cudaMemcpyHostToDevice);
+
+	uint numBlocks, numThreads;
+	computeGridSize(numParticles,256,numBlocks,numThreads);
+	
+	createTriangleBlockD<<<numBlocks,numThreads>>>((float2*)pos,
+												   ID,
+												   loc,
+												   type,
+												   start,
+												   N,
+												   numParticleTypes,
+												   d_particleTypeVec,
+												   space,
+												   height,
+												   startID,
+												   numParticles);
+	
+    cudaFree( d_particleTypeVec );													  
+}
+
 void createUserDefineBlock (float*	pos,
 							float*	vel,
 							float*	theta,

@@ -10,7 +10,7 @@
 
 	<environment>
 		<dimensions><x>10</x><y>10</y></dimensions>
-		<gravity><x>0</x><y>-9.81</y></gravity>
+		<gravity><x>0</x><y>0</y></gravity>
 		<stiffness dir="normal">1000</stiffness>
 		<stiffness dir="shear">100</stiffness>
 	</environment>
@@ -48,7 +48,7 @@
 		
 		<particletype id="verde" name="Partículas Verdes" color="ff0000">
 			<mass>1e-2</mass>
-			<radius>40e-3</radius>
+			<radius>20e-3</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
@@ -58,7 +58,7 @@
 		
 		<particletype id="verde" name="Partículas Verdes" color="ffff00">
 			<mass>1e-2</mass>
-			<radius>100e-3</radius>
+			<radius>20e-3</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>

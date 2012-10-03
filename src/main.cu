@@ -74,9 +74,9 @@ void PrepareSim (const char *filename,
 	Quantity qtd;
 	
 	// verifica quantos blocos de cada tipo existe
-	qtd.retangle = 2;
-	qtd.triangle = 0;
-	qtd.userDefine = 1; // Quantidade máxima igual a 1 (booleano)
+	qtd.retangle = 0;
+	qtd.triangle = 1;
+	qtd.userDefine = 0; // Quantidade máxima igual a 1 (booleano)
 	qtd.controlParticle = USE_BIG_PARTICLE; // Quantidade máxima igual a 1
 	
 	Retangle retangle[qtd.retangle];
@@ -114,6 +114,16 @@ void PrepareSim (const char *filename,
 	}
 	
 	if (qtd.triangle > 0){
+	
+		triangle[0].num = 180;
+		triangle[0].pos = make_float2(5,1);
+		triangle[0].side = 9;
+		triangle[0].types = 2;
+		triangle[0].typeVec = (uint*)malloc(sizeof(uint) * triangle[0].types);
+		triangle[0].typeVec[0] = 4;
+		triangle[0].typeVec[1] = 3;
+		
+		sisProps->numParticles += triangle[0].num*(triangle[0].num+1)/2;
 	
 	}
 	
@@ -271,14 +281,14 @@ void PrepareSim (const char *filename,
 	// blocos retangulares	
 	if (qtd.retangle > 0) {
 		float2 sideLenght;
-		uint2 side;
+//		uint2 side;
 		
 		for (int i = 0; i < qtd.retangle; i++){
 
 			sideLenght = retangle[i].end - retangle[i].start;
-			side = retangle[i].num;
+//			side = retangle[i].num;
 			
-			blockSize = side.x * side.y;
+			blockSize = retangle[i].num.x * retangle[i].num.y;
 
 			// Função para definir a posição inicial das esferas
 			createRetangleBlock(partValues->pos1 + startParticle*2,
@@ -287,7 +297,7 @@ void PrepareSim (const char *filename,
 								partValues->type1 + startParticle,
 								retangle[i].start,
 								sideLenght,
-								side,
+								retangle[i].num,
 								startParticle,
 								retangle[i].types,
 								retangle[i].typeVec,
@@ -296,6 +306,37 @@ void PrepareSim (const char *filename,
 			startParticle += blockSize;
 		
 		}
+	}
+	
+	// bloco triangular
+	if (qtd.triangle > 0){
+	
+		float space;
+		float height;
+		
+		for (int i = 0 ; i < qtd.triangle ; i++ ){
+			
+			blockSize = triangle[i].num * ( triangle[i].num + 1 ) / 2;
+			space = triangle[i].side / ( triangle[i].num - 1 );
+			height = space * sqrt(3) / 2;
+			
+			createTriangleBlock(partValues->pos1 + startParticle*2,
+								partValues->ID1 + startParticle,
+								partValues->loc1 + startParticle,
+								partValues->type1 + startParticle,
+								triangle[i].pos,
+								triangle[i].num,
+								triangle[i].types,
+								triangle[i].typeVec,
+								space,
+								height,
+								startParticle,
+								blockSize);
+								
+			startParticle += blockSize;
+			
+		}
+	
 	}
 	
 	// bloco definido pelo usuário
@@ -341,14 +382,25 @@ void PrepareSim (const char *filename,
 /*************************************************************************/	
 // Liberando as variáveis alocadas
 
-free( retangle[0].typeVec );
-free( retangle[1].typeVec );
-free( usrDfn.pos );
-free( usrDfn.vel );
-free( usrDfn.theta );
-free( usrDfn.omega );
-free( usrDfn.type );
+if (qtd.retangle > 0){
+	for (int i = 0 ; i < qtd.retangle ;  i++){
+		free( retangle[i].typeVec );
+	}
+}
 
+if (qtd.triangle > 0){
+	for (int i = 0 ; i < qtd.triangle ;  i++){
+		free( triangle[i].typeVec );
+	}
+}
+
+if (qtd.userDefine > 0){
+	free( usrDfn.pos );
+	free( usrDfn.vel );
+	free( usrDfn.theta );
+	free( usrDfn.omega );
+	free( usrDfn.type );
+}
 /*************************************************************************/
 /*************************************************************************/	
 
@@ -488,9 +540,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 
 #if USE_BIG_PARTICLE
 		partValues->controlPos.y += -.005;
-		partValues->controlPos.x += .000;
-		if (partValues->controlPos.y < -1) partValues->controlPos.y = 9.5;
-		if (partValues->controlPos.x > sisProps->cubeDimension.x + 25.5) partValues->controlPos.x = -25.5;
+		partValues->controlPos.x += .003;
+		if (partValues->controlPos.y < -1) partValues->controlPos.y = 10.5;
+		if (partValues->controlPos.x > sisProps->cubeDimension.x + 0.5) partValues->controlPos.x = -0.5;
 #endif
 
 		timeCtrl->tempo++;
