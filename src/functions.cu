@@ -58,6 +58,8 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->gridParticleHash, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->controlForce, sizeof(float2));
+	cudaMalloc((void**)&partValues->controlMoment, sizeof(float));
 	
 	// Definindo 0 como valor inicial de todos os vetores alocados acima
 	cudaMemset(partValues->type1, 0, sizeof(uint) * sisProps->numParticles);
@@ -355,8 +357,13 @@ void collide(float* 	oldPos,
              uint   	numParticles,
              uint 		numCells
 #if USE_BIG_PARTICLE
-			 , float2		controlPos,
-			 uint		controlType
+			 , float2	controlPos,
+			 float2		controlVel,
+			 float 		controlTheta,
+			 float		controlOmega,
+			 uint		controlType,
+			 float2*	controlForce,
+			 float*		controlMoment
 #endif
 			 )
 {
@@ -373,6 +380,9 @@ void collide(float* 	oldPos,
     uint numThreads, numBlocks;
     computeGridSize(numParticles, 64, numBlocks, numThreads);
 
+	cudaMemset(controlForce, 0, sizeof(float2));
+	cudaMemset(controlMoment, 0, sizeof(float));
+
     // execute the kernel
     collideD<<< numBlocks, numThreads >>>((float2*)oldPos,
                                           (float2*)oldVel,
@@ -384,7 +394,12 @@ void collide(float* 	oldPos,
                                           cellEnd
 #if USE_BIG_PARTICLE
 			 							  , controlPos,
-										  controlType
+			 							  controlVel,
+			 							  controlTheta,
+			 							  controlOmega,
+										  controlType,
+										  controlForce,
+										  controlMoment
 #endif
 										  );
 										  

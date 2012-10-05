@@ -53,7 +53,7 @@ void reorderDataAndFindCellStart(uint*, uint*, float*, float*, float*,
 
 void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint
 #if USE_BIG_PARTICLE
-	, float2, uint
+	, float2, float2, float, float, uint, float2*, float*
 #endif
 	);
 

@@ -431,7 +431,12 @@ void collideD(float2*	oldPos,               // input: sorted positions
               uint*		cellEnd
 #if USE_BIG_PARTICLE
 			  , float2	controlPos,
-			  uint		controlType
+			  float2	controlVel,
+			  float 	controlTheta,
+			  float 	controlOmega,
+			  uint		controlType,
+			  float2*	controlForce,
+			  float*	controlMoment
 #endif
 			  )
 
@@ -477,7 +482,16 @@ void collideD(float2*	oldPos,               // input: sorted positions
 
     
 #if USE_BIG_PARTICLE
-    force += collideSpheres(pos, controlPos, vel, make_float2(0), omega, 0, type, controlType, moment);
+	float m = 0.0f;
+	float2 f = collideSpheres(pos, controlPos, vel, controlVel, omega,
+    						  controlOmega, type, controlType, m);
+    force += f;
+    moment += m;
+//    controlForce += f;
+//    controlMoment += m;
+    atomicAdd(&(controlForce->x),-f.x);
+    atomicAdd(&(controlForce->y),-f.y);
+    atomicAdd(controlMoment, -m);
 #endif
 
 	newAcc[index] = force / partPropD[type].mass;

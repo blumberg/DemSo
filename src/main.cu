@@ -74,8 +74,8 @@ void PrepareSim (const char *filename,
 	Quantity qtd;
 	
 	// verifica quantos blocos de cada tipo existe
-	qtd.retangle = 0;
-	qtd.triangle = 1;
+	qtd.retangle = 2;
+	qtd.triangle = 0;
 	qtd.userDefine = 0; // Quantidade máxima igual a 1 (booleano)
 	qtd.controlParticle = USE_BIG_PARTICLE; // Quantidade máxima igual a 1
 	
@@ -365,6 +365,9 @@ void PrepareSim (const char *filename,
 
 #if USE_BIG_PARTICLE
 	partValues->controlPos = ctrlParticle.pos;
+	partValues->controlVel = ctrlParticle.vel;
+	partValues->controlTheta = ctrlParticle.theta;
+	partValues->controlOmega = ctrlParticle.omega;
 	partValues->controlType = ctrlParticle.type;
 #endif
 
@@ -463,16 +466,6 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 			sortLoc = partValues->loc1;
 			sortType = partValues->type1;
 		}
-		
-//		// Integracao no tempo (atualizacao das posicoes e velocidades)
-//		integrateSystem(oldPos,
-//			 	  		oldVel,
-//			 	  		partValues->acc,
-//						oldTheta,
-//						oldOmega,
-//						partValues->alpha,
-//			 	  		oldType,
-//			 	  		sisProps->numParticles);
 
 		// Define a celula de cada particula, criando os vetores
 		// gridParticleIndex e gridParticleHash ordenados pelo Index
@@ -523,7 +516,12 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				sisProps->numCells
 #if USE_BIG_PARTICLE
 				, partValues->controlPos,
-				partValues->controlType
+				partValues->controlVel,
+				partValues->controlTheta,
+				partValues->controlOmega,
+				partValues->controlType,
+				partValues->controlForce,
+				partValues->controlMoment
 #endif
 				);
 
@@ -543,6 +541,12 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		partValues->controlPos.x += .003;
 		if (partValues->controlPos.y < -1) partValues->controlPos.y = 10.5;
 		if (partValues->controlPos.x > sisProps->cubeDimension.x + 0.5) partValues->controlPos.x = -0.5;
+		float2 force;
+		float moment;
+		cudaMemcpy(&force,partValues->controlForce,sizeof(float2), cudaMemcpyDeviceToHost);
+		cudaMemcpy(&moment,partValues->controlMoment,sizeof(float), cudaMemcpyDeviceToHost);
+//		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", force.x, force.y);
+//		printf("\ncontrolMoment = %5.2f\n", moment);
 #endif
 
 		timeCtrl->tempo++;

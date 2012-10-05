@@ -69,7 +69,12 @@ struct ParticlesValues
 	uint *fixParticleIndex, *ctrlParticleIndex;
 	
 	float2 controlPos;
+	float2 controlVel;
+	float  controlTheta;
+	float  controlOmega;
 	uint controlType;
+	float2 *controlForce;
+	float  *controlMoment;
 
 };
 
