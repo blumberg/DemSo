@@ -65,10 +65,11 @@ class DEMProperties {
 // Classe dos valores de inicialização das partículas
 class DEMParticles {
 	public:
-		// Para blocos de partículas
-		float2 start;	// Coordenadas do canto inferior-esquerdo
-		float2 end;		// Coordenadas do canto superior-direito
-		float2 num;		// Número de partículas desejado em x, y
+		// Para retângulos de partículas
+		vector<float2>	start;	// Coordenadas do canto inferior-esquerdo
+		vector<float2>	end;	// Coordenadas do canto superior-direito
+		vector<uint2>	num;	// Número de partículas desejado em x, y
+		vector< vector<int> >	types;	// Tipos de partículas à sortear dentro do retângulo
 
 		// Para partículas avulsas
 		vector<float2>	pos;	// Posições x, y

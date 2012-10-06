@@ -19,6 +19,7 @@
 
 #ifndef PARSER_H
 #define PARSER_H
+#include <string>
 #include "../includes/rapidxml.hpp"
 #include "../includes/cutil_math.h"
 #include "datatypes.hpp"
@@ -29,6 +30,7 @@ class DEMParser {
 	private:
 		xml_node<> *rootTag;
 		float2 readVector (xml_node<> *);
+		std::vector<std::string> readCSVLine (std::string);
 		DEMParticleType loadParticleType (xml_node<> *);
 		DEMParticles loadBlock (xml_node<> *, DEMProperties *);
 	public:

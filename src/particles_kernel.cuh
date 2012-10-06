@@ -50,17 +50,17 @@ __constant__ ParticleProperties partPropD[MAX_PARTICLES_TYPES];
 __constant__ RenderParameters renderParD;
 
 __global__
-void createRetangleBlockD(float2*			pos,
-						  uint*				ID,
-						  uint*				loc,
-						  uint*				type,
-						  float2			start,
-						  float2			sideLenght,
-						  uint2				side,
-						  uint				startID,
-						  uint 				numParticleTypes,
-						  uint*				particleTypeVec,
-						  unsigned long 	seed) {
+void createRectanglesD(float2*			pos,
+					  uint*				ID,
+					  uint*				loc,
+					  uint*				type,
+					  float2			start,
+					  float2			sideLenght,
+					  uint2				side,
+					  uint				startID,
+					  uint 				numParticleTypes,
+					  uint*				particleTypeVec,
+					  unsigned long 	seed) {
     uint x = threadIdx.x + blockIdx.x * blockDim.x;
     uint y = threadIdx.y + blockIdx.y * blockDim.y;
 	
@@ -83,7 +83,7 @@ void createRetangleBlockD(float2*			pos,
 }
 
 __global__
-void createTriangleBlockD (float2*	pos,
+void createTrianglesD (float2*	pos,
 						   uint*	ID,
 						   uint*	loc,
 						   uint*	type,

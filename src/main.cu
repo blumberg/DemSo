@@ -74,43 +74,29 @@ void PrepareSim (const char *filename,
 	Quantity qtd;
 	
 	// verifica quantos blocos de cada tipo existe
-	qtd.retangle = 0;
-	qtd.triangle = 1;
-	qtd.userDefine = 0; // Quantidade máxima igual a 1 (booleano)
+	qtd.rectangle = sim.particles.start.size();
+	qtd.triangle = 0;
+	qtd.singleParticles = 0; // Quantidade máxima igual a 1 (booleano)
 	qtd.controlParticle = USE_BIG_PARTICLE; // Quantidade máxima igual a 1
 	
-	Retangle retangle[qtd.retangle];
+	Rectangle rectangle[qtd.rectangle];
 	Triangle triangle[qtd.triangle];
-	UserDefine usrDfn;
+	SingleParticles singleParts;
 	ControlParticle ctrlParticle;
-	
-	// Carrega propriedades dos blocos do tipo retangle
-	if (qtd.retangle > 0) {
-	
 
-		
-		// Bloco 0
-		retangle[0].num = make_uint2( 40 , 100 );
-		retangle[0].start = make_float2( 1 , 1 );
-		retangle[0].end = make_float2( 4.5 , 9 );
-		retangle[0].types = 2;
-		retangle[0].typeVec = (uint*)malloc(sizeof(uint) * retangle[0].types);
-		retangle[0].typeVec[0] = 0;
-		retangle[0].typeVec[1] = 2;
-		
-		sisProps->numParticles += retangle[0].num.x * retangle[0].num.y;
-		
-		// Bloco 1
-		retangle[1].num = make_uint2( 40 , 100 );
-		retangle[1].start = make_float2( 5.5 , 1 );
-		retangle[1].end = make_float2( 9 , 9 );
-		retangle[1].types = 3;
-		retangle[1].typeVec = (uint*)malloc(sizeof(uint) * retangle[1].types);
-		retangle[1].typeVec[0] = 0;
-		retangle[1].typeVec[1] = 1;
-		retangle[1].typeVec[2] = 3;
-		
-		sisProps->numParticles += retangle[1].num.x * retangle[1].num.y;
+	// Carrega propriedades dos retângulos
+	for (register int i = 0; i < qtd.rectangle; i++)
+	{
+		rectangle[i].start = sim.particles.start[i];
+		rectangle[i].end = sim.particles.end[i];
+		rectangle[i].num = sim.particles.num[i];
+		rectangle[i].types = sim.particles.types[i].size();
+		rectangle[i].typeVec = (uint*)malloc(sizeof(uint) * rectangle[i].types);
+		memcpy (rectangle[i].typeVec,
+				&sim.particles.types[i][0],
+				sizeof(int) * rectangle[i].types);
+
+		sisProps->numParticles += rectangle[i].num.x * rectangle[i].num.y;
 	}
 	
 	if (qtd.triangle > 0){
@@ -127,47 +113,47 @@ void PrepareSim (const char *filename,
 	
 	}
 	
-	if (qtd.userDefine > 0){
+	if (qtd.singleParticles > 0){
 		
-		usrDfn.num = 5;
+		singleParts.num = 5;
 		
-		usrDfn.pos = (float2*)malloc(sizeof(float2) * usrDfn.num);
-		usrDfn.vel = (float2*)malloc(sizeof(float2) * usrDfn.num);
-		usrDfn.theta = (float*)malloc(sizeof(float) * usrDfn.num);
-		usrDfn.omega = (float*)malloc(sizeof(float) * usrDfn.num);
-		usrDfn.type = (uint*)malloc(sizeof(uint) * usrDfn.num);
+		singleParts.pos = (float2*)malloc(sizeof(float2) * singleParts.num);
+		singleParts.vel = (float2*)malloc(sizeof(float2) * singleParts.num);
+		singleParts.theta = (float*)malloc(sizeof(float) * singleParts.num);
+		singleParts.omega = (float*)malloc(sizeof(float) * singleParts.num);
+		singleParts.type = (uint*)malloc(sizeof(uint) * singleParts.num);
 		
-		usrDfn.pos[0] = make_float2( 2, 0.5);
-		usrDfn.pos[1] = make_float2( 5, 3);
-		usrDfn.pos[2] = make_float2( 5, 5);
-		usrDfn.pos[3] = make_float2( 5, 7);
-		usrDfn.pos[4] = make_float2( 5, 9);
+		singleParts.pos[0] = make_float2( 2, 0.5);
+		singleParts.pos[1] = make_float2( 5, 3);
+		singleParts.pos[2] = make_float2( 5, 5);
+		singleParts.pos[3] = make_float2( 5, 7);
+		singleParts.pos[4] = make_float2( 5, 9);
 		
-		usrDfn.vel[0] = make_float2( 0, 0);
-		usrDfn.vel[1] = make_float2( 0, 0);
-		usrDfn.vel[2] = make_float2( 0, 0);
-		usrDfn.vel[3] = make_float2( 0, 0);
-		usrDfn.vel[4] = make_float2( 0, 0);
+		singleParts.vel[0] = make_float2( 0, 0);
+		singleParts.vel[1] = make_float2( 0, 0);
+		singleParts.vel[2] = make_float2( 0, 0);
+		singleParts.vel[3] = make_float2( 0, 0);
+		singleParts.vel[4] = make_float2( 0, 0);
 		
-		usrDfn.theta[0] = 0;
-		usrDfn.theta[1] = 0;
-		usrDfn.theta[2] = 0;
-		usrDfn.theta[3] = 0;
-		usrDfn.theta[4] = 0;
+		singleParts.theta[0] = 0;
+		singleParts.theta[1] = 0;
+		singleParts.theta[2] = 0;
+		singleParts.theta[3] = 0;
+		singleParts.theta[4] = 0;
 		
-		usrDfn.omega[0] = 10;
-		usrDfn.omega[1] = 10;
-		usrDfn.omega[2] = -1;
-		usrDfn.omega[3] = -10;
-		usrDfn.omega[4] = 0;
+		singleParts.omega[0] = 10;
+		singleParts.omega[1] = 10;
+		singleParts.omega[2] = -1;
+		singleParts.omega[3] = -10;
+		singleParts.omega[4] = 0;
 		
-		usrDfn.type[0] = 0;
-		usrDfn.type[1] = 1;
-		usrDfn.type[2] = 2;
-		usrDfn.type[3] = 3;
-		usrDfn.type[4] = 4;
+		singleParts.type[0] = 0;
+		singleParts.type[1] = 1;
+		singleParts.type[2] = 2;
+		singleParts.type[3] = 3;
+		singleParts.type[4] = 4;
 		
-		sisProps->numParticles += usrDfn.num;
+		sisProps->numParticles += singleParts.num;
 	}
 	
 	if (qtd.controlParticle > 0){
@@ -279,30 +265,30 @@ void PrepareSim (const char *filename,
 	uint blockSize;
 		
 	// blocos retangulares	
-	if (qtd.retangle > 0) {
+	if (qtd.rectangle > 0) {
 		float2 sideLenght;
 //		uint2 side;
 		
-		for (int i = 0; i < qtd.retangle; i++){
+		for (int i = 0; i < qtd.rectangle; i++){
 
-			sideLenght = retangle[i].end - retangle[i].start;
-//			side = retangle[i].num;
+			sideLenght = rectangle[i].end - rectangle[i].start;
+//			side = rectangle[i].num;
 			
-			blockSize = retangle[i].num.x * retangle[i].num.y;
+			blockSize = rectangle[i].num.x * rectangle[i].num.y;
 
 			// Função para definir a posição inicial das esferas
-			createRetangleBlock(partValues->pos1 + startParticle*2,
-								partValues->ID1 + startParticle,
-								partValues->loc1 + startParticle,
-								partValues->type1 + startParticle,
-								retangle[i].start,
-								sideLenght,
-								retangle[i].num,
-								startParticle,
-								retangle[i].types,
-								retangle[i].typeVec,
-								time(NULL));
-			
+			createRectangles(partValues->pos1 + startParticle*2,
+							partValues->ID1 + startParticle,
+							partValues->loc1 + startParticle,
+							partValues->type1 + startParticle,
+							rectangle[i].start,
+							sideLenght,
+							rectangle[i].num,
+							startParticle,
+							rectangle[i].types,
+							rectangle[i].typeVec,
+							time(NULL));
+
 			startParticle += blockSize;
 		
 		}
@@ -320,18 +306,18 @@ void PrepareSim (const char *filename,
 			space = triangle[i].side / ( triangle[i].num - 1 );
 			height = space * sqrt(3) / 2;
 			
-			createTriangleBlock(partValues->pos1 + startParticle*2,
-								partValues->ID1 + startParticle,
-								partValues->loc1 + startParticle,
-								partValues->type1 + startParticle,
-								triangle[i].pos,
-								triangle[i].num,
-								triangle[i].types,
-								triangle[i].typeVec,
-								space,
-								height,
-								startParticle,
-								blockSize);
+			createTriangles(partValues->pos1 + startParticle*2,
+							partValues->ID1 + startParticle,
+							partValues->loc1 + startParticle,
+							partValues->type1 + startParticle,
+							triangle[i].pos,
+							triangle[i].num,
+							triangle[i].types,
+							triangle[i].typeVec,
+							space,
+							height,
+							startParticle,
+							blockSize);
 								
 			startParticle += blockSize;
 			
@@ -340,24 +326,24 @@ void PrepareSim (const char *filename,
 	}
 	
 	// bloco definido pelo usuário
-	if (qtd.userDefine > 0){
-		
-		createUserDefineBlock(partValues->pos1 + startParticle*2,
+	if (qtd.singleParticles > 0)
+	{
+		createSingleParticles(partValues->pos1 + startParticle*2,
 							  partValues->vel1 + startParticle*2,
 							  partValues->theta1 + startParticle,
 							  partValues->omega1 + startParticle,
 							  partValues->ID1 + startParticle,
 							  partValues->loc1 + startParticle,
 							  partValues->type1	+ startParticle,
-							  usrDfn.pos,
-							  usrDfn.vel,
-							  usrDfn.theta,
-							  usrDfn.omega,
-							  usrDfn.type,
-							  usrDfn.num,
+							  singleParts.pos,
+							  singleParts.vel,
+							  singleParts.theta,
+							  singleParts.omega,
+							  singleParts.type,
+							  singleParts.num,
 							  startParticle);
 		
-		startParticle += usrDfn.num;
+		startParticle += singleParts.num;
 	}
 	
 /*************************************************************************/
@@ -382,9 +368,9 @@ void PrepareSim (const char *filename,
 /*************************************************************************/	
 // Liberando as variáveis alocadas
 
-if (qtd.retangle > 0){
-	for (int i = 0 ; i < qtd.retangle ;  i++){
-		free( retangle[i].typeVec );
+if (qtd.rectangle > 0){
+	for (int i = 0 ; i < qtd.rectangle ;  i++){
+		free( rectangle[i].typeVec );
 	}
 }
 
@@ -394,12 +380,12 @@ if (qtd.triangle > 0){
 	}
 }
 
-if (qtd.userDefine > 0){
-	free( usrDfn.pos );
-	free( usrDfn.vel );
-	free( usrDfn.theta );
-	free( usrDfn.omega );
-	free( usrDfn.type );
+if (qtd.singleParticles > 0){
+	free( singleParts.pos );
+	free( singleParts.vel );
+	free( singleParts.theta );
+	free( singleParts.omega );
+	free( singleParts.type );
 }
 /*************************************************************************/
 /*************************************************************************/	

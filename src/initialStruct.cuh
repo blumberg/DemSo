@@ -23,16 +23,16 @@
 // Estrutura para indicar quantas vezes cada estrutura abaixo aparecerá
 struct Quantity {
 
-	uint retangle;
+	uint rectangle;
 	uint triangle;
-	uint userDefine;
+	uint singleParticles;
 	uint controlParticle;
 
 };
 
 
 // Estrutura para criar um retangulo de partículas
-struct Retangle {
+struct Rectangle {
 
 	uint2 num; 		// Numero de partículas em X e Y
 	float2 start;	// Coordenada do canto inferior esquerdo do quadrado
@@ -56,7 +56,7 @@ struct Triangle {
 };
 
 // Entrada na mão de partículas
-struct UserDefine {
+struct SingleParticles {
 
 	uint num;		// Numero total de particulas adicionadas
 	float2 *pos;	// Posicao das partículas

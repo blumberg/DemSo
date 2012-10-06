@@ -18,6 +18,7 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <cstring>
 #include <cstdlib>
@@ -159,15 +160,43 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 	// Percorre os nós filhos de <particles> de 1 em 1
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
-		// Caso for encontrado um bloco de partículas
-		if (node->name() == string("block"))
+		// Caso for encontrado um retângulo
+		if (node->name() == string("rectangle"))
 		{
-			parts.start = make_float2(0);
-			parts.end = make_float2(0);
-			parts.num = make_float2(0);
-			if (node->first_node("start")) parts.start = readVector(node->first_node("start"));
-			if (node->first_node("end")) parts.end = readVector(node->first_node("end"));
-			if (node->first_node("num")) parts.num = readVector(node->first_node("num"));
+			// Tenta recuperar o atributo particletype
+			xml_attribute<> *attr = node->first_attribute("particletype");
+
+			// Se ele for encontrado, lê os tipos e guarda no vetor
+			if (attr)
+			{
+				// Le o ID dos tipos e guarda num vetor de IDs
+				vector<string> typeids = readCSVLine(attr->value());
+
+				// Percorre o vetor de IDs e popula o vetor dos respectivos índices
+				vector<int> typeindexes;
+				for (register int i = 0; i < typeids.size(); i++)
+					typeindexes.push_back(properties->particleTypeIndexById(typeids[i]));
+
+				// Adiciona o vetor de tipos à lista
+				parts.types.push_back(typeindexes);
+			}
+			// Senão usa um tipo só: o primeiro a ser definido
+			else {
+				vector<int> typeindexes(1,0);
+				parts.types.push_back(typeindexes);
+				cout << "Particle type not specified for rectangle, defaulting to first one: "
+					 << properties->particleTypes[0].id << endl;
+			}
+
+			// Leitura das propriedades do retângulo ou término do programa caso falte alguma
+			if (node->first_node("start")) parts.start.push_back(readVector(node->first_node("start")));
+			else throw string("<start> tag not found inside rectangle");
+
+			if (node->first_node("end")) parts.end.push_back(readVector(node->first_node("end")));
+			else throw string("<end> tag not found inside rectangle");
+
+			if (node->first_node("num")) parts.num.push_back(make_uint2(readVector(node->first_node("num"))));
+			else throw string("<num> tag not found inside rectangle");
 		}
 
 		// Caso for encontrada uma partícula avulsa (tag <particle>)
@@ -234,6 +263,22 @@ float2 DEMParser::readVector (xml_node<> *root)
 		else if (node->name() == string("y")) vect.y = atof(node->value());
 	}
 	return vect;
+}
+
+// FIXME: por enquanto espaços em branco não são desconsiderados
+vector<string> DEMParser::readCSVLine (string line)
+{
+	stringstream ss(line);
+	vector<string> values;
+
+	while (ss.good())
+	{
+		string substr;
+		getline (ss, substr, ',');
+		values.push_back(substr);
+	}
+
+	return values;
 }
 
 /*int main (int argc, char **argv)

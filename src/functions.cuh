@@ -32,13 +32,13 @@ uint iDivUp(uint, uint);
 
 void computeGridSize(uint, uint, uint &, uint &);
 
-void createRetangleBlock (float*, uint*, uint*, uint*, float2, float2, 
-						  uint2, uint, uint, uint*, unsigned long);
+void createRectangles (float*, uint*, uint*, uint*, float2, float2, 
+					   uint2, uint, uint, uint*, unsigned long);
 
-void createTriangleBlock (float*, uint*, uint*, uint*, float2, uint, 
-						  uint, uint*, float, float, uint, uint);
+void createTriangles (float*, uint*, uint*, uint*, float2, uint, 
+					  uint, uint*, float, float, uint, uint);
 
-void createUserDefineBlock (float*, float*, float*, float*, uint*, 
+void createSingleParticles (float*, float*, float*, float*, uint*, 
 							uint*, uint*, float2*, float2*, float*, 
 							float*, uint*, uint, uint);
 

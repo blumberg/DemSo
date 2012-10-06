@@ -38,7 +38,7 @@ int DEMProperties::particleTypeIndexById (string id)
 {
 	for (register int i = 0;i < particleTypes.size();i++)
 		if (particleTypes[i].id == id) return i;
-	throw "Nonexistant particle id: " + id;
+	throw "Nonexistant particle id: '" + id + "'";
 }
 // --- end FIXME
 
@@ -91,12 +91,28 @@ void DEMSimulation::printConfiguration (void)
 		cout << "\tfrictionCoefficient: " << properties.particleTypes[i].frictionCoefficient << endl;
 		cout << endl;
 	}
+	cout << "-- Particle Rectangles" << endl;
+	cout << "numRectangles: " << particles.start.size () << endl;
+	for (register int i = 0; i < particles.start.size(); i++)
+	{
+		cout << "\t---- Particle Rectangle " << i << endl;
+		cout << "\tstart: (" << particles.start[i].x << ", " << particles.start[i].y << ")" << endl;
+		cout << "\tend: (" << particles.end[i].x << ", " << particles.end[i].y << ")" << endl;
+		cout << "\tnum: (" << particles.num[i].x << ", " << particles.num[i].y << ")" << endl;
+		cout << "\ttypes:";
+		for (register int j = 0; j < particles.types[i].size(); j++)
+			cout << " [" << particles.types[i][j] << "] = "
+				 << properties.particleTypes[particles.types[i][j]].id;
+		cout << endl;
+	}
+	cout << endl;
 	cout << "-- Single Particles" << endl;
 	cout << "numSingleParticles: " << particles.pos.size () << endl;
 	for (register int i = 0; i < particles.pos.size(); i++)
 	{
 		cout << "\t---- Particle " << i << endl;
-		cout << "\ttype: " << particles.type[i] << endl;
+		cout << "\ttype: [" << particles.type[i] << "] = "
+			 << properties.particleTypes[particles.type[i]].id << endl;
 		cout << "\tpos: (" << particles.pos[i].x << ", " << particles.pos[i].y << ")" << endl;
 		cout << "\tvel: (" << particles.vel[i].x << ", " << particles.vel[i].y << ")" << endl;
 		cout << "\ttheta: " << particles.theta[i] << endl;

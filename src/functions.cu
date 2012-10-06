@@ -128,18 +128,18 @@ void computeGridSize(uint n, uint blockSize, uint &numBlocks, uint &numThreads)
 
 // cria a posição inicial das partículas. Esse kernel é executado em um
 // grid 2D com um número máximo de 16 threads por bloco
-void createRetangleBlock (float* 		pos,
-						  uint*			ID,
-						  uint*			loc,
-						  uint*			type,
-						  float2		start,
-						  float2		sideLenght,
-						  uint2			side,
-						  uint 			startID,
-						  uint 			numParticleTypes,
-						  uint*			particleTypeVec,
-						  unsigned long	seed){
-
+void createRectangles (float* 		pos,
+					  uint*			ID,
+					  uint*			loc,
+					  uint*			type,
+					  float2		start,
+					  float2		sideLenght,
+					  uint2			side,
+					  uint 			startID,
+					  uint 			numParticleTypes,
+					  uint*			particleTypeVec,
+					  unsigned long	seed)
+{
 	// alocando vetores na placa de video
 	// cudaMalloc --> aloca espaço na placa de vídeo
 	// cudaMemcpy --> transfere dados entre a CPU (Host) e GPU (Device)
@@ -158,35 +158,35 @@ void createRetangleBlock (float* 		pos,
 	dim3 numBlocks(numBlocksx,numBlocksy);
 	dim3 numThreads(numThreadsx,numThreadsy);
 
-	createRetangleBlockD<<<numBlocks,numThreads>>>((float2*)pos,
-												   ID,
-												   loc,
-												   type,
-												   start,
-												   sideLenght,
-												   side,
-												   startID,
-												   numParticleTypes,
-												   d_particleTypeVec,
-												   seed);
-													  
+	createRectanglesD<<<numBlocks,numThreads>>>((float2*)pos,
+											   ID,
+											   loc,
+											   type,
+											   start,
+											   sideLenght,
+											   side,
+											   startID,
+											   numParticleTypes,
+											   d_particleTypeVec,
+											   seed);
+
 	// Desalocando espaço na placa de vídeo (Não mais necessário)
     cudaFree( d_particleTypeVec );													  
 }
 
-void createTriangleBlock (float*	pos,
-						  uint*		ID,
-						  uint*		loc,
-						  uint*		type,
-						  float2	start,
-						  uint		N,
-						  uint		numParticleTypes,
-						  uint*		particleTypeVec,
-						  float 	space,
-						  float		height,
-						  uint 		startID,
-						  uint		numParticles){
-						  
+void createTriangles (float*	pos,
+					  uint*		ID,
+					  uint*		loc,
+					  uint*		type,
+					  float2	start,
+					  uint		N,
+					  uint		numParticleTypes,
+					  uint*		particleTypeVec,
+					  float 	space,
+					  float		height,
+					  uint 		startID,
+					  uint		numParticles)
+{
 	uint *d_particleTypeVec;
 
 	cudaMalloc((void**)&d_particleTypeVec, sizeof(uint)*numParticleTypes);
@@ -197,23 +197,23 @@ void createTriangleBlock (float*	pos,
 	uint numBlocks, numThreads;
 	computeGridSize(numParticles,256,numBlocks,numThreads);
 	
-	createTriangleBlockD<<<numBlocks,numThreads>>>((float2*)pos,
-												   ID,
-												   loc,
-												   type,
-												   start,
-												   N,
-												   numParticleTypes,
-												   d_particleTypeVec,
-												   space,
-												   height,
-												   startID,
-												   numParticles);
+	createTrianglesD<<<numBlocks,numThreads>>>((float2*)pos,
+											   ID,
+											   loc,
+											   type,
+											   start,
+											   N,
+											   numParticleTypes,
+											   d_particleTypeVec,
+											   space,
+											   height,
+											   startID,
+											   numParticles);
 	
     cudaFree( d_particleTypeVec );													  
 }
 
-void createUserDefineBlock (float*	pos,
+void createSingleParticles (float*	pos,
 							float*	vel,
 							float*	theta,
 							float*	omega,
