@@ -435,9 +435,15 @@ void collideD(float2*	oldPos,               // input: sorted positions
 			  float 	controlTheta,
 			  float 	controlOmega,
 			  uint		controlType,
+#if USE_ATOMIC
 			  float2*	controlForce,
 			  float*	controlMoment
-#endif
+#else
+			  float*	forceVecx,
+			  float*	forceVecy,
+			  float*	momentVec
+#endif // USE_ATOMIC
+#endif // USE_BIG_PARTICLE
 			  )
 
 {	
@@ -487,12 +493,17 @@ void collideD(float2*	oldPos,               // input: sorted positions
     						  controlOmega, type, controlType, m);
     force += f;
     moment += m;
-//    controlForce += f;
-//    controlMoment += m;
+    
+#if USE_ATOMIC
     atomicAdd(&(controlForce->x),-f.x);
     atomicAdd(&(controlForce->y),-f.y);
     atomicAdd(controlMoment, -m);
-#endif
+#else
+	forceVecx[index] = -f.x;
+	forceVecy[index] = -f.y;
+	momentVec[index] = -m;
+#endif // USE_ATOMIC
+#endif // USE_BIG_PARTICLE
 
 	newAcc[index] = force / partPropD[type].mass;
 	// moment / momentOfInertia

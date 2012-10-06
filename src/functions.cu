@@ -383,6 +383,17 @@ void collide(float* 	oldPos,
 	cudaMemset(controlForce, 0, sizeof(float2));
 	cudaMemset(controlMoment, 0, sizeof(float));
 
+#if !USE_ATOMIC
+	float *forceVecx, *forceVecy;
+	float *momentVec;
+	cudaMalloc((void**)&forceVecx, sizeof(float)*numParticles);
+	cudaMalloc((void**)&forceVecy, sizeof(float)*numParticles);
+	cudaMalloc((void**)&momentVec, sizeof(float)*numParticles);
+//	cudaMemset(forceVecx,0,sizeof(float)*numParticles);
+//	cudaMemset(forceVecy,0,sizeof(float)*numParticles);
+//	cudaMemset(momentVec,0,sizeof(float)*numParticles);
+#endif
+
     // execute the kernel
     collideD<<< numBlocks, numThreads >>>((float2*)oldPos,
                                           (float2*)oldVel,
@@ -398,11 +409,35 @@ void collide(float* 	oldPos,
 			 							  controlTheta,
 			 							  controlOmega,
 										  controlType,
+#if USE_ATOMIC
 										  controlForce,
 										  controlMoment
-#endif
+#else
+										  forceVecx,
+										  forceVecy,
+										  momentVec
+#endif // USE_ATOMIC
+#endif // USE_BIG_PARTICLE
 										  );
-										  
+
+#if !USE_ATOMIC
+	float2 f;
+	f.x = thrust::reduce(thrust::device_ptr<float>(forceVecx),
+							  thrust::device_ptr<float>(forceVecx + numParticles));
+	f.y = thrust::reduce(thrust::device_ptr<float>(forceVecy),
+							  thrust::device_ptr<float>(forceVecy + numParticles));
+	float m = thrust::reduce(thrust::device_ptr<float>(momentVec),
+							 thrust::device_ptr<float>(momentVec + numParticles));
+//		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", f.x, f.y);
+//		printf("\ncontrolMoment = %5.2f\n", m);
+	cudaMemcpy(controlForce,&f,sizeof(float2),cudaMemcpyHostToDevice);
+	cudaMemcpy(controlMoment,&m,sizeof(float),cudaMemcpyHostToDevice);
+	cudaFree( forceVecx );
+	cudaFree( forceVecy );
+	cudaFree( momentVec );
+#endif
+
+
     // Retirando da memória de textura 
 	#if USE_TEX
 		cudaUnbindTexture(oldPosTex);

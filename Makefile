@@ -4,7 +4,14 @@ TARGET    := DemSo
 SRC_DIR   := src
 OBJ_DIR   := obj
 
-NVCCFLAGS	:= -O3 -arch=sm_21 -I includes
+# CUDA code generation flags
+GENCODE_SM11    := -gencode arch=compute_11,code=sm_11
+GENCODE_SM20    := -gencode arch=compute_20,code=sm_20
+
+GENCODE_FLAGS := $(GENCODE_SM11)
+#GENCODE_FLAGS := $(GENCODE_SM11) $(GENCODE_SM20)
+
+NVCCFLAGS	:= -O3 -I includes
 LIBS		:= -lglut -lpthread -lGL
 
 CPP_FILES = $(wildcard $(SRC_DIR)/*.cpp)
@@ -21,15 +28,15 @@ OBJS =  $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(notdir $(CPP_FILES)))
 OBJS += $(patsubst %.cu,$(OBJ_DIR)/%.cu.o,$(notdir $(CU_FILES)))
 
 $(TARGET) : $(OBJS)
-	$(NVCC) $(NVCCFLAGS) -o $@ $(OBJS) $(LIBS)
-
+	$(NVCC) $(NVCCFLAGS) $(GENCODE_FLAGS) -o $@ $(OBJS) $(LIBS)
+	
 $(OBJ_DIR)/%.cu.o : $(SRC_DIR)/%.cu $(CUH_FILES)
 	mkdir -p $(OBJ_DIR)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(LIBS)
+	$(NVCC) $(NVCCFLAGS) $(GENCODE_FLAGS) -c -o $@ $< $(LIBS)
 
 $(OBJ_DIR)/%.o : $(SRC_DIR)/%.cpp $(H_FILES)
 	mkdir -p $(OBJ_DIR)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ $< $(LIBS)
+	$(NVCC) $(NVCCFLAGS) $(GENCODE_FLAGS) -c -o $@ $< $(LIBS)
 
 .PRONY: all
 all: $(TARGET)
