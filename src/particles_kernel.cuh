@@ -281,7 +281,7 @@ float2 collideSpheres(float2 posA, float2 posB,
 							  /(partPropD[typeA].shearStiffness+partPropD[typeB].shearStiffness);
 		float normalDamping = (partPropD[typeA].normalDamping*partPropD[typeB].normalDamping)
 							 /(partPropD[typeA].normalDamping+partPropD[typeB].normalDamping);
-		float frictionCoefficient = (partPropD[typeA].boundaryDamping+partPropD[typeB].boundaryDamping)/2;
+		float frictionCoefficient = (partPropD[typeA].frictionCoefficient+partPropD[typeB].frictionCoefficient)/2;
 
         // spring force
         force = -normalStiffness*(collideDist - dist) * norm;
