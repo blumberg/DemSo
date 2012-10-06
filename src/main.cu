@@ -133,16 +133,17 @@ void PrepareSim (const char *filename,
 		
 		sisProps->numParticles += singleParts.num;
 	}
-	
-	if (qtd.controlParticle > 0){
-		
+
+#if USE_BIG_PARTICLE
+	if (qtd.controlParticle > 0)
+	{
 		ctrlParticle.pos = make_float2( 5,9.5);
 		ctrlParticle.vel = make_float2( 0 , 0);
 		ctrlParticle.theta = 0;
 		ctrlParticle.omega = 0;
-		ctrlParticle.type = 5;
-	
+		ctrlParticle.type = sim.particles.controlledType;
 	}
+#endif
 
 /*************************************************************************/
 /*************************************************************************/
@@ -184,32 +185,23 @@ void PrepareSim (const char *filename,
 	}
 
 	// Definindo o maior raio da simulação
-	// Se existir uma única partícula gigante (TUBULAÇÃO) talvez seja
-	// interessante desprezar esse valor e no lugar, fazer com que essa
-	// única partícula teste com todas as outras.
-	float maxRadius = 0, plotRadius;
-	for (int i = 0; i < sim.properties.particleTypes.size()
+	float maxRadius = 0;
+	for (int i = 0; i < sim.properties.particleTypes.size(); i++)
+	{
 #if USE_BIG_PARTICLE
-	-1
+		if (i == sim.particles.controlledType) continue; // Skip controlled particle
 #endif
-	; i++){
 		if (maxRadius < partProps[i].radius) maxRadius = partProps[i].radius;
 	}
 
 #if USE_BIG_PARTICLE
-	if (maxRadius < partProps[sim.properties.particleTypes.size()-1].radius){
-		plotRadius = partProps[sim.properties.particleTypes.size()-1].radius;
-	}else{
-#endif
-		plotRadius = maxRadius;
-#if USE_BIG_PARTICLE
-	}
-#endif
-	// tamanho do quadrado que contem a esfera em PIXEL (para a saida grafica)
+	float plotRadius = partProps[sim.particles.controlledType].radius;
+	// tamanho do quadrado que contem a esfera controlada em PIXEL (para a saida grafica)
 	renderPar->dimx = ceil(renderPar->imageDIMx/sisProps->cubeDimension.x*plotRadius)*2;
 	if (renderPar->dimx < 2) renderPar->dimx = 2;
 	renderPar->dimy = ceil(renderPar->imageDIMy/sisProps->cubeDimension.y*plotRadius)*2;
 	if (renderPar->dimy < 2) renderPar->dimy = 2;
+#endif
 
 	// Calcula o tamanho do grid arredondando para um valor que seja
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera

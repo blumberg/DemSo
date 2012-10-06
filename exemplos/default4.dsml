@@ -97,5 +97,7 @@
 			<theta>0</theta>
 			<omega>3.1415</omega>
 		</particle>
+		
+		<controlled particletype="MOVE" />
 	</particles>
 </simulation>

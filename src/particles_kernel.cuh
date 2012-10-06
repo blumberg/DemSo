@@ -610,8 +610,8 @@ void plotControlParticleD(uchar4*	ptr,
 	
 	float pRadius = renderParD.imageDIMy/sisPropD.cubeDimension.y*partPropD[type].radius;
 	
-	if ((rx*rx + ry*ry) < (halfSidex*halfSidey)){
-		
+	if ((rx*rx + ry*ry) < (halfSidex*halfSidey))
+	{
 		int cPixelx = renderParD.imageDIMx/sisPropD.cubeDimension.x*pos.x;
 		int cPixely = renderParD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
 	

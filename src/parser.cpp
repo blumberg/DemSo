@@ -29,6 +29,7 @@
 #include "rapidxml_utils.hpp"
 #include "datatypes.hpp"
 #include "parser.hpp"
+#include "main.cuh"
 
 using namespace std;
 using namespace rapidxml;
@@ -292,6 +293,29 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 				parts.omega.push_back(0.0f);
 		}
 	}
+#if USE_BIG_PARTICLE
+	xml_node<> *node = root->first_node("controlled");
+	if (node)
+	{
+		int type;
+
+		// Tenta recuperar o atributo particletype
+		xml_attribute<> *attr = node->first_attribute("particletype");
+
+		// Se ele está presente, seu valor contém o ID do tipo da partícula,
+		// então, procuramos qual é o index do típo de partícula a partir do ID
+		if (attr) type = properties->particleTypeIndexById(attr->value());
+
+		// Senão utilizamos o primeiro típo de partículas definido
+		else {
+			type = 0;
+			cout << "Controlled particle's type not specified, defaulting to first one: "
+				 << properties->particleTypes[type].id << endl;
+		}
+		parts.controlledType = type;
+	}
+	else throw "Controlled particle tag missing";
+#endif
 
 	return parts;
 }
