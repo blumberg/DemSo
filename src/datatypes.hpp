@@ -69,18 +69,20 @@ class DEMParticles {
 		vector<float2>	start;	// Coordenadas do canto inferior-esquerdo
 		vector<float2>	end;	// Coordenadas do canto superior-direito
 		vector<uint2>	num;	// Número de partículas desejado em x, y
-		vector< vector<int> >	types;	// Tipos de partículas à sortear dentro do retângulo
+		vector< vector<int> > types;	// Tipos de partículas à sortear dentro do retângulo
+
+		// Para triângulos de partículas
+		vector<float2>	t_pos;	// Posição do meio da aresta inferior
+		vector<float>	width;	// Largura da base do triângulo
+		vector<uint>	t_num;  // Número de partículas na base do triângulo
+		vector< vector<int> > t_types;	// Tipos de partículas à sortear dentro do triângulo
 
 		// Para partículas avulsas
 		vector<float2>	pos;	// Posições x, y
 		vector<float2>	vel;	// Velocidades x, y
 		vector<float>	theta;	// Posições angulares
 		vector<float>	omega;	// Velocidades angulares
-		vector<int>		type;	// Se para uma partícula i, type[i] == 1, então
-								// o tipo desta partícula será o que estiver na posição
-								// 1 no vetor particleTypes[]
-		//void addParticles (DEMParticles);
-		//void generateBlock (int, float3, float3, float3, DEMProperties *);
+		vector<int>		type;	// Tipos das partículas
 };
 
 class DEMSimulation {

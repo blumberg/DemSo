@@ -199,6 +199,45 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 			else throw string("<num> tag not found inside rectangle");
 		}
 
+		// Caso for encontrado um triângulo
+		if (node->name() == string("triangle"))
+		{
+			// Tenta recuperar o atributo particletype
+			xml_attribute<> *attr = node->first_attribute("particletype");
+
+			// Se ele for encontrado, lê os tipos e guarda no vetor
+			if (attr)
+			{
+				// Le o ID dos tipos e guarda num vetor de IDs
+				vector<string> typeids = readCSVLine(attr->value());
+
+				// Percorre o vetor de IDs e popula o vetor dos respectivos índices
+				vector<int> typeindexes;
+				for (register int i = 0; i < typeids.size(); i++)
+					typeindexes.push_back(properties->particleTypeIndexById(typeids[i]));
+
+				// Adiciona o vetor de tipos à lista
+				parts.t_types.push_back(typeindexes);
+			}
+			// Senão usa um tipo só: o primeiro a ser definido
+			else {
+				vector<int> typeindexes(1,0);
+				parts.t_types.push_back(typeindexes);
+				cout << "Particle type not specified for triangle, defaulting to first one: "
+					 << properties->particleTypes[0].id << endl;
+			}
+
+			// Leitura das propriedades do triângulo ou término do programa caso falte alguma
+			if (node->first_node("pos")) parts.t_pos.push_back(readVector(node->first_node("pos")));
+			else throw string("<pos> tag not found inside triangle");
+
+			if (node->first_node("width")) parts.width.push_back(atof(node->first_node("width")->value()));
+			else throw string("<width> tag not found inside triangle");
+
+			if (node->first_node("num")) parts.t_num.push_back(atoi(node->first_node("num")->value()));
+			else throw string("<num> tag not found inside triangle");
+		}
+
 		// Caso for encontrada uma partícula avulsa (tag <particle>)
 		if (node->name() == string("particle"))
 		{

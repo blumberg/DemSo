@@ -106,6 +106,21 @@ void DEMSimulation::printConfiguration (void)
 		cout << endl;
 	}
 	cout << endl;
+	cout << "-- Particle Triangles" << endl;
+	cout << "numTriangles: " << particles.t_pos.size() << endl;
+	for (register int i = 0; i < particles.t_pos.size(); i++)
+	{
+		cout << "\t---- Particle Triangle " << i << endl;
+		cout << "\tpos: (" << particles.t_pos[i].x << ", " << particles.t_pos[i].y << ")" << endl;
+		cout << "\twidth: " << particles.width[i] << endl;
+		cout << "\tnum: " << particles.t_num[i] << endl;
+		cout << "\ttypes:";
+		for (register int j = 0; j < particles.t_types[i].size(); j++)
+			cout << " [" << particles.t_types[i][j] << "] = "
+				 << properties.particleTypes[particles.t_types[i][j]].id;
+		cout << endl;
+	}
+	cout << endl;
 	cout << "-- Single Particles" << endl;
 	cout << "numSingleParticles: " << particles.pos.size () << endl;
 	for (register int i = 0; i < particles.pos.size(); i++)

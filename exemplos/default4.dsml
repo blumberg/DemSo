@@ -37,8 +37,8 @@
 		</particletype>
 		
 		<particletype id="verde" name="Partículas Verdes" color="00ff00">
-			<mass>1e-2</mass>
-			<radius>40e-3</radius>
+			<mass>5e-2</mass>
+			<radius>100e-3</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
@@ -58,7 +58,7 @@
 		
 		<particletype id="amarela" name="Partículas Amarelas" color="ffff00">
 			<mass>1e-2</mass>
-			<radius>20e-2</radius>
+			<radius>20e-3</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
@@ -79,39 +79,20 @@
 	</properties>
 
 	<particles>
-	<!--
-		<rectangle particletype="branca">
+		<rectangle particletype="branca,vermelha">
 			<start><x>1.0</x><y>1.0</y></start>
 			<end><x>4.5</x><y>4.0</y></end>
 			<num><x>40</x><y>40</y></num>
 		</rectangle>
 
-		<rectangle particletype="azul">
-			<start><x>5.5</x><y>1.0</y></start>
-			<end><x>9.0</x><y>4.0</y></end>
-			<num><x>40</x><y>40</y></num>
-		</rectangle>
+		<triangle particletype="amarela,azul">
+			<pos><x>7.25</x><y>1</y></pos>
+			<width>3.5</width>
+			<num>40</num>
+		</triangle>
 
-		<rectangle particletype="verde">
-			<start><x>1.0</x><y>5.0</y></start>
-			<end><x>4.5</x><y>9.0</y></end>
-			<num><x>40</x><y>40</y></num>
-		</rectangle>
-
-		<rectangle particletype="vermelha">
-			<start><x>5.5</x><y>5.0</y></start>
-			<end><x>9.0</x><y>9.0</y></end>
-			<num><x>40</x><y>40</y></num>
-		</rectangle>
--->
-		<particle particletype="amarela">
+		<particle particletype="verde">
 			<pos><x>5</x><y>5</y></pos>
-			<vel><x>0</x><y>0</y></vel>
-			<theta>0</theta>
-			<omega>3.1415</omega>
-		</particle>
-		<particle particletype="vermelha">
-			<pos><x>5</x><y>6</y></pos>
 			<vel><x>0</x><y>0</y></vel>
 			<theta>0</theta>
 			<omega>3.1415</omega>

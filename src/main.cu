@@ -75,7 +75,7 @@ void PrepareSim (const char *filename,
 	
 	// verifica quantos blocos de cada tipo existe
 	qtd.rectangle = sim.particles.start.size();
-	qtd.triangle = 0;
+	qtd.triangle = sim.particles.t_pos.size();
 	qtd.singleParticles = sim.particles.pos.size();
 	qtd.controlParticle = USE_BIG_PARTICLE; // Quantidade máxima igual a 1
 	
@@ -84,7 +84,7 @@ void PrepareSim (const char *filename,
 	SingleParticles singleParts;
 	ControlParticle ctrlParticle;
 
-	// Carrega propriedades dos retângulos
+	// Load rectangles' properties
 	for (register int i = 0; i < qtd.rectangle; i++)
 	{
 		rectangle[i].start = sim.particles.start[i];
@@ -99,20 +99,22 @@ void PrepareSim (const char *filename,
 		sisProps->numParticles += rectangle[i].num.x * rectangle[i].num.y;
 	}
 	
-	if (qtd.triangle > 0){
-	
-		triangle[0].num = 180;
-		triangle[0].pos = make_float2(5,1);
-		triangle[0].side = 9;
-		triangle[0].types = 2;
-		triangle[0].typeVec = (uint*)malloc(sizeof(uint) * triangle[0].types);
-		triangle[0].typeVec[0] = 4;
-		triangle[0].typeVec[1] = 3;
+	// Load triangles' properties
+	for (register int i = 0; i < qtd.triangle; i++)
+	{
+		triangle[i].pos = sim.particles.t_pos[i];
+		triangle[i].side = sim.particles.width[i];
+		triangle[i].num = sim.particles.t_num[i];
+		triangle[i].types = sim.particles.t_types[i].size();
+		triangle[i].typeVec = (uint*)malloc(sizeof(uint) * triangle[i].types);
+		memcpy (triangle[i].typeVec,
+				&sim.particles.t_types[i][0],
+				sizeof(int) * triangle[i].types);
 		
-		sisProps->numParticles += triangle[0].num*(triangle[0].num+1)/2;
-	
+		sisProps->numParticles += triangle[i].num*(triangle[i].num+1)/2;
 	}
-	
+
+	// Load single particles' properties
 	if (qtd.singleParticles > 0)
 	{	
 		singleParts.num = qtd.singleParticles;
@@ -239,69 +241,8 @@ void PrepareSim (const char *filename,
 	
 	uint startParticle = 0;
 	uint blockSize;
-		
-	// blocos retangulares	
-	if (qtd.rectangle > 0) {
-		float2 sideLenght;
-//		uint2 side;
-		
-		for (int i = 0; i < qtd.rectangle; i++){
 
-			sideLenght = rectangle[i].end - rectangle[i].start;
-//			side = rectangle[i].num;
-			
-			blockSize = rectangle[i].num.x * rectangle[i].num.y;
-
-			// Função para definir a posição inicial das esferas
-			createRectangles(partValues->pos1 + startParticle*2,
-							partValues->ID1 + startParticle,
-							partValues->loc1 + startParticle,
-							partValues->type1 + startParticle,
-							rectangle[i].start,
-							sideLenght,
-							rectangle[i].num,
-							startParticle,
-							rectangle[i].types,
-							rectangle[i].typeVec,
-							time(NULL));
-
-			startParticle += blockSize;
-		
-		}
-	}
-	
-	// bloco triangular
-	if (qtd.triangle > 0){
-	
-		float space;
-		float height;
-		
-		for (int i = 0 ; i < qtd.triangle ; i++ ){
-			
-			blockSize = triangle[i].num * ( triangle[i].num + 1 ) / 2;
-			space = triangle[i].side / ( triangle[i].num - 1 );
-			height = space * sqrt(3) / 2;
-			
-			createTriangles(partValues->pos1 + startParticle*2,
-							partValues->ID1 + startParticle,
-							partValues->loc1 + startParticle,
-							partValues->type1 + startParticle,
-							triangle[i].pos,
-							triangle[i].num,
-							triangle[i].types,
-							triangle[i].typeVec,
-							space,
-							height,
-							startParticle,
-							blockSize);
-								
-			startParticle += blockSize;
-			
-		}
-	
-	}
-	
-	// bloco definido pelo usuário
+	// Criando partículas avulsas
 	if (qtd.singleParticles > 0)
 	{
 		createSingleParticles(partValues->pos1 + startParticle*2,
@@ -320,6 +261,62 @@ void PrepareSim (const char *filename,
 							  startParticle);
 		
 		startParticle += singleParts.num;
+	}
+
+	// Criando retangulos
+	if (qtd.rectangle > 0) {
+		float2 sideLenght;
+		
+		for (int i = 0; i < qtd.rectangle; i++)
+		{
+			sideLenght = rectangle[i].end - rectangle[i].start;
+			
+			blockSize = rectangle[i].num.x * rectangle[i].num.y;
+
+			// Função para definir a posição inicial das esferas
+			createRectangles(partValues->pos1 + startParticle*2,
+							partValues->ID1 + startParticle,
+							partValues->loc1 + startParticle,
+							partValues->type1 + startParticle,
+							rectangle[i].start,
+							sideLenght,
+							rectangle[i].num,
+							startParticle,
+							rectangle[i].types,
+							rectangle[i].typeVec,
+							time(NULL));
+
+			startParticle += blockSize;
+		}
+	}
+	
+	// Criando triangulos
+	if (qtd.triangle > 0)
+	{
+		float space;
+		float height;
+		
+		for (int i = 0 ; i < qtd.triangle ; i++ )
+		{
+			blockSize = triangle[i].num * ( triangle[i].num + 1 ) / 2;
+			space = triangle[i].side / ( triangle[i].num - 1 );
+			height = space * sqrt(3) / 2;
+			
+			createTriangles(partValues->pos1 + startParticle*2,
+							partValues->ID1 + startParticle,
+							partValues->loc1 + startParticle,
+							partValues->type1 + startParticle,
+							triangle[i].pos,
+							triangle[i].num,
+							triangle[i].types,
+							triangle[i].typeVec,
+							space,
+							height,
+							startParticle,
+							blockSize);
+
+			startParticle += blockSize;
+		}
 	}
 	
 /*************************************************************************/
