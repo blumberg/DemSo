@@ -2,27 +2,29 @@
 <simulation>
 	<parameters>
 		<timestep>10.0e-4</timestep>
+		<imageHeight>800</imageHeight>
+		<follow>0</follow>
+		<follow>1</follow>
+		<follow>2</follow>
+		<follow>3</follow>
 	</parameters>
 
 	<environment>
-		<dimensions>
-			<x>10</x>
-			<y>10</y>
-		</dimensions>
+		<dimensions><x>10</x><y>10</y></dimensions>
 		<gravity><y>-9.81</y></gravity>
 		<stiffness dir="normal">1000</stiffness>
 		<stiffness dir="shear">100</stiffness>
-		<damping>15</damping>
-		<friction>0.4</friction>
 	</environment>
 
 	<properties>
 		<particletype id="vermelha" name="Partículas Vermelhas" color="255000000">
 			<mass>1</mass>
 			<radius>100e-3</radius>
-			<stiffness dir="normal">1e5</stiffness>
-			<stiffness dir="shear">1e5</stiffness>
-			<damping>268.32</damping>
+			<stiffness dir="normal">1e3</stiffness>
+			<stiffness dir="shear">1e3</stiffness>
+			<damping>0.2</damping>
+			<damping type="boundary">0.5</damping>
+			<friction>0.4</friction>
 		</particletype>
 	</properties>
 
@@ -49,7 +51,7 @@
 			<pos><x>9</x><y>5</y></pos>
 			<vel><x>7</x><y>2</y></vel>
 			<theta>42</theta>
-			<omega>314.15</omega>
+			<omega>3.1415</omega>
 		</particle>
 	</particles>
 </simulation>

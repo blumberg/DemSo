@@ -50,6 +50,9 @@ DEMParameters DEMParser::loadParameters (void)
 	DEMParameters params;
 	xml_node<> *root = rootTag->first_node("parameters");
 
+	// Tamanho padrão da janela de simulação (pixels)
+	params.imageDIMy = 800;
+
 	// Percorrento os nós filhos do nó principal (<parameters>)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
