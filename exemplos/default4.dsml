@@ -66,7 +66,7 @@
 			<friction>0.4</friction>
 		</particletype>
 
-		<particletype id="MOVE" color="1a3311">
+		<particletype id="MOVE" color="3a9933">
 			<mass>100</mass>
 			<radius>500e-3</radius>
 			<stiffness dir="normal">1e20</stiffness>
@@ -75,7 +75,6 @@
 			<damping type="boundary">0.5</damping>
 			<friction>0.4</friction>
 		</particletype>
-
 	</properties>
 
 	<particles>

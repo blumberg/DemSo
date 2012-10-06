@@ -269,7 +269,7 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 			if (node_pos)
 				parts.pos.push_back(readVector(node_pos));			
 			else
-				throw "Missing <pos> tag on particle definition.";
+				throw string("Missing <pos> tag on particle definition");
 
 			// Lê a velocidade inicial (tag <vel>)
 			xml_node<> *node_vel = node->first_node("vel");
@@ -314,7 +314,7 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 		}
 		parts.controlledType = type;
 	}
-	else throw "Controlled particle tag missing";
+	else throw string("Controlled particle tag missing");
 #endif
 
 	return parts;

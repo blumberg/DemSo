@@ -17,11 +17,21 @@
 	</environment>
 
 	<properties>
-		<particletype id="vermelha" name="Partículas Vermelhas" color="255000000">
+		<particletype id="amarela" name="Partículas Amarelas" color="ffff00">
 			<mass>1</mass>
-			<radius>100e-3</radius>
-			<stiffness dir="normal">1e3</stiffness>
-			<stiffness dir="shear">1e3</stiffness>
+			<radius>200e-3</radius>
+			<stiffness dir="normal">1000</stiffness>
+			<stiffness dir="shear">1000</stiffness>
+			<damping>0.2</damping>
+			<damping type="boundary">0.5</damping>
+			<friction>0.4</friction>
+		</particletype>
+
+		<particletype id="MOVE" color="3a9933">
+			<mass>100</mass>
+			<radius>500e-3</radius>
+			<stiffness dir="normal">1e20</stiffness>
+			<stiffness dir="shear">1e20</stiffness>
 			<damping>0.2</damping>
 			<damping type="boundary">0.5</damping>
 			<friction>0.4</friction>
@@ -29,29 +39,31 @@
 	</properties>
 
 	<particles>
-		<particle particletype="vermelha">
+		<particle particletype="amarela">
 			<pos><x>5</x><y>5</y></pos>
 			<vel><x>0</x><y>0</y></vel>
 			<theta>0</theta>
 			<omega>3.1415</omega>
 		</particle>
-		<particle particletype="vermelha">
+		<particle particletype="amarela">
 			<pos><x>4</x><y>4</y></pos>
 			<vel><x>-1</x><y>-1</y></vel>
 			<theta>123</theta>
 			<omega>2.34</omega>
 		</particle>
-		<particle particletype="vermelha">
+		<particle particletype="amarela">
 			<pos><x>2</x><y>2</y></pos>
 			<vel><x>10</x><y>1</y></vel>
 			<theta>4</theta>
 			<omega>80</omega>
 		</particle>
-		<particle particletype="vermelha">
+		<particle particletype="amarela">
 			<pos><x>9</x><y>5</y></pos>
 			<vel><x>7</x><y>2</y></vel>
 			<theta>42</theta>
 			<omega>3.1415</omega>
 		</particle>
+
+		<controlled particletype="MOVE" />
 	</particles>
 </simulation>
