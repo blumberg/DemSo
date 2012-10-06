@@ -76,7 +76,7 @@ void PrepareSim (const char *filename,
 	// verifica quantos blocos de cada tipo existe
 	qtd.rectangle = sim.particles.start.size();
 	qtd.triangle = 0;
-	qtd.singleParticles = 0; // Quantidade máxima igual a 1 (booleano)
+	qtd.singleParticles = sim.particles.pos.size();
 	qtd.controlParticle = USE_BIG_PARTICLE; // Quantidade máxima igual a 1
 	
 	Rectangle rectangle[qtd.rectangle];
@@ -113,45 +113,21 @@ void PrepareSim (const char *filename,
 	
 	}
 	
-	if (qtd.singleParticles > 0){
-		
-		singleParts.num = 5;
+	if (qtd.singleParticles > 0)
+	{	
+		singleParts.num = qtd.singleParticles;
 		
 		singleParts.pos = (float2*)malloc(sizeof(float2) * singleParts.num);
 		singleParts.vel = (float2*)malloc(sizeof(float2) * singleParts.num);
 		singleParts.theta = (float*)malloc(sizeof(float) * singleParts.num);
 		singleParts.omega = (float*)malloc(sizeof(float) * singleParts.num);
 		singleParts.type = (uint*)malloc(sizeof(uint) * singleParts.num);
-		
-		singleParts.pos[0] = make_float2( 2, 0.5);
-		singleParts.pos[1] = make_float2( 5, 3);
-		singleParts.pos[2] = make_float2( 5, 5);
-		singleParts.pos[3] = make_float2( 5, 7);
-		singleParts.pos[4] = make_float2( 5, 9);
-		
-		singleParts.vel[0] = make_float2( 0, 0);
-		singleParts.vel[1] = make_float2( 0, 0);
-		singleParts.vel[2] = make_float2( 0, 0);
-		singleParts.vel[3] = make_float2( 0, 0);
-		singleParts.vel[4] = make_float2( 0, 0);
-		
-		singleParts.theta[0] = 0;
-		singleParts.theta[1] = 0;
-		singleParts.theta[2] = 0;
-		singleParts.theta[3] = 0;
-		singleParts.theta[4] = 0;
-		
-		singleParts.omega[0] = 10;
-		singleParts.omega[1] = 10;
-		singleParts.omega[2] = -1;
-		singleParts.omega[3] = -10;
-		singleParts.omega[4] = 0;
-		
-		singleParts.type[0] = 0;
-		singleParts.type[1] = 1;
-		singleParts.type[2] = 2;
-		singleParts.type[3] = 3;
-		singleParts.type[4] = 4;
+
+		memcpy(singleParts.pos,	  &sim.particles.pos[0],   sizeof(float2) * singleParts.num);
+		memcpy(singleParts.vel,   &sim.particles.vel[0],   sizeof(float2) * singleParts.num);
+		memcpy(singleParts.theta, &sim.particles.theta[0], sizeof(float)  * singleParts.num);
+		memcpy(singleParts.omega, &sim.particles.omega[0], sizeof(float)  * singleParts.num);
+		memcpy(singleParts.type,  &sim.particles.type[0],  sizeof(int)	  * singleParts.num);
 		
 		sisProps->numParticles += singleParts.num;
 	}

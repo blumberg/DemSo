@@ -56,9 +56,9 @@
 			<friction>0.4</friction>
 		</particletype>
 		
-		<particletype id="bizarra" name="Partículas Bizarras" color="ffff00">
+		<particletype id="amarela" name="Partículas Amarelas" color="ffff00">
 			<mass>1e-2</mass>
-			<radius>20e-3</radius>
+			<radius>20e-2</radius>
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
@@ -79,6 +79,7 @@
 	</properties>
 
 	<particles>
+	<!--
 		<rectangle particletype="branca">
 			<start><x>1.0</x><y>1.0</y></start>
 			<end><x>4.5</x><y>4.0</y></end>
@@ -102,9 +103,15 @@
 			<end><x>9.0</x><y>9.0</y></end>
 			<num><x>40</x><y>40</y></num>
 		</rectangle>
-
-		<particle particletype="vermelha">
+-->
+		<particle particletype="amarela">
 			<pos><x>5</x><y>5</y></pos>
+			<vel><x>0</x><y>0</y></vel>
+			<theta>0</theta>
+			<omega>3.1415</omega>
+		</particle>
+		<particle particletype="vermelha">
+			<pos><x>5</x><y>6</y></pos>
 			<vel><x>0</x><y>0</y></vel>
 			<theta>0</theta>
 			<omega>3.1415</omega>
