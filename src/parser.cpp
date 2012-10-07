@@ -61,7 +61,7 @@ DEMParameters DEMParser::loadParameters (void)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("timestep")) params.timeStep = atof(node->value());
-		else if (node->name() == string("imageHeight")) params.imageDIMy = atoi(node->value());
+		else if (node->name() == string("imageheight")) params.imageDIMy = atoi(node->value());
 		else if (node->name() == string("follow")) params.followedParticles.push_back(atoi(node->value()));
 	}
 
@@ -166,6 +166,9 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 	if (properties->particleTypes.empty())
 		throw string("No particle types defined, aborting.");
 
+	// Contador de partículas avulsas; usado para seguí-las com follow
+	int numSingleParticles = 0;
+
 	// Percorre os nós filhos de <particles> de 1 em 1
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
@@ -254,11 +257,11 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 			int type;
 
 			// Tenta recuperar o atributo particletype
-			xml_attribute<> *attr = node->first_attribute("particletype");
+			xml_attribute<> *attr_type = node->first_attribute("particletype");
 
 			// Se ele está presente, seu valor contém o ID do tipo da partícula,
 			// então, procuramos qual é o index do típo de partícula a partir do ID
-			if (attr) type = properties->particleTypeIndexById(attr->value());
+			if (attr_type) type = properties->particleTypeIndexById(attr_type->value());
 
 			// Senão utilizamos o primeiro típo de partículas definido
 			else {
@@ -267,6 +270,15 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 					 << properties->particleTypes[type].id << endl;
 			}
 			parts.type.push_back(type);
+
+			// Tenta recuperar o atributo follow
+			xml_attribute<> *attr_follow = node->first_attribute("follow");
+
+			// Se ele está presente e seu valor é true, adicionamos a partícula na
+			// lista de partículas a serem seguidas
+			if (attr_follow)
+				if (attr_follow->value() == string("true"))
+					parts.followedParticles.push_back(numSingleParticles);
 
 			// Se a posição inicial (tag <pos>) foi definida, adiciona ao vetor
 			// de posições, senão, aborta.
@@ -296,6 +308,9 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 				parts.omega.push_back(atof(node_omega->value()));
 			else
 				parts.omega.push_back(0.0f);
+
+			// Atualiza o contador de partículas avulsas
+			numSingleParticles++;
 		}
 	}
 #if USE_BIG_PARTICLE

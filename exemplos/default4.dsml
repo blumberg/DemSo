@@ -2,8 +2,7 @@
 <simulation>
 	<parameters>
 		<timestep>1e-3</timestep>
-		<imageHeight>800</imageHeight>
-		<follow>0</follow>
+		<imageheight>800</imageheight>
 		<follow>1</follow>
 		<follow>15</follow>
 	</parameters>
@@ -90,7 +89,7 @@
 			<num>40</num>
 		</triangle>
 
-		<particle particletype="verde">
+		<particle follow="true" particletype="verde">
 			<pos><x>5</x><y>5</y></pos>
 			<vel><x>0</x><y>0</y></vel>
 			<theta>0</theta>

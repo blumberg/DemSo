@@ -2,9 +2,7 @@
 <simulation>
 	<parameters>
 		<timestep>10.0e-4</timestep>
-		<imageHeight>800</imageHeight>
-		<follow>0</follow>
-		<follow>1</follow>
+		<imageheight>800</imageheight>
 	</parameters>
 
 	<environment>
@@ -27,13 +25,13 @@
 	</properties>
 
 	<particles>
-		<particle particletype="amarela">
+		<particle follow="true" particletype="amarela">
 			<pos><x>4</x><y>5</y></pos>
 			<vel><x>1</x><y>0</y></vel>
 			<theta>0</theta>
 			<omega>6</omega>
 		</particle>
-		<particle particletype="amarela">
+		<particle follow="true" particletype="amarela">
 			<pos><x>6</x><y>5</y></pos>
 			<vel><x>-1</x><y>0</y></vel>
 			<theta>0</theta>

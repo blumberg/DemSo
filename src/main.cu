@@ -148,16 +148,16 @@ void PrepareSim (const char *filename,
 /*************************************************************************/
 /*************************************************************************/
 
-	// Número de partículas no sistema é o número de partículas do bloco
-	// mais o número de partículas avulsas
-//	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y
-//							 + sim.particles.pos.size();
-
 	sisProps->cubeDimension = sim.environment.dimension;
 
 	sisProps->timeStep = sim.parameters.timeStep;
 
-	simBlock->followedParticles = sim.parameters.followedParticles;
+	simBlock->followedParticles = sim.particles.followedParticles;
+
+	// Appending particles declared in <parameters> tag to the list of followed particles
+	simBlock->followedParticles.insert(simBlock->followedParticles.end(),
+									   sim.parameters.followedParticles.begin(),
+									   sim.parameters.followedParticles.end());
 	
 	sisProps->gravity = sim.environment.gravity;
 

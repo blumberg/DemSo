@@ -84,6 +84,7 @@ class DEMParticles {
 		vector<float>	theta;	// Posições angulares
 		vector<float>	omega;	// Velocidades angulares
 		vector<int>		type;	// Tipos das partículas
+		vector<int>		followedParticles; // Partículas a serem seguidas
 
 #if USE_BIG_PARTICLE
 		int controlledType;	// Tipo da particula controlada
