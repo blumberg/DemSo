@@ -354,7 +354,7 @@ float2 collideCell(int2		gridPos,
 
 __device__
 float2 collideBoundary(float2 &pos, float2 &vel, float omega,
-                       uint type, float2 boundPos, float &moment)
+                       uint type, float2 boundPos, float &alpha)
 {
 	// Getting radius
 	float radius = partPropD[type].radius;
@@ -406,17 +406,12 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		else Ft = Ftmax * contactVel_t / length(contactVel_t);
 
 		// Shear force
-		force += Ft;
+		force = Ft;
 		// Moment
-		moment += radius * dot(Ft, tang); 
-
-		// Fixing position and velocity
-		if (pos.x >= sisPropD.cubeDimension.x || pos.x <= 0.0f) vel.y *= -1;
-		if (pos.y >= sisPropD.cubeDimension.y || pos.y <= 0.0f) vel.x *= -1;
-		pos = boundPos;
+		alpha += radius * dot(Ft, tang) / partPropD[type].inertia; 
     }
 
-    return force;
+    return force / partPropD[type].inertia;
 }
 
 
@@ -520,8 +515,17 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 		pos[index].y = sisPropD.cubeDimension.y - radius;
 		vel[index].y *= -partPropD[type[index]].boundaryDamping; }
 	if (pos[index].y < radius) {
+		float2 wallAcc; float wallAlpha = 0.0f;
+		wallAcc = collideBoundary (pos[index], vel[index], omega[index], type[index],
+								   make_float2(pos[index].x, 0.1f), wallAlpha);
+		vel[index] += wallAcc * sisPropD.timeStep;
+		pos[index] += wallAcc * sisPropD.timeStep * sisPropD.timeStep;
+		omega[index] += wallAlpha * sisPropD.timeStep;
+		theta[index] += wallAlpha * sisPropD.timeStep * sisPropD.timeStep;
+
 		pos[index].y = radius;
-		vel[index].y *= -partPropD[type[index]].boundaryDamping; }
+		vel[index].y *= -partPropD[type[index]].boundaryDamping;
+	}
 #endif
 }
 
