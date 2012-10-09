@@ -21,6 +21,7 @@
 #include "thrust/sort.h" 					   // thrust para ordenar vetor
 #include "main.cuh"
 #include "particles_kernel.cuh"
+#include <thrust/transform_reduce.h>
 
 using std::vector;
 
@@ -58,8 +59,14 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->gridParticleHash, sizeof(uint) * sisProps->numParticles);
+#if USE_ATOMIC
 	cudaMalloc((void**)&partValues->controlForce, sizeof(float2));
 	cudaMalloc((void**)&partValues->controlMoment, sizeof(float));
+#else
+	cudaMalloc((void**)&partValues->controlForceVecX, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->controlForceVecY, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->controlMomentVec, sizeof(float) * sisProps->numParticles);
+#endif
 	
 	// Definindo 0 como valor inicial de todos os vetores alocados acima
 	cudaMemset(partValues->type1, 0, sizeof(uint) * sisProps->numParticles);
@@ -87,6 +94,9 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMemcpyToSymbol(sisPropD, sisProps, sizeof(SystemProperties));
 	cudaMemcpyToSymbol(renderParD, renderPar, sizeof(RenderParameters));
 	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * MAX_PARTICLES_TYPES);
+	
+	partValues->ctrlF = (float2*)malloc(sizeof(float2));
+	partValues->ctrlM = (float*)malloc(sizeof(float));
 }
 
 
@@ -114,6 +124,19 @@ void desAllocateVectors(ParticlesValues* partValues)
     cudaFree( partValues->cellEnd );
     cudaFree( partValues->gridParticleIndex );
     cudaFree( partValues->gridParticleHash );
+    
+#if USE_ATOMIC
+	cudaFree( partValues->controlForce );
+	cudaFree( partValues->controlMoment );
+#else
+	cudaFree( partValues->controlForceVecX );
+	cudaFree( partValues->controlForceVecY );
+	cudaFree( partValues->controlMomentVec );
+#endif
+
+	free( partValues->ctrlF );
+	free( partValues->ctrlM );
+	
 }
 
 // Função para retornar o maior inteiro da divisão a/b
@@ -362,9 +385,17 @@ void collide(float* 	oldPos,
 			 float 		controlTheta,
 			 float		controlOmega,
 			 uint		controlType,
+#if USE_ATOMIC
 			 float2*	controlForce,
-			 float*		controlMoment
-#endif
+			 float*		controlMoment,
+#else
+			 float*		controlForceVecX,
+			 float*		controlForceVecY,
+			 float*		controlMomentVec,
+#endif // USE_ATOMIC
+			 float2*	ctrlF,
+			 float*		ctrlM
+#endif // USE_BIG_PARTICLE
 			 )
 {
 	// Declarando como memória de textura
@@ -380,18 +411,13 @@ void collide(float* 	oldPos,
     uint numThreads, numBlocks;
     computeGridSize(numParticles, 64, numBlocks, numThreads);
 
+#if USE_ATOMIC
 	cudaMemset(controlForce, 0, sizeof(float2));
 	cudaMemset(controlMoment, 0, sizeof(float));
-
-#if !USE_ATOMIC
-	float *forceVecx, *forceVecy;
-	float *momentVec;
-	cudaMalloc((void**)&forceVecx, sizeof(float)*numParticles);
-	cudaMalloc((void**)&forceVecy, sizeof(float)*numParticles);
-	cudaMalloc((void**)&momentVec, sizeof(float)*numParticles);
-//	cudaMemset(forceVecx,0,sizeof(float)*numParticles);
-//	cudaMemset(forceVecy,0,sizeof(float)*numParticles);
-//	cudaMemset(momentVec,0,sizeof(float)*numParticles);
+#else
+//	cudaMemset(controlForceVecX, 0, sizeof(float) * numParticles);
+//	cudaMemset(controlForceVecY, 0, sizeof(float) * numParticles);
+//	cudaMemset(controlMomentVec, 0, sizeof(float) * numParticles);
 #endif
 
     // execute the kernel
@@ -413,28 +439,23 @@ void collide(float* 	oldPos,
 										  controlForce,
 										  controlMoment
 #else
-										  forceVecx,
-										  forceVecy,
-										  momentVec
+										  controlForceVecX,
+										  controlForceVecY,
+										  controlMomentVec
 #endif // USE_ATOMIC
 #endif // USE_BIG_PARTICLE
 										  );
 
-#if !USE_ATOMIC
-	float2 f;
-	f.x = thrust::reduce(thrust::device_ptr<float>(forceVecx),
-							  thrust::device_ptr<float>(forceVecx + numParticles));
-	f.y = thrust::reduce(thrust::device_ptr<float>(forceVecy),
-							  thrust::device_ptr<float>(forceVecy + numParticles));
-	float m = thrust::reduce(thrust::device_ptr<float>(momentVec),
-							 thrust::device_ptr<float>(momentVec + numParticles));
-//		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", f.x, f.y);
-//		printf("\ncontrolMoment = %5.2f\n", m);
-	cudaMemcpy(controlForce,&f,sizeof(float2),cudaMemcpyHostToDevice);
-	cudaMemcpy(controlMoment,&m,sizeof(float),cudaMemcpyHostToDevice);
-	cudaFree( forceVecx );
-	cudaFree( forceVecy );
-	cudaFree( momentVec );
+#if USE_ATOMIC
+	cudaMemcpy(ctrlF,controlForce,sizeof(float2),cudaMemcpyDeviceToHost);
+	cudaMemcpy(ctrlM,controlMoment,sizeof(float),cudaMemcpyDeviceToHost);	
+#else
+	ctrlF->x = thrust::reduce(thrust::device_ptr<float>(controlForceVecX),
+							  thrust::device_ptr<float>(controlForceVecX + numParticles));
+	ctrlF->y = thrust::reduce(thrust::device_ptr<float>(controlForceVecY),
+							  thrust::device_ptr<float>(controlForceVecY + numParticles));
+	ctrlM[0] = thrust::reduce(thrust::device_ptr<float>(controlMomentVec),
+							  thrust::device_ptr<float>(controlMomentVec + numParticles));
 #endif
 
 

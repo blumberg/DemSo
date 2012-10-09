@@ -497,11 +497,11 @@ void collideD(float2*	oldPos,               // input: sorted positions
 #if USE_ATOMIC
     atomicAdd(&(controlForce->x),-f.x);
     atomicAdd(&(controlForce->y),-f.y);
-    atomicAdd(controlMoment, -m);
+    atomicAdd(controlMoment, -m/partPropD[type].radius*partPropD[controlType].radius);
 #else
 	forceVecx[index] = -f.x;
 	forceVecy[index] = -f.y;
-	momentVec[index] = -m;
+	momentVec[index] = -m/partPropD[type].radius*partPropD[controlType].radius;
 #endif // USE_ATOMIC
 #endif // USE_BIG_PARTICLE
 

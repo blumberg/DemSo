@@ -53,8 +53,14 @@ void reorderDataAndFindCellStart(uint*, uint*, float*, float*, float*,
 
 void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint
 #if USE_BIG_PARTICLE
-	, float2, float2, float, float, uint, float2*, float*
-#endif
+	, float2, float2, float, float, uint,
+#if USE_ATOMIC
+	float2*, float*,
+#else
+	float*, float*, float*,
+#endif // USE_ATOMIC
+	float2*, float*
+#endif // USE_BIG_PARTICLE
 	);
 
 void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, uint);

@@ -57,26 +57,41 @@ struct ParticleProperties {
 // variáveis dessa estrutura serão alocadas na GPU.
 struct ParticlesValues
 {
+	// Posição translacional da partícula
 	float *pos1, *vel1, *acc;
 	float *pos2, *vel2;
-
+	
+	// Posição angular da partícula
 	float *theta1, *omega1, *alpha;
 	float *theta2, *omega2;
-
+	
+	// Propriedade das partículas
 	uint *ID1, *type1, *loc1;
 	uint *ID2, *type2, *loc2;
 
+	// Variáveis de localização e organização
 	uint *cellStart, *cellEnd;
 	uint *gridParticleIndex, *gridParticleHash;
 	uint *fixParticleIndex, *ctrlParticleIndex;
 	
-	float2 controlPos;
-	float2 controlVel;
-	float  controlTheta;
-	float  controlOmega;
-	uint controlType;
-	float2 *controlForce;
-	float  *controlMoment;
+	// Partícula controlada
+	float2 	controlPos;
+	float2 	controlVel;
+	float  	controlTheta;
+	float  	controlOmega;
+	uint 	controlType;
+	float2*	ctrlF;
+	float*	ctrlM;
+	
+	// Reação na partícula grande
+#if USE_ATOMIC
+	float2*	controlForce;
+	float*	controlMoment;
+#else
+	float*	controlForceVecX;
+	float*	controlForceVecY;
+	float*	controlMomentVec;
+#endif
 
 };
 

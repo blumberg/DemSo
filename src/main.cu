@@ -26,6 +26,7 @@
 #include "gpu_anim.h" 				  // bib. de vizualização em tempo real
 #include "cutil_math.h" 		      // funções matemáticas de vetores
 
+
 // Dependece files
 #include "initialStruct.cuh"
 #include "main.cuh"
@@ -520,9 +521,17 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				partValues->controlTheta,
 				partValues->controlOmega,
 				partValues->controlType,
+#if USE_ATOMIC
 				partValues->controlForce,
-				partValues->controlMoment
-#endif
+				partValues->controlMoment,
+#else
+				partValues->controlForceVecX,
+				partValues->controlForceVecY,
+				partValues->controlMomentVec,
+#endif // USE_ATOMIC
+				partValues->ctrlF,
+				partValues->ctrlM
+#endif // USE_BIG_PARTICLE
 				);
 
 		// Integracao no tempo (atualizacao das posicoes e velocidades)
@@ -541,12 +550,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		partValues->controlPos.x += .003;
 		if (partValues->controlPos.y < -1) partValues->controlPos.y = 10.5;
 		if (partValues->controlPos.x > sisProps->cubeDimension.x + 0.5) partValues->controlPos.x = -0.5;
-		float2 force;
-		float moment;
-		cudaMemcpy(&force,partValues->controlForce,sizeof(float2), cudaMemcpyDeviceToHost);
-		cudaMemcpy(&moment,partValues->controlMoment,sizeof(float), cudaMemcpyDeviceToHost);
-//		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", force.x, force.y);
-//		printf("\ncontrolMoment = %5.2f\n", moment);
+		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", partValues->ctrlF[0].x, partValues->ctrlF[0].y);
+		printf("\ncontrolMoment = %5.2f\n", partValues->ctrlM[0]);
 #endif
 
 		timeCtrl->tempo++;
