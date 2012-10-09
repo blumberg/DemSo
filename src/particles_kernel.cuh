@@ -246,7 +246,7 @@ __device__
 float2 collideSpheres(float2 posA, float2 posB,
                       float2 velA, float2 velB,
 					  float omegaA, float omegaB,
-                      uint typeA, uint typeB, float &moment)
+                      uint typeA, uint typeB, float &moment, float &pressure)
 {
 	// Getting radius
 	float radiusA = partPropD[typeA].radius;
@@ -299,13 +299,16 @@ float2 collideSpheres(float2 posA, float2 posB,
 		float2 Ft = make_float2(0.0f);
 		if (length(Ftrial) < Ftmax) Ft = Ftrial;
 		else Ft = Ftmax * contactVel_t / length(contactVel_t);
+		
+		// Cálculo da pressão hidrostática na partícula
+		pressure += length(force)/(2*M_PI*partPropD[typeA].radius);
 
 		// Shear force
 		force += Ft;
 		// Moment
 		moment += radiusA * dot(Ft, tang); 
     }
-
+	
     return force;
 }
 
@@ -325,7 +328,8 @@ float2 collideCell(int2		gridPos,
                    uint*	oldType,
                    uint*	cellStart,
                    uint*	cellEnd,
-				   float	&moment)
+				   float	&moment,
+				   float&	pressure)
 {
     uint gridHash = calcGridHash(gridPos);
 
@@ -344,7 +348,7 @@ float2 collideCell(int2		gridPos,
                 uint type2 = FETCH(oldType, j);
 
                 // collide two spheres
-                force += collideSpheres(pos, pos2, vel, vel2, omega, omega2, type, type2, moment);
+                force += collideSpheres(pos, pos2, vel, vel2, omega, omega2, type, type2, moment,pressure);
             }
         }
     }
@@ -423,12 +427,12 @@ void collideD(float2*	oldPos,               // input: sorted positions
 			  float*  newAlpha,				// output: new angular acceleration
               uint*		oldType,
               uint*		cellStart,
-              uint*		cellEnd
+              uint*		cellEnd,
 #if USE_BIG_PARTICLE
-			  , float2	controlPos,
-			  uint		controlType
+			  float2	controlPos,
+			  uint		controlType,
 #endif
-			  )
+			  float*	pressure)
 
 {	
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -451,7 +455,7 @@ void collideD(float2*	oldPos,               // input: sorted positions
             int2 neighbourPos = gridPos + make_int2(x, y);
             force += collideCell(neighbourPos, index, pos, vel, omega,
 								 type, oldPos, oldVel, oldOmega,
-								 oldType, cellStart, cellEnd, moment);
+								 oldType, cellStart, cellEnd, moment, pressure[index]);
         }
     }
 

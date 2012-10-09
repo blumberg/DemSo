@@ -471,12 +471,12 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				partValues->cellStart,
 				partValues->cellEnd,
 				sisProps->numParticles,
-				sisProps->numCells
+				sisProps->numCells,
 #if USE_BIG_PARTICLE
-				, partValues->controlPos,
-				partValues->controlType
+				partValues->controlPos,
+				partValues->controlType,
 #endif
-				);
+				partValues->pressure);
 
 		// Integracao no tempo (atualizacao das posicoes e velocidades)
 		integrateSystem(sortPos,
@@ -506,14 +506,14 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  sortType,
 				  sisProps->numParticles,
 				  renderPar->imageDIMx,
-				  renderPar->imageDIMy
+				  renderPar->imageDIMy,
 #if USE_BIG_PARTICLE
-				  , partValues->controlPos,
+				  partValues->controlPos,
 				  partValues->controlType,
 				  renderPar->dimx,
-				  renderPar->dimy
+				  renderPar->dimy,
 #endif
-				  );
+				  partValues->pressure);
 
 	// Escreve no arquivo de output os dados de saída
 	if (!simBlock->followedParticles.empty())
@@ -528,7 +528,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 						 partValues->alpha,
 						 sortID,
 						 sortType,
-						 sortLoc);
+						 sortLoc,
+						 partValues->pressure);
 	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;

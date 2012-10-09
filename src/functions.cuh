@@ -51,21 +51,21 @@ void reorderDataAndFindCellStart(uint*, uint*, float*, float*, float*,
                                  float*, float*, float*, float*, uint*,
                                  uint*, uint, uint);
 
-void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint
+void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint,
 #if USE_BIG_PARTICLE
-	, float2, uint
+	float2, uint,
 #endif
-	);
+	float*);
 
 void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, uint);
 
-void plotParticles(uchar4*, float*, float*, uint*, uint, int, int
+void plotParticles(uchar4*, float*, float*, uint*, uint, int, int,
 #if USE_BIG_PARTICLE
-				  , float2, uint, int, int
+				  float2, uint, int, int,
 #endif
-				  );
+				  float*);
 
 void writeOutputFile (FILE*, std::vector<int>, float, float2*, float2*, float2*, float*, float*,
-					  float*, uint*, uint*, uint*);
+					  float*, uint*, uint*, uint*, float*);
 
 #endif /* FUNCTIONS_CUH */

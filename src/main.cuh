@@ -60,6 +60,8 @@ struct ParticlesValues
 
 	float *theta1, *omega1, *alpha;
 	float *theta2, *omega2;
+	
+	float *pressure;
 
 	uint *ID1, *type1, *loc1;
 	uint *ID2, *type2, *loc2;

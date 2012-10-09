@@ -58,6 +58,7 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
 	cudaMalloc((void**)&partValues->gridParticleHash, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->pressure, sizeof(float) * sisProps->numParticles);
 	
 	// Definindo 0 como valor inicial de todos os vetores alocados acima
 	cudaMemset(partValues->type1, 0, sizeof(uint) * sisProps->numParticles);
@@ -112,6 +113,7 @@ void desAllocateVectors(ParticlesValues* partValues)
     cudaFree( partValues->cellEnd );
     cudaFree( partValues->gridParticleIndex );
     cudaFree( partValues->gridParticleHash );
+    cudaFree( partValues->pressure );
 }
 
 // Função para retornar o maior inteiro da divisão a/b
@@ -353,12 +355,12 @@ void collide(float* 	oldPos,
              uint*  	cellStart,
              uint*  	cellEnd,
              uint   	numParticles,
-             uint 		numCells
+             uint 		numCells,
 #if USE_BIG_PARTICLE
-			 , float2		controlPos,
-			 uint		controlType
+			 float2		controlPos,
+			 uint		controlType,
 #endif
-			 )
+			 float*		pressure)
 {
 	// Declarando como memória de textura
 	#if USE_TEX
@@ -373,6 +375,8 @@ void collide(float* 	oldPos,
     uint numThreads, numBlocks;
     computeGridSize(numParticles, 64, numBlocks, numThreads);
 
+	cudaMemset(pressure,0,sizeof(float)*numParticles);
+
     // execute the kernel
     collideD<<< numBlocks, numThreads >>>((float2*)oldPos,
                                           (float2*)oldVel,
@@ -381,12 +385,12 @@ void collide(float* 	oldPos,
 										  newAlpha,
                                           oldType,
                                           cellStart,
-                                          cellEnd
+                                          cellEnd,
 #if USE_BIG_PARTICLE
-			 							  , controlPos,
-										  controlType
+			 							  controlPos,
+										  controlType,
 #endif
-										  );
+										  pressure);
 										  
     // Retirando da memória de textura 
 	#if USE_TEX
@@ -436,14 +440,14 @@ void plotParticles(uchar4*	ptr,
 				   uint*	type,
 				   uint 	numParticles,
 				   int 		DIMx,
-				   int		DIMy
+				   int		DIMy,
 #if USE_BIG_PARTICLE
-				   ,float2 	controlPos,
+				   float2 	controlPos,
 				   uint		controlType,
 				   int		dimx,
 				   int		dimy
 #endif
-				   ){
+				   float*	pressure){
 
 	// pinta o fundo de preto
 	cudaMemset(ptr, 0, DIMx*DIMy*sizeof(uchar4));
@@ -490,7 +494,8 @@ void writeOutputFile (FILE*			outputFile,
 					  float*		alpha,
 					  uint*			ID,
 					  uint*			type,
-					  uint*			loc)
+					  uint*			loc,
+					  float*		pressure)
 {
 	// Print current elapsed time
 	fprintf (outputFile, "%f,", h_elapsedTime); // Don't print newline
@@ -504,7 +509,7 @@ void writeOutputFile (FILE*			outputFile,
 
 		// Particle Data
 		float2 h_pos, h_vel, h_acc;
-		float h_theta, h_omega, h_alpha;
+		float h_theta, h_omega, h_alpha, h_pressure;
 		uint h_id, h_type;
 
 		// Geting particle data from GPU
@@ -519,11 +524,12 @@ void writeOutputFile (FILE*			outputFile,
 		cudaMemcpy (&h_alpha, &alpha[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
 		cudaMemcpy (&h_id,	  &ID[h_loc],    sizeof(uint),  cudaMemcpyDeviceToHost);
 		cudaMemcpy (&h_type,  &type[h_loc],  sizeof(uint),  cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_pressure, &pressure[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
 
 		// Print particle data
-		fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f", h_id, h_type,
+		fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f", h_id, h_type,
 				 h_pos.x, h_pos.y, h_vel.x, h_vel.y, h_acc.x, h_acc.y,
-				 h_theta, h_omega, h_alpha);
+				 h_theta, h_omega, h_alpha, h_pressure);
 
 		// If we're not at the last particle, print a comma
 		if (i != chosenOnes.size()-1) fprintf (outputFile, ",");

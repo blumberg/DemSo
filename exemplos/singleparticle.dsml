@@ -16,26 +16,26 @@
 		<particletype id="amarela" name="Partículas Amarelas" color="ffff00">
 			<mass>1</mass>
 			<radius>200e-3</radius>
-			<stiffness dir="normal">100</stiffness>
+			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000000</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary">0.5</damping>
+			<damping type="boundary">1</damping>
 			<friction>0.4</friction>
 		</particletype>
 	</properties>
 
 	<particles>
 		<particle follow="true" particletype="amarela">
-			<pos><x>4</x><y>5</y></pos>
-			<vel><x>1</x><y>0</y></vel>
+			<pos><x>1</x><y>5</y></pos>
+			<vel><x>3</x><y>0</y></vel>
 			<theta>0</theta>
-			<omega>6</omega>
+			<omega>4</omega>
 		</particle>
 		<particle follow="true" particletype="amarela">
-			<pos><x>6</x><y>5</y></pos>
-			<vel><x>-1</x><y>0</y></vel>
+			<pos><x>9</x><y>5</y></pos>
+			<vel><x>-3</x><y>0</y></vel>
 			<theta>0</theta>
-			<omega>0</omega>
+			<omega>-4</omega>
 		</particle>
 
 		<controlled particletype="MOVE" />

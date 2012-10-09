@@ -3,8 +3,8 @@
 	<parameters>
 		<timestep>1e-3</timestep>
 		<imageheight>800</imageheight>
-		<follow>1</follow>
-		<follow>15</follow>
+<!--		<follow>1</follow>-->
+		<!--<follow>15</follow>-->
 	</parameters>
 
 	<environment>
@@ -67,7 +67,7 @@
 
 		<particletype id="MOVE" color="3a9933">
 			<mass>100</mass>
-			<radius>500e-3</radius>
+			<radius>5e-3</radius>
 			<stiffness dir="normal">1e20</stiffness>
 			<stiffness dir="shear">1e20</stiffness>
 			<damping>0.2</damping>
@@ -90,7 +90,7 @@
 		</triangle>
 
 		<particle follow="true" particletype="verde">
-			<pos><x>5</x><y>5</y></pos>
+			<pos><x>2</x><y>0.5</y></pos>
 			<vel><x>0</x><y>0</y></vel>
 			<theta>0</theta>
 			<omega>3.1415</omega>
