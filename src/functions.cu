@@ -410,6 +410,11 @@ void collide(float* 	oldPos,
     uint numThreads, numBlocks;
     computeGridSize(numParticles, 64, numBlocks, numThreads);
 
+#if USE_ATOMIC
+	cudaMemset(controlForce, 0, sizeof(float2));
+	cudaMemset(controlMoment, 0, sizeof(float));
+#endif
+
     // execute the kernel
     collideD<<< numBlocks, numThreads >>>((float2*)oldPos,
                                           (float2*)oldVel,

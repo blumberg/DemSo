@@ -550,7 +550,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		partValues->controlPos.x += .003;
 		if (partValues->controlPos.y < -1) partValues->controlPos.y = 10.5;
 		if (partValues->controlPos.x > sisProps->cubeDimension.x + 0.5) partValues->controlPos.x = -0.5;
-		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", partValues->ctrlF[0].x, partValues->ctrlF[0].y);
+		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", partValues->ctrlF->x, partValues->ctrlF->y);
 		printf("\ncontrolMoment = %5.2f\n", partValues->ctrlM[0]);
 #endif
 
