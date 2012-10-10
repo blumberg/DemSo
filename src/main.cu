@@ -323,12 +323,6 @@ void PrepareSim (const char *filename,
 	printf("\nNumero de Particulas = %d\n", sisProps->numParticles);
 	printf("grid %d x %d\n\n", sisProps->gridSize.x, sisProps->gridSize.y);
 
-#if USE_TEX
-	printf("Memoria de textura: UTILIZADA\n\n");
-#else
-	printf("Memoria de textura: NAO\n\n");
-#endif 
-
 /*************************************************************************/
 /*************************************************************************/	
 // Liberando as variáveis alocadas

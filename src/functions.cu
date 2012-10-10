@@ -305,14 +305,6 @@ void reorderDataAndFindCellStart(uint*  cellStart,
     // set all cells to empty
 	cudaMemset(cellStart, 0xffffffff, numCells*sizeof(uint));
 
-	// Declarando como memória de textura
-	#if USE_TEX
-		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldIDTex, oldID, numParticles*sizeof(uint));
-		cudaBindTexture(0, oldTypeTex, oldType, numParticles*sizeof(uint));
-	#endif
-
     uint smemSize = sizeof(uint)*(numThreads+1);
     reorderDataAndFindCellStartD<<< numBlocks, numThreads, smemSize>>>(
         cellStart,
@@ -332,14 +324,6 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 		oldOmega,
         oldID,
         oldType);
-    
-    // Retirando da memória de textura 
-	#if USE_TEX
-		cudaUnbindTexture(oldPosTex);
-		cudaUnbindTexture(oldVelTex);
-		cudaUnbindTexture(oldIDTex);
-		cudaUnbindTexture(oldTypeTex);
-	#endif
 
 }
 
@@ -362,14 +346,6 @@ void collide(float* 	oldPos,
 #endif
 			 float*		pressure)
 {
-	// Declarando como memória de textura
-	#if USE_TEX
-		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldTypeTex, oldType, numParticles*sizeof(uint));
-		cudaBindTexture(0, cellStartTex, cellStart, numCells*sizeof(uint));
-		cudaBindTexture(0, cellEndTex, cellEnd, numCells*sizeof(uint));    
-	#endif
 
     // thread per particle
     uint numThreads, numBlocks;
@@ -391,15 +367,7 @@ void collide(float* 	oldPos,
 										  controlType,
 #endif
 										  pressure);
-										  
-    // Retirando da memória de textura 
-	#if USE_TEX
-		cudaUnbindTexture(oldPosTex);
-		cudaUnbindTexture(oldVelTex);
-		cudaUnbindTexture(oldTypeTex);
-		cudaUnbindTexture(cellStartTex);
-		cudaUnbindTexture(cellEndTex);
-	#endif
+
 }
 
 // Realiza a integração numérica do sistema. Essa é uma integração linear,

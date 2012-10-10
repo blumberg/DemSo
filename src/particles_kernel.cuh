@@ -26,23 +26,6 @@
 
 // Esse arquivo contem todas as funções executadas na placa de vídeo
 
-// Define se pega a variável da memória global ou da memória de textura
-#if USE_TEX
-#define FETCH(t, i) tex1Dfetch(t##Tex, i)
-#else
-#define FETCH(t, i) t[i]
-#endif
-
-#if USE_TEX
-// textures for particle position and velocity
-texture<float2, 1, cudaReadModeElementType> oldPosTex;
-texture<float2, 1, cudaReadModeElementType> oldVelTex;
-texture<uint, 1, cudaReadModeElementType> oldIDTex;
-texture<uint, 1, cudaReadModeElementType> oldTypeTex;
-
-texture<uint, 1, cudaReadModeElementType> cellStartTex;
-texture<uint, 1, cudaReadModeElementType> cellEndTex;
-#endif
 
 // Declarando as variáveis da memória de constante
 __constant__ SystemProperties sisPropD;
@@ -224,12 +207,12 @@ void reorderDataAndFindCellStartD(uint*   	cellStart,        // output: cell sta
 
 	    // Now use the sorted index to reorder the pos and vel data
 	    uint sortedIndex = gridParticleIndex[index];
-	    float2 pos = FETCH(oldPos, sortedIndex);       // macro does either global read or texture fetch
-        float2 vel = FETCH(oldVel, sortedIndex);       // see particles_kernel.cuh
-		float theta = FETCH(oldTheta, sortedIndex);
-		float omega = FETCH(oldOmega, sortedIndex);
-        uint ID = FETCH(oldID, sortedIndex);
-        uint type = FETCH(oldType, sortedIndex);
+	    float2 pos = oldPos[sortedIndex];
+        float2 vel = oldVel[sortedIndex];
+		float theta = oldTheta[sortedIndex];
+		float omega = oldOmega[sortedIndex];
+        uint ID = oldID[sortedIndex];
+        uint type = oldType[sortedIndex];
 
         sortedPos[index] = pos;
         sortedVel[index] = vel;
@@ -334,18 +317,18 @@ float2 collideCell(int2		gridPos,
     uint gridHash = calcGridHash(gridPos);
 
     // get start of bucket for this cell
-    uint startIndex = FETCH(cellStart, gridHash);
+    uint startIndex = cellStart[gridHash];
 
     float2 force = make_float2(0.0f);
     if (startIndex != (uint)-1) {        // cell is not empty
         // iterate over particles in this cell
-        uint endIndex = FETCH(cellEnd, gridHash);
+        uint endIndex = cellEnd[gridHash];
         for(uint j=startIndex; j<endIndex; j++) {
             if (j != index) {              // check not colliding with self
-	            float2 pos2 = FETCH(oldPos, j);
-                float2 vel2 = FETCH(oldVel, j);
-				float  omega2 = FETCH(oldOmega, j);
-                uint type2 = FETCH(oldType, j);
+	            float2 pos2 = oldPos[j];
+                float2 vel2 = oldVel[j];
+				float  omega2 = oldOmega[j];
+                uint type2 = oldType[j];
 
                 // collide two spheres
                 force += collideSpheres(pos, pos2, vel, vel2, omega, omega2, type, type2, moment,pressure);
@@ -439,10 +422,10 @@ void collideD(float2*	oldPos,               // input: sorted positions
     if (index >= sisPropD.numParticles) return;    
     
     // read particle data from sorted arrays
-	float2 pos = FETCH(oldPos, index);
-    float2 vel = FETCH(oldVel, index);
-	float omega = FETCH(oldOmega, index);
-    uint type = FETCH(oldType, index);
+	float2 pos = oldPos[index];
+    float2 vel = oldVel[index];
+	float omega = oldOmega[index];
+    uint type = oldType[index];
 
     // get address in grid
     int2 gridPos = calcGridPos(pos);

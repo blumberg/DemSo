@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <vector>
 
-#define USE_TEX 0
 #define USE_BIG_PARTICLE 0
 
 #define FPS 31.0f
