@@ -82,7 +82,7 @@ void PrepareSim (const char *filename,
 	
 	Retangle retangle[qtd.retangle];
 	Triangle triangle[qtd.triangle];
-	UserDefine usrDfn;
+	UserDefine usrDfn;	
 	ControlParticle ctrlParticle;
 	
 	// Carrega propriedades dos blocos do tipo retangle
@@ -526,8 +526,11 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				partValues->controlMoment,
 #else
 				partValues->controlForceVecX,
+				partValues->hCFVx,
 				partValues->controlForceVecY,
+				partValues->hCFVy,
 				partValues->controlMomentVec,
+				partValues->hCMV,
 #endif // USE_ATOMIC
 				partValues->ctrlF,
 				partValues->ctrlM

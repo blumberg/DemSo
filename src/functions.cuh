@@ -57,7 +57,7 @@ void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, 
 #if USE_ATOMIC
 	float2*, float*,
 #else
-	float*, float*, float*,
+	float*, float*, float*, float*, float*, float*,
 #endif // USE_ATOMIC
 	float2*, float*
 #endif // USE_BIG_PARTICLE

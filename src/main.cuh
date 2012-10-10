@@ -73,7 +73,8 @@ struct ParticlesValues
 	uint *cellStart, *cellEnd;
 	uint *gridParticleIndex, *gridParticleHash;
 	uint *fixParticleIndex, *ctrlParticleIndex;
-	
+
+#if USE_BIG_PARTICLE
 	// Partícula controlada
 	float2 	controlPos;
 	float2 	controlVel;
@@ -89,9 +90,13 @@ struct ParticlesValues
 	float*	controlMoment;
 #else
 	float*	controlForceVecX;
+	float*	hCFVx;
 	float*	controlForceVecY;
+	float*	hCFVy;
 	float*	controlMomentVec;
-#endif
+	float*	hCMV;
+#endif // USE_ATOMIC
+#endif // USE_BIG_PARTICLE
 
 };
 

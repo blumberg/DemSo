@@ -510,6 +510,35 @@ void collideD(float2*	oldPos,               // input: sorted positions
 	newAlpha[index] = moment / partPropD[type].inertia;
 }
 
+
+__global__
+void reduceVecD(float* vector,
+				float* hash){
+	
+	extern __shared__ float cache[];
+	
+	uint index = blockIdx.x * blockDim.x + threadIdx.x;
+	int cacheIndex = threadIdx.x;
+	
+	
+	if (index < sisPropD.numParticles) cache[cacheIndex] = vector[index];
+	else cache[cacheIndex] = 0;
+	
+	__syncthreads();
+	
+	int i = blockDim.x/2;
+	while (i != 0) {
+		if (cacheIndex < i)
+			cache[cacheIndex] += cache[cacheIndex + i];
+
+		__syncthreads();
+		i /= 2;
+	}
+	
+	if (cacheIndex == 0) hash[blockIdx.x] = cache[0];
+
+}
+
 __global__
 void integrateSystemD(float2* pos, float2* vel, float2* acc,
 					  float* theta, float* omega, float* alpha, uint* type)

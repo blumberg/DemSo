@@ -27,6 +27,19 @@ using std::vector;
 // Esse arquivo prepara as funções que serão executadas na GPU. Ele define
 // o tamanho do Grid e o número de Threads.
 
+
+// Função para retornar o maior inteiro da divisão a/b
+inline uint iDivUp(uint a, uint b){
+    return (a % b != 0) ? (a / b + 1) : (a / b);
+}
+
+// compute grid and thread block size for a given number of elements
+void computeGridSize(uint n, uint blockSize, uint &numBlocks, uint &numThreads)
+{
+    numThreads = min(blockSize, n);
+    numBlocks = iDivUp(n, numThreads);
+}
+
 // Aloca espaço na memória da GPU e copia as propriedades para a memória de
 // constantes.
 void allocateVectors(ParticleProperties* partProps,
@@ -34,68 +47,80 @@ void allocateVectors(ParticleProperties* partProps,
 					 SystemProperties* sisProps,
 					 RenderParameters* renderPar)
 {
+	uint numParticles = sisProps->numParticles;
 	// alocando vetores na placa de video
 	// cudaMalloc --> aloca espaço na placa de vídeo
 	// cudaMemcpy --> transfere dados entre a CPU (Host) e GPU (Device)
 	// cudaMemcpyToSymbol --> copia variável para a memória de constante
-	cudaMalloc((void**)&partValues->type1, sizeof(uint) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->type2, sizeof(uint) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->ID1, sizeof(uint) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->ID2, sizeof(uint) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->loc1, sizeof(uint) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->loc2, sizeof(uint) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->pos1, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->pos2, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->vel1, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->vel2, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->acc, sizeof(float) * sisProps->numParticles * 2);
-	cudaMalloc((void**)&partValues->theta1, sizeof(float) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->theta2, sizeof(float) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->omega1, sizeof(float) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->omega2, sizeof(float) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->alpha, sizeof(float) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->type1, sizeof(uint) * numParticles);
+	cudaMalloc((void**)&partValues->type2, sizeof(uint) * numParticles);
+	cudaMalloc((void**)&partValues->ID1, sizeof(uint) * numParticles);
+	cudaMalloc((void**)&partValues->ID2, sizeof(uint) * numParticles);
+	cudaMalloc((void**)&partValues->loc1, sizeof(uint) * numParticles);
+	cudaMalloc((void**)&partValues->loc2, sizeof(uint) * numParticles);
+	cudaMalloc((void**)&partValues->pos1, sizeof(float) * numParticles * 2);
+	cudaMalloc((void**)&partValues->pos2, sizeof(float) * numParticles * 2);
+	cudaMalloc((void**)&partValues->vel1, sizeof(float) * numParticles * 2);
+	cudaMalloc((void**)&partValues->vel2, sizeof(float) * numParticles * 2);
+	cudaMalloc((void**)&partValues->acc, sizeof(float) * numParticles * 2);
+	cudaMalloc((void**)&partValues->theta1, sizeof(float) * numParticles);
+	cudaMalloc((void**)&partValues->theta2, sizeof(float) * numParticles);
+	cudaMalloc((void**)&partValues->omega1, sizeof(float) * numParticles);
+	cudaMalloc((void**)&partValues->omega2, sizeof(float) * numParticles);
+	cudaMalloc((void**)&partValues->alpha, sizeof(float) * numParticles);
 	cudaMalloc((void**)&partValues->cellStart, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
-	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->gridParticleHash, sizeof(uint) * sisProps->numParticles);
+	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * numParticles);
+	cudaMalloc((void**)&partValues->gridParticleHash, sizeof(uint) * numParticles);
+
+#if USE_BIG_PARTICLE
 #if USE_ATOMIC
 	cudaMalloc((void**)&partValues->controlForce, sizeof(float2));
 	cudaMalloc((void**)&partValues->controlMoment, sizeof(float));
 #else
-	cudaMalloc((void**)&partValues->controlForceVecX, sizeof(float) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->controlForceVecY, sizeof(float) * sisProps->numParticles);
-	cudaMalloc((void**)&partValues->controlMomentVec, sizeof(float) * sisProps->numParticles);
-#endif
+	uint numBlocks, numThreads;
+	computeGridSize(numParticles, 512, numBlocks, numThreads);
+	cudaMalloc((void**)&partValues->controlForceVecX, sizeof(float) * numParticles);
+	cudaMalloc((void**)&partValues->controlForceVecY, sizeof(float) * numParticles);
+	cudaMalloc((void**)&partValues->controlMomentVec, sizeof(float) * numParticles);
+	cudaMalloc((void**)&partValues->hCFVx, sizeof(float) * numBlocks);
+	cudaMalloc((void**)&partValues->hCFVy, sizeof(float) * numBlocks);
+	cudaMalloc((void**)&partValues->hCMV, sizeof(float) * numBlocks);
+	cudaMemset(partValues->hCFVx, 0, sizeof(float) * numBlocks);
+	cudaMemset(partValues->hCFVy, 0, sizeof(float) * numBlocks);
+	cudaMemset(partValues->hCMV, 0, sizeof(float) * numBlocks);
+#endif // USE_ATOMIC
+	partValues->ctrlF = (float2*)malloc(sizeof(float2));
+	partValues->ctrlM = (float*)malloc(sizeof(float));
+#endif // USE_BIG_PARTICLE
 	
 	// Definindo 0 como valor inicial de todos os vetores alocados acima
-	cudaMemset(partValues->type1, 0, sizeof(uint) * sisProps->numParticles);
-	cudaMemset(partValues->type2, 0, sizeof(uint) * sisProps->numParticles);
-	cudaMemset(partValues->ID1, 0, sizeof(uint) * sisProps->numParticles);
-	cudaMemset(partValues->ID2, 0, sizeof(uint) * sisProps->numParticles);
-	cudaMemset(partValues->loc1, 0, sizeof(uint) * sisProps->numParticles);
-	cudaMemset(partValues->loc2, 0, sizeof(uint) * sisProps->numParticles);
-	cudaMemset(partValues->pos1, 0, sizeof(float) * sisProps->numParticles * 2);
-	cudaMemset(partValues->pos2, 0, sizeof(float) * sisProps->numParticles * 2);
-	cudaMemset(partValues->vel1, 0, sizeof(float) * sisProps->numParticles * 2);
-	cudaMemset(partValues->vel2, 0, sizeof(float) * sisProps->numParticles * 2);
-	cudaMemset(partValues->acc, 0, sizeof(float) * sisProps->numParticles * 2);
-	cudaMemset(partValues->theta1, 0, sizeof(float) * sisProps->numParticles);
-	cudaMemset(partValues->theta2, 0, sizeof(float) * sisProps->numParticles);
-	cudaMemset(partValues->omega1, 0, sizeof(float) * sisProps->numParticles);
-	cudaMemset(partValues->omega2, 0, sizeof(float) * sisProps->numParticles);
-	cudaMemset(partValues->alpha, 0, sizeof(float) * sisProps->numParticles);
+	cudaMemset(partValues->type1, 0, sizeof(uint) * numParticles);
+	cudaMemset(partValues->type2, 0, sizeof(uint) * numParticles);
+	cudaMemset(partValues->ID1, 0, sizeof(uint) * numParticles);
+	cudaMemset(partValues->ID2, 0, sizeof(uint) * numParticles);
+	cudaMemset(partValues->loc1, 0, sizeof(uint) * numParticles);
+	cudaMemset(partValues->loc2, 0, sizeof(uint) * numParticles);
+	cudaMemset(partValues->pos1, 0, sizeof(float) * numParticles * 2);
+	cudaMemset(partValues->pos2, 0, sizeof(float) * numParticles * 2);
+	cudaMemset(partValues->vel1, 0, sizeof(float) * numParticles * 2);
+	cudaMemset(partValues->vel2, 0, sizeof(float) * numParticles * 2);
+	cudaMemset(partValues->acc, 0, sizeof(float) * numParticles * 2);
+	cudaMemset(partValues->theta1, 0, sizeof(float) * numParticles);
+	cudaMemset(partValues->theta2, 0, sizeof(float) * numParticles);
+	cudaMemset(partValues->omega1, 0, sizeof(float) * numParticles);
+	cudaMemset(partValues->omega2, 0, sizeof(float) * numParticles);
+	cudaMemset(partValues->alpha, 0, sizeof(float) * numParticles);
 	cudaMemset(partValues->cellStart, 0, sizeof(uint) * sisProps->numCells);
 	cudaMemset(partValues->cellEnd, 0, sizeof(uint) * sisProps->numCells);
-	cudaMemset(partValues->gridParticleIndex, 0, sizeof(uint) * sisProps->numParticles);
-	cudaMemset(partValues->gridParticleHash, 0, sizeof(uint) * sisProps->numParticles);
+	cudaMemset(partValues->gridParticleIndex, 0, sizeof(uint) * numParticles);
+	cudaMemset(partValues->gridParticleHash, 0, sizeof(uint) * numParticles);
 
 
 	cudaMemcpyToSymbol(sisPropD, sisProps, sizeof(SystemProperties));
 	cudaMemcpyToSymbol(renderParD, renderPar, sizeof(RenderParameters));
 	cudaMemcpyToSymbol(partPropD, partProps , sizeof(ParticleProperties) * MAX_PARTICLES_TYPES);
-	
-	partValues->ctrlF = (float2*)malloc(sizeof(float2));
-	partValues->ctrlM = (float*)malloc(sizeof(float));
+
 }
 
 
@@ -123,7 +148,8 @@ void desAllocateVectors(ParticlesValues* partValues)
     cudaFree( partValues->cellEnd );
     cudaFree( partValues->gridParticleIndex );
     cudaFree( partValues->gridParticleHash );
-    
+
+#if USE_BIG_PARTICLE
 #if USE_ATOMIC
 	cudaFree( partValues->controlForce );
 	cudaFree( partValues->controlMoment );
@@ -131,23 +157,14 @@ void desAllocateVectors(ParticlesValues* partValues)
 	cudaFree( partValues->controlForceVecX );
 	cudaFree( partValues->controlForceVecY );
 	cudaFree( partValues->controlMomentVec );
-#endif
-
+	cudaFree( partValues->hCFVx );
+	cudaFree( partValues->hCFVy );
+	cudaFree( partValues->hCMV );
+#endif // USE_ATOMIC
 	free( partValues->ctrlF );
 	free( partValues->ctrlM );
-	
-}
+#endif // USE_BIG_PARTICLE
 
-// Função para retornar o maior inteiro da divisão a/b
-inline uint iDivUp(uint a, uint b){
-    return (a % b != 0) ? (a / b + 1) : (a / b);
-}
-
-// compute grid and thread block size for a given number of elements
-void computeGridSize(uint n, uint blockSize, uint &numBlocks, uint &numThreads)
-{
-    numThreads = min(blockSize, n);
-    numBlocks = iDivUp(n, numThreads);
 }
 
 // cria a posição inicial das partículas. Esse kernel é executado em um
@@ -389,8 +406,11 @@ void collide(float* 	oldPos,
 			 float*		controlMoment,
 #else
 			 float*		controlForceVecX,
+			 float*		hCFVx,
 			 float*		controlForceVecY,
+			 float*		hCFVy,
 			 float*		controlMomentVec,
+			 float*		hCMV,
 #endif // USE_ATOMIC
 			 float2*	ctrlF,
 			 float*		ctrlM
@@ -410,7 +430,7 @@ void collide(float* 	oldPos,
     uint numThreads, numBlocks;
     computeGridSize(numParticles, 64, numBlocks, numThreads);
 
-#if USE_ATOMIC
+#if (USE_ATOMIC*USE_BIG_PARTICLE)
 	cudaMemset(controlForce, 0, sizeof(float2));
 	cudaMemset(controlMoment, 0, sizeof(float));
 #endif
@@ -441,18 +461,38 @@ void collide(float* 	oldPos,
 #endif // USE_BIG_PARTICLE
 										  );
 
+#if USE_BIG_PARTICLE
 #if USE_ATOMIC
 	cudaMemcpy(ctrlF,controlForce,sizeof(float2),cudaMemcpyDeviceToHost);
 	cudaMemcpy(ctrlM,controlMoment,sizeof(float),cudaMemcpyDeviceToHost);	
 #else
-	ctrlF->x = thrust::reduce(thrust::device_ptr<float>(controlForceVecX),
-							  thrust::device_ptr<float>(controlForceVecX + numParticles));
-	ctrlF->y = thrust::reduce(thrust::device_ptr<float>(controlForceVecY),
-							  thrust::device_ptr<float>(controlForceVecY + numParticles));
-	ctrlM[0] = thrust::reduce(thrust::device_ptr<float>(controlMomentVec),
-							  thrust::device_ptr<float>(controlMomentVec + numParticles));
-#endif
+	computeGridSize(numParticles, 512, numBlocks, numThreads);
+	uint smemSize = sizeof(float)*numThreads;
 
+	reduceVecD<<<numBlocks, numThreads, smemSize>>>(controlForceVecX,
+													hCFVx);
+	reduceVecD<<<numBlocks, numThreads, smemSize>>>(controlForceVecY,
+													hCFVy);
+	reduceVecD<<<numBlocks, numThreads, smemSize>>>(controlMomentVec,
+													hCMV);																										
+
+	float cpu_hCFVx[numBlocks], cpu_hCFVy[numBlocks], cpu_hCMV[numBlocks];
+	cudaMemcpy(&cpu_hCFVx,hCFVx,sizeof(float)*numBlocks,cudaMemcpyDeviceToHost);
+	cudaMemcpy(&cpu_hCFVy,hCFVy,sizeof(float)*numBlocks,cudaMemcpyDeviceToHost);
+	cudaMemcpy(&cpu_hCMV,hCMV,sizeof(float)*numBlocks,cudaMemcpyDeviceToHost);
+
+	ctrlF->x = 0;
+	ctrlF->y = 0;
+	ctrlM[0] = 0;
+
+	for (int i = 0; i < numBlocks; i++){
+		ctrlF->x += cpu_hCFVx[i];
+		ctrlF->y += cpu_hCFVy[i];
+		ctrlM[0] += cpu_hCMV[i];
+	}
+
+#endif // USE_ATOMIC
+#endif // USE_BIG_PARTICLE
 
     // Retirando da memória de textura 
 	#if USE_TEX
