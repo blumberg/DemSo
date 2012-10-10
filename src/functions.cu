@@ -21,7 +21,6 @@
 #include "thrust/sort.h" 					   // thrust para ordenar vetor
 #include "main.cuh"
 #include "particles_kernel.cuh"
-#include <thrust/transform_reduce.h>
 
 using std::vector;
 
@@ -410,15 +409,6 @@ void collide(float* 	oldPos,
     // thread per particle
     uint numThreads, numBlocks;
     computeGridSize(numParticles, 64, numBlocks, numThreads);
-
-#if USE_ATOMIC
-	cudaMemset(controlForce, 0, sizeof(float2));
-	cudaMemset(controlMoment, 0, sizeof(float));
-#else
-//	cudaMemset(controlForceVecX, 0, sizeof(float) * numParticles);
-//	cudaMemset(controlForceVecY, 0, sizeof(float) * numParticles);
-//	cudaMemset(controlMomentVec, 0, sizeof(float) * numParticles);
-#endif
 
     // execute the kernel
     collideD<<< numBlocks, numThreads >>>((float2*)oldPos,
