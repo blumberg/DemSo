@@ -67,7 +67,7 @@
 
 		<particletype id="MOVE" color="3a9933">
 			<mass>100</mass>
-			<radius>5e-3</radius>
+			<radius>500e-3</radius>
 			<stiffness dir="normal">1e20</stiffness>
 			<stiffness dir="shear">1e20</stiffness>
 			<damping>0.2</damping>

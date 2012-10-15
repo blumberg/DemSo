@@ -459,7 +459,8 @@ void collideD(float2*	oldPos,               // input: sorted positions
 
     
 #if USE_BIG_PARTICLE
-    force += collideSpheres(pos, controlPos, vel, make_float2(0), omega, 0, type, controlType, moment);
+    force += collideSpheres(pos, controlPos, vel, make_float2(0), omega,
+							0, type, controlType, moment, pressure[index]);
 #endif
 
 	newAcc[index] = force / partPropD[type].mass;
@@ -546,12 +547,12 @@ float colorbar (float input, int component)
 		rv = (x-0.5f)/0.5f*(bottom-top) + top;
 
 	if (rv > 1.0f)
-		return 1.0f;
+		return 255.0f;
 
 	if (rv < 0.0f)
 		return 0.0f;
 
-	return rv;
+	return rv*255.0f;
 }
 
 // Pinta a esfera.
@@ -569,7 +570,7 @@ void plotSpheresD(uchar4*	ptr,
 	
 	float2 pos = sortPos[index];
 	float theta = sortTheta[index];
-	float pressure = pressureVec[index];
+	float pressure = pressureVec[index]/100; //TODO: escolher um valor de normalização dinamicamente
 	
 	uint currentType = type[index];
 	float pRadius = renderParD.imageDIMy/sisPropD.cubeDimension.y*partPropD[currentType].radius;
@@ -602,9 +603,9 @@ void plotSpheresD(uchar4*	ptr,
 //				ptr[pixel].z = partPropD[currentType].colorB * fscale;
 				ptr[pixel].w = 255.0f * fscale;
 				
-				ptr[pixel].x = colorbar(pressure/100, RGB_R) * fscale;
-				ptr[pixel].y = colorbar(pressure/100, RGB_G) * fscale;
-				ptr[pixel].z = colorbar(pressure/100, RGB_B) * fscale;
+				ptr[pixel].x = colorbar(pressure, RGB_R) * fscale;
+				ptr[pixel].y = colorbar(pressure, RGB_G) * fscale;
+				ptr[pixel].z = colorbar(pressure, RGB_B) * fscale;
 			}
 		}
 	}

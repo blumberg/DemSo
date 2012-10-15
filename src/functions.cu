@@ -413,7 +413,7 @@ void plotParticles(uchar4*	ptr,
 				   float2 	controlPos,
 				   uint		controlType,
 				   int		dimx,
-				   int		dimy
+				   int		dimy,
 #endif
 				   float*	pressure){
 

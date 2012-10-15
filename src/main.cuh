@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <vector>
 
-#define USE_BIG_PARTICLE 0
+#define USE_BIG_PARTICLE 1
 
 #define FPS 31.0f
 #define MAX_PARTICLES_TYPES 10
