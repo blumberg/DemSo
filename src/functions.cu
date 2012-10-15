@@ -427,7 +427,8 @@ void plotParticles(uchar4*	ptr,
 	plotSpheresD<<<numBlocks,numThreads>>>(ptr,
 									 	   (float2*)pos,
 										   theta,
-									 	   type);
+									 	   type,
+										   pressure);
 
 #if USE_BIG_PARTICLE
 	uint numBlocksx, numBlocksy, numThreadsx, numThreadsy;

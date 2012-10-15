@@ -516,13 +516,52 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 #endif
 }
 
+#define RGB_R 0
+#define RGB_G 1
+#define RGB_B 2
+// Takes input in normalized form (0 < input < 1) and returns
+// the appropriate color value for the specified component (RGB_R,
+// RGB_G or RGB_B)
+__device__
+float colorbar (float input, int component)
+{
+	float rv, x, top = 1.5f, bottom = -0.5f;
+
+	switch (component) {
+		case RGB_R:
+			x = input - 0.25f;
+			break;
+		case RGB_B:
+			x = input + 0.25f;
+			break;
+		default:
+			x = input;
+	}
+
+	// Function for the green component
+	// shifted to get red or blue component
+	if (x < 0.5f)
+		rv = x/0.5f*(top-bottom) + bottom;
+	else
+		rv = (x-0.5f)/0.5f*(bottom-top) + top;
+
+	if (rv > 1.0f)
+		return 1.0f;
+
+	if (rv < 0.0f)
+		return 0.0f;
+
+	return rv;
+}
 
 // Pinta a esfera.
 __global__
 void plotSpheresD(uchar4*	ptr,
 				  float2* 	sortPos,
 				  float*	sortTheta,
-				  uint*		type)
+				  
+				  uint*		type,
+				  float*	pressureVec)
 {
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
 	
@@ -530,6 +569,7 @@ void plotSpheresD(uchar4*	ptr,
 	
 	float2 pos = sortPos[index];
 	float theta = sortTheta[index];
+	float pressure = pressureVec[index];
 	
 	uint currentType = type[index];
 	float pRadius = renderParD.imageDIMy/sisPropD.cubeDimension.y*partPropD[currentType].radius;
@@ -557,11 +597,14 @@ void plotSpheresD(uchar4*	ptr,
 				if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
 				
 				// define a cor do pixel
-				ptr[pixel].x = partPropD[currentType].colorR * fscale;
-				ptr[pixel].y = partPropD[currentType].colorG * fscale;
-				ptr[pixel].z = partPropD[currentType].colorB * fscale;
+//				ptr[pixel].x = partPropD[currentType].colorR * fscale;
+//				ptr[pixel].y = partPropD[currentType].colorG * fscale;
+//				ptr[pixel].z = partPropD[currentType].colorB * fscale;
 				ptr[pixel].w = 255.0f * fscale;
 				
+				ptr[pixel].x = colorbar(pressure/100, RGB_R) * fscale;
+				ptr[pixel].y = colorbar(pressure/100, RGB_G) * fscale;
+				ptr[pixel].z = colorbar(pressure/100, RGB_B) * fscale;
 			}
 		}
 	}
