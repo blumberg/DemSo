@@ -9,6 +9,7 @@ GENCODE_SM11    := -gencode arch=compute_11,code=sm_11
 GENCODE_SM20    := -gencode arch=compute_20,code=sm_20
 
 GENCODE_FLAGS := -arch=sm_11
+#GENCODE_FLAGS := -arch=sm_20
 #GENCODE_FLAGS := $(GENCODE_SM11)
 #GENCODE_FLAGS := $(GENCODE_SM20)
 

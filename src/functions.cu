@@ -468,18 +468,36 @@ void collide(float* 	oldPos,
 #else
 	computeGridSize(numParticles, 512, numBlocks, numThreads);
 	uint smemSize = sizeof(float)*numThreads;
-
-	reduceVecD<<<numBlocks, numThreads, smemSize>>>(controlForceVecX,
-													hCFVx);
-	reduceVecD<<<numBlocks, numThreads, smemSize>>>(controlForceVecY,
-													hCFVy);
-	reduceVecD<<<numBlocks, numThreads, smemSize>>>(controlMomentVec,
-													hCMV);																										
-
+	
+	cudaStream_t stream0, stream1, stream2;
 	float cpu_hCFVx[numBlocks], cpu_hCFVy[numBlocks], cpu_hCMV[numBlocks];
-	cudaMemcpy(&cpu_hCFVx,hCFVx,sizeof(float)*numBlocks,cudaMemcpyDeviceToHost);
-	cudaMemcpy(&cpu_hCFVy,hCFVy,sizeof(float)*numBlocks,cudaMemcpyDeviceToHost);
-	cudaMemcpy(&cpu_hCMV,hCMV,sizeof(float)*numBlocks,cudaMemcpyDeviceToHost);
+	
+	cudaStreamCreate( &stream0 );
+	cudaStreamCreate( &stream1 );
+	cudaStreamCreate( &stream2 );
+
+	reduceVecD<<<numBlocks, numThreads, smemSize, stream0>>>(controlForceVecX,
+															 hCFVx);
+
+	cudaMemcpyAsync(&cpu_hCFVx,hCFVx,sizeof(float)*numBlocks,cudaMemcpyDeviceToHost,stream0);
+
+	reduceVecD<<<numBlocks, numThreads, smemSize, stream0>>>(controlForceVecY,
+															 hCFVy);
+
+	cudaMemcpyAsync(&cpu_hCFVy,hCFVy,sizeof(float)*numBlocks,cudaMemcpyDeviceToHost,stream1);
+
+	reduceVecD<<<numBlocks, numThreads, smemSize, stream0>>>(controlMomentVec,
+															 hCMV);																										
+
+	cudaMemcpyAsync(&cpu_hCMV,hCMV,sizeof(float)*numBlocks,cudaMemcpyDeviceToHost,stream2);
+
+	cudaStreamSynchronize( stream0 );
+	cudaStreamSynchronize( stream1 );
+	cudaStreamSynchronize( stream2 );
+
+	cudaStreamDestroy( stream0 );
+	cudaStreamDestroy( stream1 );
+	cudaStreamDestroy( stream2 );
 
 	ctrlF->x = 0;
 	ctrlF->y = 0;
