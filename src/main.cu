@@ -75,125 +75,91 @@ void PrepareSim (const char *filename,
 	Quantity qtd;
 	
 	// verifica quantos blocos de cada tipo existe
-	qtd.retangle = 2;
-	qtd.triangle = 0;
-	qtd.userDefine = 0; // Quantidade máxima igual a 1 (booleano)
+	qtd.rectangle = sim.particles.start.size();
+	qtd.triangle = sim.particles.t_pos.size();
+	qtd.singleParticles = sim.particles.pos.size();
+
 	qtd.controlParticle = USE_BIG_PARTICLE; // Quantidade máxima igual a 1
 	
-	Retangle retangle[qtd.retangle];
+	Rectangle rectangle[qtd.rectangle];
 	Triangle triangle[qtd.triangle];
-	UserDefine usrDfn;	
+	SingleParticles singleParts;
 	ControlParticle ctrlParticle;
-	
-	// Carrega propriedades dos blocos do tipo retangle
-	if (qtd.retangle > 0) {
-	
 
-		
-		// Bloco 0
-		retangle[0].num = make_uint2( 40 , 100 );
-		retangle[0].start = make_float2( 1 , 1 );
-		retangle[0].end = make_float2( 4.5 , 9 );
-		retangle[0].types = 2;
-		retangle[0].typeVec = (uint*)malloc(sizeof(uint) * retangle[0].types);
-		retangle[0].typeVec[0] = 0;
-		retangle[0].typeVec[1] = 2;
-		
-		sisProps->numParticles += retangle[0].num.x * retangle[0].num.y;
-		
-		// Bloco 1
-		retangle[1].num = make_uint2( 40 , 100 );
-		retangle[1].start = make_float2( 5.5 , 1 );
-		retangle[1].end = make_float2( 9 , 9 );
-		retangle[1].types = 3;
-		retangle[1].typeVec = (uint*)malloc(sizeof(uint) * retangle[1].types);
-		retangle[1].typeVec[0] = 0;
-		retangle[1].typeVec[1] = 1;
-		retangle[1].typeVec[2] = 3;
-		
-		sisProps->numParticles += retangle[1].num.x * retangle[1].num.y;
+	// Load rectangles' properties
+	for (register int i = 0; i < qtd.rectangle; i++)
+	{
+		rectangle[i].start = sim.particles.start[i];
+		rectangle[i].end = sim.particles.end[i];
+		rectangle[i].num = sim.particles.num[i];
+		rectangle[i].types = sim.particles.types[i].size();
+		rectangle[i].typeVec = (uint*)malloc(sizeof(uint) * rectangle[i].types);
+		memcpy (rectangle[i].typeVec,
+				&sim.particles.types[i][0],
+				sizeof(int) * rectangle[i].types);
+
+		sisProps->numParticles += rectangle[i].num.x * rectangle[i].num.y;
 	}
 	
-	if (qtd.triangle > 0){
-	
-		triangle[0].num = 180;
-		triangle[0].pos = make_float2(5,1);
-		triangle[0].side = 9;
-		triangle[0].types = 2;
-		triangle[0].typeVec = (uint*)malloc(sizeof(uint) * triangle[0].types);
-		triangle[0].typeVec[0] = 4;
-		triangle[0].typeVec[1] = 3;
+	// Load triangles' properties
+	for (register int i = 0; i < qtd.triangle; i++)
+	{
+		triangle[i].pos = sim.particles.t_pos[i];
+		triangle[i].side = sim.particles.width[i];
+		triangle[i].num = sim.particles.t_num[i];
+		triangle[i].types = sim.particles.t_types[i].size();
+		triangle[i].typeVec = (uint*)malloc(sizeof(uint) * triangle[i].types);
+		memcpy (triangle[i].typeVec,
+				&sim.particles.t_types[i][0],
+				sizeof(int) * triangle[i].types);
 		
-		sisProps->numParticles += triangle[0].num*(triangle[0].num+1)/2;
-	
+		sisProps->numParticles += triangle[i].num*(triangle[i].num+1)/2;
 	}
-	
-	if (qtd.userDefine > 0){
+
+	// Load single particles' properties
+	if (qtd.singleParticles > 0)
+	{	
+		singleParts.num = qtd.singleParticles;
 		
-		usrDfn.num = 5;
+		singleParts.pos = (float2*)malloc(sizeof(float2) * singleParts.num);
+		singleParts.vel = (float2*)malloc(sizeof(float2) * singleParts.num);
+		singleParts.theta = (float*)malloc(sizeof(float) * singleParts.num);
+		singleParts.omega = (float*)malloc(sizeof(float) * singleParts.num);
+		singleParts.type = (uint*)malloc(sizeof(uint) * singleParts.num);
+
+		memcpy(singleParts.pos,	  &sim.particles.pos[0],   sizeof(float2) * singleParts.num);
+		memcpy(singleParts.vel,   &sim.particles.vel[0],   sizeof(float2) * singleParts.num);
+		memcpy(singleParts.theta, &sim.particles.theta[0], sizeof(float)  * singleParts.num);
+		memcpy(singleParts.omega, &sim.particles.omega[0], sizeof(float)  * singleParts.num);
+		memcpy(singleParts.type,  &sim.particles.type[0],  sizeof(int)	  * singleParts.num);
 		
-		usrDfn.pos = (float2*)malloc(sizeof(float2) * usrDfn.num);
-		usrDfn.vel = (float2*)malloc(sizeof(float2) * usrDfn.num);
-		usrDfn.theta = (float*)malloc(sizeof(float) * usrDfn.num);
-		usrDfn.omega = (float*)malloc(sizeof(float) * usrDfn.num);
-		usrDfn.type = (uint*)malloc(sizeof(uint) * usrDfn.num);
-		
-		usrDfn.pos[0] = make_float2( 2, 0.5);
-		usrDfn.pos[1] = make_float2( 5, 3);
-		usrDfn.pos[2] = make_float2( 5, 5);
-		usrDfn.pos[3] = make_float2( 5, 7);
-		usrDfn.pos[4] = make_float2( 5, 9);
-		
-		usrDfn.vel[0] = make_float2( 0, 0);
-		usrDfn.vel[1] = make_float2( 0, 0);
-		usrDfn.vel[2] = make_float2( 0, 0);
-		usrDfn.vel[3] = make_float2( 0, 0);
-		usrDfn.vel[4] = make_float2( 0, 0);
-		
-		usrDfn.theta[0] = 0;
-		usrDfn.theta[1] = 0;
-		usrDfn.theta[2] = 0;
-		usrDfn.theta[3] = 0;
-		usrDfn.theta[4] = 0;
-		
-		usrDfn.omega[0] = 10;
-		usrDfn.omega[1] = 10;
-		usrDfn.omega[2] = -1;
-		usrDfn.omega[3] = -10;
-		usrDfn.omega[4] = 0;
-		
-		usrDfn.type[0] = 0;
-		usrDfn.type[1] = 1;
-		usrDfn.type[2] = 2;
-		usrDfn.type[3] = 3;
-		usrDfn.type[4] = 4;
-		
-		sisProps->numParticles += usrDfn.num;
+		sisProps->numParticles += singleParts.num;
 	}
-	
-	if (qtd.controlParticle > 0){
-		
+
+#if USE_BIG_PARTICLE
+	if (qtd.controlParticle > 0)
+	{
 		ctrlParticle.pos = make_float2( 5,9.5);
 		ctrlParticle.vel = make_float2( 0 , 0);
 		ctrlParticle.theta = 0;
 		ctrlParticle.omega = 0;
-		ctrlParticle.type = 5;
-	
+		ctrlParticle.type = sim.particles.controlledType;
 	}
+#endif
 
 /*************************************************************************/
 /*************************************************************************/
-
-	// Número de partículas no sistema é o número de partículas do bloco
-	// mais o número de partículas avulsas
-//	sisProps->numParticles = sim.particles.num.x * sim.particles.num.y
-//							 + sim.particles.pos.size();
 
 	sisProps->cubeDimension = sim.environment.dimension;
 
 	sisProps->timeStep = sim.parameters.timeStep;
 
-	simBlock->followedParticles = sim.parameters.followedParticles;
+	simBlock->followedParticles = sim.particles.followedParticles;
+
+	// Appending particles declared in <parameters> tag to the list of followed particles
+	simBlock->followedParticles.insert(simBlock->followedParticles.end(),
+									   sim.parameters.followedParticles.begin(),
+									   sim.parameters.followedParticles.end());
 	
 	sisProps->gravity = sim.environment.gravity;
 
@@ -221,32 +187,23 @@ void PrepareSim (const char *filename,
 	}
 
 	// Definindo o maior raio da simulação
-	// Se existir uma única partícula gigante (TUBULAÇÃO) talvez seja
-	// interessante desprezar esse valor e no lugar, fazer com que essa
-	// única partícula teste com todas as outras.
-	float maxRadius = 0, plotRadius;
-	for (int i = 0; i < sim.properties.particleTypes.size()
+	float maxRadius = 0;
+	for (int i = 0; i < sim.properties.particleTypes.size(); i++)
+	{
 #if USE_BIG_PARTICLE
-	-1
+		if (i == sim.particles.controlledType) continue; // Skip controlled particle
 #endif
-	; i++){
 		if (maxRadius < partProps[i].radius) maxRadius = partProps[i].radius;
 	}
 
 #if USE_BIG_PARTICLE
-	if (maxRadius < partProps[sim.properties.particleTypes.size()-1].radius){
-		plotRadius = partProps[sim.properties.particleTypes.size()-1].radius;
-	}else{
-#endif
-		plotRadius = maxRadius;
-#if USE_BIG_PARTICLE
-	}
-#endif
-	// tamanho do quadrado que contem a esfera em PIXEL (para a saida grafica)
+	float plotRadius = partProps[sim.particles.controlledType].radius;
+	// tamanho do quadrado que contem a esfera controlada em PIXEL (para a saida grafica)
 	renderPar->dimx = ceil(renderPar->imageDIMx/sisProps->cubeDimension.x*plotRadius)*2;
 	if (renderPar->dimx < 2) renderPar->dimx = 2;
 	renderPar->dimy = ceil(renderPar->imageDIMy/sisProps->cubeDimension.y*plotRadius)*2;
 	if (renderPar->dimy < 2) renderPar->dimy = 2;
+#endif
 
 	// Calcula o tamanho do grid arredondando para um valor que seja
 	// potencia de 2. O grid deve ser de 1.2 a 3 vezes o diametro da esfera
@@ -278,87 +235,82 @@ void PrepareSim (const char *filename,
 	
 	uint startParticle = 0;
 	uint blockSize;
-		
-	// blocos retangulares	
-	if (qtd.retangle > 0) {
-		float2 sideLenght;
-//		uint2 side;
-		
-		for (int i = 0; i < qtd.retangle; i++){
 
-			sideLenght = retangle[i].end - retangle[i].start;
-//			side = retangle[i].num;
-			
-			blockSize = retangle[i].num.x * retangle[i].num.y;
-
-			// Função para definir a posição inicial das esferas
-			createRetangleBlock(partValues->pos1 + startParticle*2,
-								partValues->ID1 + startParticle,
-								partValues->loc1 + startParticle,
-								partValues->type1 + startParticle,
-								retangle[i].start,
-								sideLenght,
-								retangle[i].num,
-								startParticle,
-								retangle[i].types,
-								retangle[i].typeVec,
-								time(NULL));
-			
-			startParticle += blockSize;
-		
-		}
-	}
-	
-	// bloco triangular
-	if (qtd.triangle > 0){
-	
-		float space;
-		float height;
-		
-		for (int i = 0 ; i < qtd.triangle ; i++ ){
-			
-			blockSize = triangle[i].num * ( triangle[i].num + 1 ) / 2;
-			space = triangle[i].side / ( triangle[i].num - 1 );
-			height = space * sqrt(3) / 2;
-			
-			createTriangleBlock(partValues->pos1 + startParticle*2,
-								partValues->ID1 + startParticle,
-								partValues->loc1 + startParticle,
-								partValues->type1 + startParticle,
-								triangle[i].pos,
-								triangle[i].num,
-								triangle[i].types,
-								triangle[i].typeVec,
-								space,
-								height,
-								startParticle,
-								blockSize);
-								
-			startParticle += blockSize;
-			
-		}
-	
-	}
-	
-	// bloco definido pelo usuário
-	if (qtd.userDefine > 0){
-		
-		createUserDefineBlock(partValues->pos1 + startParticle*2,
+	// Criando partículas avulsas
+	if (qtd.singleParticles > 0)
+	{
+		createSingleParticles(partValues->pos1 + startParticle*2,
 							  partValues->vel1 + startParticle*2,
 							  partValues->theta1 + startParticle,
 							  partValues->omega1 + startParticle,
 							  partValues->ID1 + startParticle,
 							  partValues->loc1 + startParticle,
 							  partValues->type1	+ startParticle,
-							  usrDfn.pos,
-							  usrDfn.vel,
-							  usrDfn.theta,
-							  usrDfn.omega,
-							  usrDfn.type,
-							  usrDfn.num,
+							  singleParts.pos,
+							  singleParts.vel,
+							  singleParts.theta,
+							  singleParts.omega,
+							  singleParts.type,
+							  singleParts.num,
 							  startParticle);
 		
-		startParticle += usrDfn.num;
+		startParticle += singleParts.num;
+	}
+
+	// Criando retangulos
+	if (qtd.rectangle > 0) {
+		float2 sideLenght;
+		
+		for (int i = 0; i < qtd.rectangle; i++)
+		{
+			sideLenght = rectangle[i].end - rectangle[i].start;
+			
+			blockSize = rectangle[i].num.x * rectangle[i].num.y;
+
+			// Função para definir a posição inicial das esferas
+			createRectangles(partValues->pos1 + startParticle*2,
+							partValues->ID1 + startParticle,
+							partValues->loc1 + startParticle,
+							partValues->type1 + startParticle,
+							rectangle[i].start,
+							sideLenght,
+							rectangle[i].num,
+							startParticle,
+							rectangle[i].types,
+							rectangle[i].typeVec,
+							time(NULL));
+
+			startParticle += blockSize;
+		}
+	}
+	
+	// Criando triangulos
+	if (qtd.triangle > 0)
+	{
+		float space;
+		float height;
+		
+		for (int i = 0 ; i < qtd.triangle ; i++ )
+		{
+			blockSize = triangle[i].num * ( triangle[i].num + 1 ) / 2;
+			space = triangle[i].side / ( triangle[i].num - 1 );
+			height = space * sqrt(3) / 2;
+			
+			createTriangles(partValues->pos1 + startParticle*2,
+							partValues->ID1 + startParticle,
+							partValues->loc1 + startParticle,
+							partValues->type1 + startParticle,
+							triangle[i].pos,
+							triangle[i].num,
+							triangle[i].types,
+							triangle[i].typeVec,
+							space,
+							height,
+							startParticle,
+							blockSize);
+
+			startParticle += blockSize;
+		}
 	}
 	
 /*************************************************************************/
@@ -376,19 +328,13 @@ void PrepareSim (const char *filename,
 	printf("\nNumero de Particulas = %d\n", sisProps->numParticles);
 	printf("grid %d x %d\n\n", sisProps->gridSize.x, sisProps->gridSize.y);
 
-#if USE_TEX
-	printf("Memoria de textura: UTILIZADA\n\n");
-#else
-	printf("Memoria de textura: NAO\n\n");
-#endif 
-
 /*************************************************************************/
 /*************************************************************************/	
 // Liberando as variáveis alocadas
 
-if (qtd.retangle > 0){
-	for (int i = 0 ; i < qtd.retangle ;  i++){
-		free( retangle[i].typeVec );
+if (qtd.rectangle > 0){
+	for (int i = 0 ; i < qtd.rectangle ;  i++){
+		free( rectangle[i].typeVec );
 	}
 }
 
@@ -398,12 +344,12 @@ if (qtd.triangle > 0){
 	}
 }
 
-if (qtd.userDefine > 0){
-	free( usrDfn.pos );
-	free( usrDfn.vel );
-	free( usrDfn.theta );
-	free( usrDfn.omega );
-	free( usrDfn.type );
+if (qtd.singleParticles > 0){
+	free( singleParts.pos );
+	free( singleParts.vel );
+	free( singleParts.theta );
+	free( singleParts.omega );
+	free( singleParts.type );
 }
 /*************************************************************************/
 /*************************************************************************/	
@@ -514,9 +460,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				partValues->cellStart,
 				partValues->cellEnd,
 				sisProps->numParticles,
-				sisProps->numCells
+				sisProps->numCells,
 #if USE_BIG_PARTICLE
-				, partValues->controlPos,
+				partValues->controlPos,
 				partValues->controlVel,
 				partValues->controlTheta,
 				partValues->controlOmega,
@@ -533,9 +479,9 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				partValues->hCMV,
 #endif // USE_ATOMIC
 				partValues->ctrlF,
-				partValues->ctrlM
+				partValues->ctrlM,
 #endif // USE_BIG_PARTICLE
-				);
+				partValues->pressure);
 
 		// Integracao no tempo (atualizacao das posicoes e velocidades)
 		integrateSystem(sortPos,
@@ -567,14 +513,14 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  sortType,
 				  sisProps->numParticles,
 				  renderPar->imageDIMx,
-				  renderPar->imageDIMy
+				  renderPar->imageDIMy,
 #if USE_BIG_PARTICLE
-				  , partValues->controlPos,
+				  partValues->controlPos,
 				  partValues->controlType,
 				  renderPar->dimx,
-				  renderPar->dimy
+				  renderPar->dimy,
 #endif
-				  );
+				  partValues->pressure);
 
 	// Escreve no arquivo de output os dados de saída
 	if (!simBlock->followedParticles.empty())
@@ -589,7 +535,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 						 partValues->alpha,
 						 sortID,
 						 sortType,
-						 sortLoc);
+						 sortLoc,
+						 partValues->pressure);
 	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;

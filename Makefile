@@ -52,4 +52,4 @@ clean:
 	rm -f $(TARGET)
 
 parser: src/parser.cpp src/DEMSimulation.cpp
-	$(NVCC) src/parser.cpp src/DEMParticles.cpp src/DEMSimulation.cpp -o parser -I./includes $(NVCCFLAGS) 
+	$(NVCC) src/parser.cpp src/DEMSimulation.cpp -o parser -I./includes $(NVCCFLAGS) 

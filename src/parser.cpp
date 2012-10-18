@@ -18,6 +18,7 @@
  */
 
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <cstring>
 #include <cstdlib>
@@ -28,6 +29,7 @@
 #include "rapidxml_utils.hpp"
 #include "datatypes.hpp"
 #include "parser.hpp"
+#include "main.cuh"
 
 using namespace std;
 using namespace rapidxml;
@@ -49,13 +51,21 @@ DEMParameters DEMParser::loadParameters (void)
 	DEMParameters params;
 	xml_node<> *root = rootTag->first_node("parameters");
 
+	// Valor padrão do passo de tempo
+	params.timeStep = -1; // Inválido, assim podemos checar se foi especificado
+
+	// Tamanho padrão da janela de simulação (pixels)
+	params.imageDIMy = 800;
+
 	// Percorrento os nós filhos do nó principal (<parameters>)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("timestep")) params.timeStep = atof(node->value());
-		else if (node->name() == string("imageHeight")) params.imageDIMy = atoi(node->value());
+		else if (node->name() == string("imageheight")) params.imageDIMy = atoi(node->value());
 		else if (node->name() == string("follow")) params.followedParticles.push_back(atoi(node->value()));
 	}
+
+	if (params.timeStep == -1) throw string("Simulation timestep not specified");
 
 	return params;
 }
@@ -156,18 +166,88 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 	if (properties->particleTypes.empty())
 		throw string("No particle types defined, aborting.");
 
+	// Contador de partículas avulsas; usado para seguí-las com follow
+	int numSingleParticles = 0;
+
 	// Percorre os nós filhos de <particles> de 1 em 1
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
-		// Caso for encontrado um bloco de partículas
-		if (node->name() == string("block"))
+		// Caso for encontrado um retângulo
+		if (node->name() == string("rectangle"))
 		{
-			parts.start = make_float2(0);
-			parts.end = make_float2(0);
-			parts.num = make_float2(0);
-			if (node->first_node("start")) parts.start = readVector(node->first_node("start"));
-			if (node->first_node("end")) parts.end = readVector(node->first_node("end"));
-			if (node->first_node("num")) parts.num = readVector(node->first_node("num"));
+			// Tenta recuperar o atributo particletype
+			xml_attribute<> *attr = node->first_attribute("particletype");
+
+			// Se ele for encontrado, lê os tipos e guarda no vetor
+			if (attr)
+			{
+				// Le o ID dos tipos e guarda num vetor de IDs
+				vector<string> typeids = readCSVLine(attr->value());
+
+				// Percorre o vetor de IDs e popula o vetor dos respectivos índices
+				vector<int> typeindexes;
+				for (register int i = 0; i < typeids.size(); i++)
+					typeindexes.push_back(properties->particleTypeIndexById(typeids[i]));
+
+				// Adiciona o vetor de tipos à lista
+				parts.types.push_back(typeindexes);
+			}
+			// Senão usa um tipo só: o primeiro a ser definido
+			else {
+				vector<int> typeindexes(1,0);
+				parts.types.push_back(typeindexes);
+				cout << "Particle type not specified for rectangle, defaulting to first one: "
+					 << properties->particleTypes[0].id << endl;
+			}
+
+			// Leitura das propriedades do retângulo ou término do programa caso falte alguma
+			if (node->first_node("start")) parts.start.push_back(readVector(node->first_node("start")));
+			else throw string("<start> tag not found inside rectangle");
+
+			if (node->first_node("end")) parts.end.push_back(readVector(node->first_node("end")));
+			else throw string("<end> tag not found inside rectangle");
+
+			if (node->first_node("num")) parts.num.push_back(make_uint2(readVector(node->first_node("num"))));
+			else throw string("<num> tag not found inside rectangle");
+		}
+
+		// Caso for encontrado um triângulo
+		if (node->name() == string("triangle"))
+		{
+			// Tenta recuperar o atributo particletype
+			xml_attribute<> *attr = node->first_attribute("particletype");
+
+			// Se ele for encontrado, lê os tipos e guarda no vetor
+			if (attr)
+			{
+				// Le o ID dos tipos e guarda num vetor de IDs
+				vector<string> typeids = readCSVLine(attr->value());
+
+				// Percorre o vetor de IDs e popula o vetor dos respectivos índices
+				vector<int> typeindexes;
+				for (register int i = 0; i < typeids.size(); i++)
+					typeindexes.push_back(properties->particleTypeIndexById(typeids[i]));
+
+				// Adiciona o vetor de tipos à lista
+				parts.t_types.push_back(typeindexes);
+			}
+			// Senão usa um tipo só: o primeiro a ser definido
+			else {
+				vector<int> typeindexes(1,0);
+				parts.t_types.push_back(typeindexes);
+				cout << "Particle type not specified for triangle, defaulting to first one: "
+					 << properties->particleTypes[0].id << endl;
+			}
+
+			// Leitura das propriedades do triângulo ou término do programa caso falte alguma
+			if (node->first_node("pos")) parts.t_pos.push_back(readVector(node->first_node("pos")));
+			else throw string("<pos> tag not found inside triangle");
+
+			if (node->first_node("width")) parts.width.push_back(atof(node->first_node("width")->value()));
+			else throw string("<width> tag not found inside triangle");
+
+			if (node->first_node("num")) parts.t_num.push_back(atoi(node->first_node("num")->value()));
+			else throw string("<num> tag not found inside triangle");
 		}
 
 		// Caso for encontrada uma partícula avulsa (tag <particle>)
@@ -177,11 +257,11 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 			int type;
 
 			// Tenta recuperar o atributo particletype
-			xml_attribute<> *attr = node->first_attribute("particletype");
+			xml_attribute<> *attr_type = node->first_attribute("particletype");
 
 			// Se ele está presente, seu valor contém o ID do tipo da partícula,
 			// então, procuramos qual é o index do típo de partícula a partir do ID
-			if (attr) type = properties->particleTypeIndexById(attr->value());
+			if (attr_type) type = properties->particleTypeIndexById(attr_type->value());
 
 			// Senão utilizamos o primeiro típo de partículas definido
 			else {
@@ -191,13 +271,22 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 			}
 			parts.type.push_back(type);
 
+			// Tenta recuperar o atributo follow
+			xml_attribute<> *attr_follow = node->first_attribute("follow");
+
+			// Se ele está presente e seu valor é true, adicionamos a partícula na
+			// lista de partículas a serem seguidas
+			if (attr_follow)
+				if (attr_follow->value() == string("true"))
+					parts.followedParticles.push_back(numSingleParticles);
+
 			// Se a posição inicial (tag <pos>) foi definida, adiciona ao vetor
 			// de posições, senão, aborta.
 			xml_node<> *node_pos = node->first_node("pos");
 			if (node_pos)
 				parts.pos.push_back(readVector(node_pos));			
 			else
-				throw "Missing <pos> tag on particle definition.";
+				throw string("Missing <pos> tag on particle definition");
 
 			// Lê a velocidade inicial (tag <vel>)
 			xml_node<> *node_vel = node->first_node("vel");
@@ -219,8 +308,34 @@ DEMParticles DEMParser::loadParticles (DEMProperties *properties)
 				parts.omega.push_back(atof(node_omega->value()));
 			else
 				parts.omega.push_back(0.0f);
+
+			// Atualiza o contador de partículas avulsas
+			numSingleParticles++;
 		}
 	}
+#if USE_BIG_PARTICLE
+	xml_node<> *node = root->first_node("controlled");
+	if (node)
+	{
+		int type;
+
+		// Tenta recuperar o atributo particletype
+		xml_attribute<> *attr = node->first_attribute("particletype");
+
+		// Se ele está presente, seu valor contém o ID do tipo da partícula,
+		// então, procuramos qual é o index do típo de partícula a partir do ID
+		if (attr) type = properties->particleTypeIndexById(attr->value());
+
+		// Senão utilizamos o primeiro típo de partículas definido
+		else {
+			type = 0;
+			cout << "Controlled particle's type not specified, defaulting to first one: "
+				 << properties->particleTypes[type].id << endl;
+		}
+		parts.controlledType = type;
+	}
+	else throw string("Controlled particle tag missing");
+#endif
 
 	return parts;
 }
@@ -234,6 +349,22 @@ float2 DEMParser::readVector (xml_node<> *root)
 		else if (node->name() == string("y")) vect.y = atof(node->value());
 	}
 	return vect;
+}
+
+// FIXME: por enquanto espaços em branco não são desconsiderados
+vector<string> DEMParser::readCSVLine (string line)
+{
+	stringstream ss(line);
+	vector<string> values;
+
+	while (ss.good())
+	{
+		string substr;
+		getline (ss, substr, ',');
+		values.push_back(substr);
+	}
+
+	return values;
 }
 
 /*int main (int argc, char **argv)

@@ -72,6 +72,7 @@ void allocateVectors(ParticleProperties* partProps,
 	cudaMalloc((void**)&partValues->cellEnd, sizeof(uint) * sisProps->numCells);
 	cudaMalloc((void**)&partValues->gridParticleIndex, sizeof(uint) * numParticles);
 	cudaMalloc((void**)&partValues->gridParticleHash, sizeof(uint) * numParticles);
+	cudaMalloc((void**)&partValues->pressure, sizeof(float) * numParticles);
 
 #if USE_BIG_PARTICLE
 #if USE_ATOMIC
@@ -93,6 +94,7 @@ void allocateVectors(ParticleProperties* partProps,
 	partValues->ctrlF = (float2*)malloc(sizeof(float2));
 	partValues->ctrlM = (float*)malloc(sizeof(float));
 #endif // USE_BIG_PARTICLE
+
 	
 	// Definindo 0 como valor inicial de todos os vetores alocados acima
 	cudaMemset(partValues->type1, 0, sizeof(uint) * numParticles);
@@ -148,6 +150,7 @@ void desAllocateVectors(ParticlesValues* partValues)
     cudaFree( partValues->cellEnd );
     cudaFree( partValues->gridParticleIndex );
     cudaFree( partValues->gridParticleHash );
+    cudaFree( partValues->pressure );
 
 #if USE_BIG_PARTICLE
 #if USE_ATOMIC
@@ -169,18 +172,18 @@ void desAllocateVectors(ParticlesValues* partValues)
 
 // cria a posição inicial das partículas. Esse kernel é executado em um
 // grid 2D com um número máximo de 16 threads por bloco
-void createRetangleBlock (float* 		pos,
-						  uint*			ID,
-						  uint*			loc,
-						  uint*			type,
-						  float2		start,
-						  float2		sideLenght,
-						  uint2			side,
-						  uint 			startID,
-						  uint 			numParticleTypes,
-						  uint*			particleTypeVec,
-						  unsigned long	seed){
-
+void createRectangles (float* 		pos,
+					  uint*			ID,
+					  uint*			loc,
+					  uint*			type,
+					  float2		start,
+					  float2		sideLenght,
+					  uint2			side,
+					  uint 			startID,
+					  uint 			numParticleTypes,
+					  uint*			particleTypeVec,
+					  unsigned long	seed)
+{
 	// alocando vetores na placa de video
 	// cudaMalloc --> aloca espaço na placa de vídeo
 	// cudaMemcpy --> transfere dados entre a CPU (Host) e GPU (Device)
@@ -199,35 +202,35 @@ void createRetangleBlock (float* 		pos,
 	dim3 numBlocks(numBlocksx,numBlocksy);
 	dim3 numThreads(numThreadsx,numThreadsy);
 
-	createRetangleBlockD<<<numBlocks,numThreads>>>((float2*)pos,
-												   ID,
-												   loc,
-												   type,
-												   start,
-												   sideLenght,
-												   side,
-												   startID,
-												   numParticleTypes,
-												   d_particleTypeVec,
-												   seed);
-													  
+	createRectanglesD<<<numBlocks,numThreads>>>((float2*)pos,
+											   ID,
+											   loc,
+											   type,
+											   start,
+											   sideLenght,
+											   side,
+											   startID,
+											   numParticleTypes,
+											   d_particleTypeVec,
+											   seed);
+
 	// Desalocando espaço na placa de vídeo (Não mais necessário)
     cudaFree( d_particleTypeVec );													  
 }
 
-void createTriangleBlock (float*	pos,
-						  uint*		ID,
-						  uint*		loc,
-						  uint*		type,
-						  float2	start,
-						  uint		N,
-						  uint		numParticleTypes,
-						  uint*		particleTypeVec,
-						  float 	space,
-						  float		height,
-						  uint 		startID,
-						  uint		numParticles){
-						  
+void createTriangles (float*	pos,
+					  uint*		ID,
+					  uint*		loc,
+					  uint*		type,
+					  float2	start,
+					  uint		N,
+					  uint		numParticleTypes,
+					  uint*		particleTypeVec,
+					  float 	space,
+					  float		height,
+					  uint 		startID,
+					  uint		numParticles)
+{
 	uint *d_particleTypeVec;
 
 	cudaMalloc((void**)&d_particleTypeVec, sizeof(uint)*numParticleTypes);
@@ -238,23 +241,23 @@ void createTriangleBlock (float*	pos,
 	uint numBlocks, numThreads;
 	computeGridSize(numParticles,256,numBlocks,numThreads);
 	
-	createTriangleBlockD<<<numBlocks,numThreads>>>((float2*)pos,
-												   ID,
-												   loc,
-												   type,
-												   start,
-												   N,
-												   numParticleTypes,
-												   d_particleTypeVec,
-												   space,
-												   height,
-												   startID,
-												   numParticles);
+	createTrianglesD<<<numBlocks,numThreads>>>((float2*)pos,
+											   ID,
+											   loc,
+											   type,
+											   start,
+											   N,
+											   numParticleTypes,
+											   d_particleTypeVec,
+											   space,
+											   height,
+											   startID,
+											   numParticles);
 	
     cudaFree( d_particleTypeVec );													  
 }
 
-void createUserDefineBlock (float*	pos,
+void createSingleParticles (float*	pos,
 							float*	vel,
 							float*	theta,
 							float*	omega,
@@ -344,14 +347,6 @@ void reorderDataAndFindCellStart(uint*  cellStart,
     // set all cells to empty
 	cudaMemset(cellStart, 0xffffffff, numCells*sizeof(uint));
 
-	// Declarando como memória de textura
-	#if USE_TEX
-		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldIDTex, oldID, numParticles*sizeof(uint));
-		cudaBindTexture(0, oldTypeTex, oldType, numParticles*sizeof(uint));
-	#endif
-
     uint smemSize = sizeof(uint)*(numThreads+1);
     reorderDataAndFindCellStartD<<< numBlocks, numThreads, smemSize>>>(
         cellStart,
@@ -371,14 +366,6 @@ void reorderDataAndFindCellStart(uint*  cellStart,
 		oldOmega,
         oldID,
         oldType);
-    
-    // Retirando da memória de textura 
-	#if USE_TEX
-		cudaUnbindTexture(oldPosTex);
-		cudaUnbindTexture(oldVelTex);
-		cudaUnbindTexture(oldIDTex);
-		cudaUnbindTexture(oldTypeTex);
-	#endif
 
 }
 
@@ -394,9 +381,9 @@ void collide(float* 	oldPos,
              uint*  	cellStart,
              uint*  	cellEnd,
              uint   	numParticles,
-             uint 		numCells
+             uint 		numCells,
 #if USE_BIG_PARTICLE
-			 , float2	controlPos,
+			 float2		controlPos,
 			 float2		controlVel,
 			 float 		controlTheta,
 			 float		controlOmega,
@@ -413,27 +400,22 @@ void collide(float* 	oldPos,
 			 float*		hCMV,
 #endif // USE_ATOMIC
 			 float2*	ctrlF,
-			 float*		ctrlM
+			 float*		ctrlM,
 #endif // USE_BIG_PARTICLE
-			 )
+			 float*		pressure)
 {
-	// Declarando como memória de textura
-	#if USE_TEX
-		cudaBindTexture(0, oldPosTex, oldPos, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldVelTex, oldVel, numParticles*sizeof(float2));
-		cudaBindTexture(0, oldTypeTex, oldType, numParticles*sizeof(uint));
-		cudaBindTexture(0, cellStartTex, cellStart, numCells*sizeof(uint));
-		cudaBindTexture(0, cellEndTex, cellEnd, numCells*sizeof(uint));    
-	#endif
 
     // thread per particle
     uint numThreads, numBlocks;
     computeGridSize(numParticles, 64, numBlocks, numThreads);
 
+
 #if (USE_ATOMIC*USE_BIG_PARTICLE)
 	cudaMemset(controlForce, 0, sizeof(float2));
 	cudaMemset(controlMoment, 0, sizeof(float));
 #endif
+
+	cudaMemset(pressure,0,sizeof(float)*numParticles);
 
     // execute the kernel
     collideD<<< numBlocks, numThreads >>>((float2*)oldPos,
@@ -443,23 +425,24 @@ void collide(float* 	oldPos,
 										  newAlpha,
                                           oldType,
                                           cellStart,
-                                          cellEnd
+                                          cellEnd,
 #if USE_BIG_PARTICLE
-			 							  , controlPos,
+			 							  controlPos,
 			 							  controlVel,
 			 							  controlTheta,
 			 							  controlOmega,
 										  controlType,
 #if USE_ATOMIC
 										  controlForce,
-										  controlMoment
+										  controlMoment,
 #else
 										  controlForceVecX,
 										  controlForceVecY,
-										  controlMomentVec
+										  controlMomentVec,
 #endif // USE_ATOMIC
 #endif // USE_BIG_PARTICLE
-										  );
+										  pressure);
+
 
 #if USE_BIG_PARTICLE
 #if USE_ATOMIC
@@ -512,14 +495,6 @@ void collide(float* 	oldPos,
 #endif // USE_ATOMIC
 #endif // USE_BIG_PARTICLE
 
-    // Retirando da memória de textura 
-	#if USE_TEX
-		cudaUnbindTexture(oldPosTex);
-		cudaUnbindTexture(oldVelTex);
-		cudaUnbindTexture(oldTypeTex);
-		cudaUnbindTexture(cellStartTex);
-		cudaUnbindTexture(cellEndTex);
-	#endif
 }
 
 // Realiza a integração numérica do sistema. Essa é uma integração linear,
@@ -560,14 +535,14 @@ void plotParticles(uchar4*	ptr,
 				   uint*	type,
 				   uint 	numParticles,
 				   int 		DIMx,
-				   int		DIMy
+				   int		DIMy,
 #if USE_BIG_PARTICLE
-				   ,float2 	controlPos,
+				   float2 	controlPos,
 				   uint		controlType,
 				   int		dimx,
-				   int		dimy
+				   int		dimy,
 #endif
-				   ){
+				   float*	pressure){
 
 	// pinta o fundo de preto
 	cudaMemset(ptr, 0, DIMx*DIMy*sizeof(uchar4));
@@ -579,7 +554,8 @@ void plotParticles(uchar4*	ptr,
 	plotSpheresD<<<numBlocks,numThreads>>>(ptr,
 									 	   (float2*)pos,
 										   theta,
-									 	   type);
+									 	   type,
+										   pressure);
 
 #if USE_BIG_PARTICLE
 	uint numBlocksx, numBlocksy, numThreadsx, numThreadsy;
@@ -614,7 +590,8 @@ void writeOutputFile (FILE*			outputFile,
 					  float*		alpha,
 					  uint*			ID,
 					  uint*			type,
-					  uint*			loc)
+					  uint*			loc,
+					  float*		pressure)
 {
 	// Print current elapsed time
 	fprintf (outputFile, "%f,", h_elapsedTime); // Don't print newline
@@ -628,7 +605,7 @@ void writeOutputFile (FILE*			outputFile,
 
 		// Particle Data
 		float2 h_pos, h_vel, h_acc;
-		float h_theta, h_omega, h_alpha;
+		float h_theta, h_omega, h_alpha, h_pressure;
 		uint h_id, h_type;
 
 		// Geting particle data from GPU
@@ -643,11 +620,12 @@ void writeOutputFile (FILE*			outputFile,
 		cudaMemcpy (&h_alpha, &alpha[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
 		cudaMemcpy (&h_id,	  &ID[h_loc],    sizeof(uint),  cudaMemcpyDeviceToHost);
 		cudaMemcpy (&h_type,  &type[h_loc],  sizeof(uint),  cudaMemcpyDeviceToHost);
+		cudaMemcpy (&h_pressure, &pressure[h_loc], sizeof(float), cudaMemcpyDeviceToHost);
 
 		// Print particle data
-		fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f", h_id, h_type,
+		fprintf (outputFile, "%u,%u,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f", h_id, h_type,
 				 h_pos.x, h_pos.y, h_vel.x, h_vel.y, h_acc.x, h_acc.y,
-				 h_theta, h_omega, h_alpha);
+				 h_theta, h_omega, h_alpha, h_pressure);
 
 		// If we're not at the last particle, print a comma
 		if (i != chosenOnes.size()-1) fprintf (outputFile, ",");

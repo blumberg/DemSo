@@ -26,7 +26,6 @@
 #include <vector>
 
 // Controle de Compilação
-#define USE_TEX 0
 #define USE_BIG_PARTICLE 1
 #define USE_ATOMIC 0
 
@@ -65,6 +64,9 @@ struct ParticlesValues
 	float *theta1, *omega1, *alpha;
 	float *theta2, *omega2;
 	
+	// Pressão hidrostática na partícula
+	float *pressure;
+
 	// Propriedade das partículas
 	uint *ID1, *type1, *loc1;
 	uint *ID2, *type2, *loc2;

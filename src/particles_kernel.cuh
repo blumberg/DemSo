@@ -26,23 +26,6 @@
 
 // Esse arquivo contem todas as funções executadas na placa de vídeo
 
-// Define se pega a variável da memória global ou da memória de textura
-#if USE_TEX
-#define FETCH(t, i) tex1Dfetch(t##Tex, i)
-#else
-#define FETCH(t, i) t[i]
-#endif
-
-#if USE_TEX
-// textures for particle position and velocity
-texture<float2, 1, cudaReadModeElementType> oldPosTex;
-texture<float2, 1, cudaReadModeElementType> oldVelTex;
-texture<uint, 1, cudaReadModeElementType> oldIDTex;
-texture<uint, 1, cudaReadModeElementType> oldTypeTex;
-
-texture<uint, 1, cudaReadModeElementType> cellStartTex;
-texture<uint, 1, cudaReadModeElementType> cellEndTex;
-#endif
 
 // Declarando as variáveis da memória de constante
 __constant__ SystemProperties sisPropD;
@@ -50,17 +33,17 @@ __constant__ ParticleProperties partPropD[MAX_PARTICLES_TYPES];
 __constant__ RenderParameters renderParD;
 
 __global__
-void createRetangleBlockD(float2*			pos,
-						  uint*				ID,
-						  uint*				loc,
-						  uint*				type,
-						  float2			start,
-						  float2			sideLenght,
-						  uint2				side,
-						  uint				startID,
-						  uint 				numParticleTypes,
-						  uint*				particleTypeVec,
-						  unsigned long 	seed) {
+void createRectanglesD(float2*			pos,
+					  uint*				ID,
+					  uint*				loc,
+					  uint*				type,
+					  float2			start,
+					  float2			sideLenght,
+					  uint2				side,
+					  uint				startID,
+					  uint 				numParticleTypes,
+					  uint*				particleTypeVec,
+					  unsigned long 	seed) {
     uint x = threadIdx.x + blockIdx.x * blockDim.x;
     uint y = threadIdx.y + blockIdx.y * blockDim.y;
 	
@@ -83,7 +66,7 @@ void createRetangleBlockD(float2*			pos,
 }
 
 __global__
-void createTriangleBlockD (float2*	pos,
+void createTrianglesD (float2*	pos,
 						   uint*	ID,
 						   uint*	loc,
 						   uint*	type,
@@ -224,12 +207,12 @@ void reorderDataAndFindCellStartD(uint*   	cellStart,        // output: cell sta
 
 	    // Now use the sorted index to reorder the pos and vel data
 	    uint sortedIndex = gridParticleIndex[index];
-	    float2 pos = FETCH(oldPos, sortedIndex);       // macro does either global read or texture fetch
-        float2 vel = FETCH(oldVel, sortedIndex);       // see particles_kernel.cuh
-		float theta = FETCH(oldTheta, sortedIndex);
-		float omega = FETCH(oldOmega, sortedIndex);
-        uint ID = FETCH(oldID, sortedIndex);
-        uint type = FETCH(oldType, sortedIndex);
+	    float2 pos = oldPos[sortedIndex];
+        float2 vel = oldVel[sortedIndex];
+		float theta = oldTheta[sortedIndex];
+		float omega = oldOmega[sortedIndex];
+        uint ID = oldID[sortedIndex];
+        uint type = oldType[sortedIndex];
 
         sortedPos[index] = pos;
         sortedVel[index] = vel;
@@ -246,7 +229,7 @@ __device__
 float2 collideSpheres(float2 posA, float2 posB,
                       float2 velA, float2 velB,
 					  float omegaA, float omegaB,
-                      uint typeA, uint typeB, float &moment)
+                      uint typeA, uint typeB, float &moment, float &pressure)
 {
 	// Getting radius
 	float radiusA = partPropD[typeA].radius;
@@ -281,7 +264,7 @@ float2 collideSpheres(float2 posA, float2 posB,
 							  /(partPropD[typeA].shearStiffness+partPropD[typeB].shearStiffness);
 		float normalDamping = (partPropD[typeA].normalDamping*partPropD[typeB].normalDamping)
 							 /(partPropD[typeA].normalDamping+partPropD[typeB].normalDamping);
-		float frictionCoefficient = (partPropD[typeA].boundaryDamping+partPropD[typeB].boundaryDamping)/2;
+		float frictionCoefficient = (partPropD[typeA].frictionCoefficient+partPropD[typeB].frictionCoefficient)/2;
 
         // spring force
         force = -normalStiffness*(collideDist - dist) * norm;
@@ -299,13 +282,16 @@ float2 collideSpheres(float2 posA, float2 posB,
 		float2 Ft = make_float2(0.0f);
 		if (length(Ftrial) < Ftmax) Ft = Ftrial;
 		else Ft = Ftmax * contactVel_t / length(contactVel_t);
+		
+		// Cálculo da pressão hidrostática na partícula
+		pressure += length(force)/(2*M_PI*partPropD[typeA].radius);
 
 		// Shear force
 		force += Ft;
 		// Moment
 		moment += radiusA * dot(Ft, tang); 
     }
-
+	
     return force;
 }
 
@@ -325,26 +311,27 @@ float2 collideCell(int2		gridPos,
                    uint*	oldType,
                    uint*	cellStart,
                    uint*	cellEnd,
-				   float	&moment)
+				   float	&moment,
+				   float&	pressure)
 {
     uint gridHash = calcGridHash(gridPos);
 
     // get start of bucket for this cell
-    uint startIndex = FETCH(cellStart, gridHash);
+    uint startIndex = cellStart[gridHash];
 
     float2 force = make_float2(0.0f);
     if (startIndex != (uint)-1) {        // cell is not empty
         // iterate over particles in this cell
-        uint endIndex = FETCH(cellEnd, gridHash);
+        uint endIndex = cellEnd[gridHash];
         for(uint j=startIndex; j<endIndex; j++) {
             if (j != index) {              // check not colliding with self
-	            float2 pos2 = FETCH(oldPos, j);
-                float2 vel2 = FETCH(oldVel, j);
-				float  omega2 = FETCH(oldOmega, j);
-                uint type2 = FETCH(oldType, j);
+	            float2 pos2 = oldPos[j];
+                float2 vel2 = oldVel[j];
+				float  omega2 = oldOmega[j];
+                uint type2 = oldType[j];
 
                 // collide two spheres
-                force += collideSpheres(pos, pos2, vel, vel2, omega, omega2, type, type2, moment);
+                force += collideSpheres(pos, pos2, vel, vel2, omega, omega2, type, type2, moment,pressure);
             }
         }
     }
@@ -354,7 +341,7 @@ float2 collideCell(int2		gridPos,
 
 __device__
 float2 collideBoundary(float2 &pos, float2 &vel, float omega,
-                       uint type, float2 boundPos, float &moment)
+                       uint type, float2 boundPos, float &alpha)
 {
 	// Getting radius
 	float radius = partPropD[type].radius;
@@ -406,17 +393,12 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		else Ft = Ftmax * contactVel_t / length(contactVel_t);
 
 		// Shear force
-		force += Ft;
+		force = Ft;
 		// Moment
-		moment += radius * dot(Ft, tang); 
-
-		// Fixing position and velocity
-		if (pos.x >= sisPropD.cubeDimension.x || pos.x <= 0.0f) vel.y *= -1;
-		if (pos.y >= sisPropD.cubeDimension.y || pos.y <= 0.0f) vel.x *= -1;
-		pos = boundPos;
+		alpha += radius * dot(Ft, tang) / partPropD[type].inertia; 
     }
 
-    return force;
+    return force / partPropD[type].inertia;
 }
 
 
@@ -424,37 +406,36 @@ __global__
 void collideD(float2*	oldPos,               // input: sorted positions
               float2*	oldVel,               // input: sorted velocities
               float2*	newAcc,                // output: new acceleration
-			  float*  oldOmega,				// input: sorted angular velocities
-			  float*  newAlpha,				// output: new angular acceleration
+			  float*  	oldOmega,				// input: sorted angular velocities
+			  float*  	newAlpha,				// output: new angular acceleration
               uint*		oldType,
               uint*		cellStart,
-              uint*		cellEnd
+              uint*		cellEnd,
 #if USE_BIG_PARTICLE
-			  , float2	controlPos,
+			  float2	controlPos,
 			  float2	controlVel,
 			  float 	controlTheta,
 			  float 	controlOmega,
 			  uint		controlType,
 #if USE_ATOMIC
 			  float2*	controlForce,
-			  float*	controlMoment
+			  float*	controlMoment,
 #else
 			  float*	forceVecx,
 			  float*	forceVecy,
-			  float*	momentVec
+			  float*	momentVec,
 #endif // USE_ATOMIC
 #endif // USE_BIG_PARTICLE
-			  )
-
+			  float*	pressure)
 {	
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index >= sisPropD.numParticles) return;    
     
     // read particle data from sorted arrays
-	float2 pos = FETCH(oldPos, index);
-    float2 vel = FETCH(oldVel, index);
-	float omega = FETCH(oldOmega, index);
-    uint type = FETCH(oldType, index);
+	float2 pos = oldPos[index];
+    float2 vel = oldVel[index];
+	float omega = oldOmega[index];
+    uint type = oldType[index];
 
     // get address in grid
     int2 gridPos = calcGridPos(pos);
@@ -467,7 +448,7 @@ void collideD(float2*	oldPos,               // input: sorted positions
             int2 neighbourPos = gridPos + make_int2(x, y);
             force += collideCell(neighbourPos, index, pos, vel, omega,
 								 type, oldPos, oldVel, oldOmega,
-								 oldType, cellStart, cellEnd, moment);
+								 oldType, cellStart, cellEnd, moment, pressure[index]);
         }
     }
 
@@ -488,9 +469,10 @@ void collideD(float2*	oldPos,               // input: sorted positions
 
     
 #if USE_BIG_PARTICLE
+
 	float m = 0.0f;
 	float2 f = collideSpheres(pos, controlPos, vel, controlVel, omega,
-    						  controlOmega, type, controlType, m);
+    						  controlOmega, type, controlType, m, pressure[index]);
     force += f;
     moment += m;
     
@@ -504,6 +486,7 @@ void collideD(float2*	oldPos,               // input: sorted positions
 	momentVec[index] = -m/partPropD[type].radius*partPropD[controlType].radius;
 #endif // USE_ATOMIC
 #endif // USE_BIG_PARTICLE
+
 
 	newAcc[index] = force / partPropD[type].mass;
 	// moment / momentOfInertia
@@ -574,18 +557,66 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 		pos[index].y = sisPropD.cubeDimension.y - radius;
 		vel[index].y *= -partPropD[type[index]].boundaryDamping; }
 	if (pos[index].y < radius) {
+		float2 wallAcc; float wallAlpha = 0.0f;
+		wallAcc = collideBoundary (pos[index], vel[index], omega[index], type[index],
+								   make_float2(pos[index].x, 0.1f), wallAlpha);
+		vel[index] += wallAcc * sisPropD.timeStep;
+		pos[index] += wallAcc * sisPropD.timeStep * sisPropD.timeStep;
+		omega[index] += wallAlpha * sisPropD.timeStep;
+		theta[index] += wallAlpha * sisPropD.timeStep * sisPropD.timeStep;
+
 		pos[index].y = radius;
-		vel[index].y *= -partPropD[type[index]].boundaryDamping; }
+		vel[index].y *= -partPropD[type[index]].boundaryDamping;
+	}
 #endif
 }
 
+#define RGB_R 0
+#define RGB_G 1
+#define RGB_B 2
+// Takes input in normalized form (0 < input < 1) and returns
+// the appropriate color value for the specified component (RGB_R,
+// RGB_G or RGB_B)
+__device__
+float colorbar (float input, int component)
+{
+	float rv, x, top = 1.5f, bottom = -0.5f;
+
+	switch (component) {
+		case RGB_R:
+			x = input - 0.25f;
+			break;
+		case RGB_B:
+			x = input + 0.25f;
+			break;
+		default:
+			x = input;
+	}
+
+	// Function for the green component
+	// shifted to get red or blue component
+	if (x < 0.5f)
+		rv = x/0.5f*(top-bottom) + bottom;
+	else
+		rv = (x-0.5f)/0.5f*(bottom-top) + top;
+
+	if (rv > 1.0f)
+		return 255.0f;
+
+	if (rv < 0.0f)
+		return 0.0f;
+
+	return rv*255.0f;
+}
 
 // Pinta a esfera.
 __global__
 void plotSpheresD(uchar4*	ptr,
 				  float2* 	sortPos,
 				  float*	sortTheta,
-				  uint*		type)
+				  
+				  uint*		type,
+				  float*	pressureVec)
 {
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
 	
@@ -593,6 +624,7 @@ void plotSpheresD(uchar4*	ptr,
 	
 	float2 pos = sortPos[index];
 	float theta = sortTheta[index];
+	float pressure = pressureVec[index]/100; //TODO: escolher um valor de normalização dinamicamente
 	
 	uint currentType = type[index];
 	float pRadius = renderParD.imageDIMy/sisPropD.cubeDimension.y*partPropD[currentType].radius;
@@ -620,11 +652,14 @@ void plotSpheresD(uchar4*	ptr,
 				if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
 				
 				// define a cor do pixel
-				ptr[pixel].x = partPropD[currentType].colorR * fscale;
-				ptr[pixel].y = partPropD[currentType].colorG * fscale;
-				ptr[pixel].z = partPropD[currentType].colorB * fscale;
+//				ptr[pixel].x = partPropD[currentType].colorR * fscale;
+//				ptr[pixel].y = partPropD[currentType].colorG * fscale;
+//				ptr[pixel].z = partPropD[currentType].colorB * fscale;
 				ptr[pixel].w = 255.0f * fscale;
 				
+				ptr[pixel].x = colorbar(pressure, RGB_R) * fscale;
+				ptr[pixel].y = colorbar(pressure, RGB_G) * fscale;
+				ptr[pixel].z = colorbar(pressure, RGB_B) * fscale;
 			}
 		}
 	}
@@ -664,8 +699,8 @@ void plotControlParticleD(uchar4*	ptr,
 	
 	float pRadius = renderParD.imageDIMy/sisPropD.cubeDimension.y*partPropD[type].radius;
 	
-	if ((rx*rx + ry*ry) < (halfSidex*halfSidey)){
-		
+	if ((rx*rx + ry*ry) < (halfSidex*halfSidey))
+	{
 		int cPixelx = renderParD.imageDIMx/sisPropD.cubeDimension.x*pos.x;
 		int cPixely = renderParD.imageDIMy/sisPropD.cubeDimension.y*pos.y;
 	

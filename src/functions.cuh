@@ -32,13 +32,13 @@ uint iDivUp(uint, uint);
 
 void computeGridSize(uint, uint, uint &, uint &);
 
-void createRetangleBlock (float*, uint*, uint*, uint*, float2, float2, 
-						  uint2, uint, uint, uint*, unsigned long);
+void createRectangles (float*, uint*, uint*, uint*, float2, float2, 
+					   uint2, uint, uint, uint*, unsigned long);
 
-void createTriangleBlock (float*, uint*, uint*, uint*, float2, uint, 
-						  uint, uint*, float, float, uint, uint);
+void createTriangles (float*, uint*, uint*, uint*, float2, uint, 
+					  uint, uint*, float, float, uint, uint);
 
-void createUserDefineBlock (float*, float*, float*, float*, uint*, 
+void createSingleParticles (float*, float*, float*, float*, uint*, 
 							uint*, uint*, float2*, float2*, float*, 
 							float*, uint*, uint, uint);
 
@@ -51,27 +51,28 @@ void reorderDataAndFindCellStart(uint*, uint*, float*, float*, float*,
                                  float*, float*, float*, float*, uint*,
                                  uint*, uint, uint);
 
-void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint
+void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint,
 #if USE_BIG_PARTICLE
-	, float2, float2, float, float, uint,
+	float2, float2, float, float, uint,
 #if USE_ATOMIC
 	float2*, float*,
 #else
 	float*, float*, float*, float*, float*, float*,
 #endif // USE_ATOMIC
-	float2*, float*
+	float2*, float*,
 #endif // USE_BIG_PARTICLE
-	);
+	float*);
+
 
 void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, uint);
 
-void plotParticles(uchar4*, float*, float*, uint*, uint, int, int
+void plotParticles(uchar4*, float*, float*, uint*, uint, int, int,
 #if USE_BIG_PARTICLE
-				  , float2, uint, int, int
+				  float2, uint, int, int,
 #endif
-				  );
+				  float*);
 
 void writeOutputFile (FILE*, std::vector<int>, float, float2*, float2*, float2*, float*, float*,
-					  float*, uint*, uint*, uint*);
+					  float*, uint*, uint*, uint*, float*);
 
 #endif /* FUNCTIONS_CUH */

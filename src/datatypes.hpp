@@ -21,7 +21,8 @@
 #define DATATYPES_H
 #include <vector>
 #include <math.h>
-#include "../includes/cutil_math.h"
+#include "cutil_math.h"
+#include "main.cuh"
 
 using std::vector;
 
@@ -65,21 +66,29 @@ class DEMProperties {
 // Classe dos valores de inicialização das partículas
 class DEMParticles {
 	public:
-		// Para blocos de partículas
-		float2 start;	// Coordenadas do canto inferior-esquerdo
-		float2 end;		// Coordenadas do canto superior-direito
-		float2 num;		// Número de partículas desejado em x, y
+		// Para retângulos de partículas
+		vector<float2>	start;	// Coordenadas do canto inferior-esquerdo
+		vector<float2>	end;	// Coordenadas do canto superior-direito
+		vector<uint2>	num;	// Número de partículas desejado em x, y
+		vector< vector<int> > types;	// Tipos de partículas à sortear dentro do retângulo
+
+		// Para triângulos de partículas
+		vector<float2>	t_pos;	// Posição do meio da aresta inferior
+		vector<float>	width;	// Largura da base do triângulo
+		vector<uint>	t_num;  // Número de partículas na base do triângulo
+		vector< vector<int> > t_types;	// Tipos de partículas à sortear dentro do triângulo
 
 		// Para partículas avulsas
 		vector<float2>	pos;	// Posições x, y
 		vector<float2>	vel;	// Velocidades x, y
 		vector<float>	theta;	// Posições angulares
 		vector<float>	omega;	// Velocidades angulares
-		vector<int>		type;	// Se para uma partícula i, type[i] == 1, então
-								// o tipo desta partícula será o que estiver na posição
-								// 1 no vetor particleTypes[]
-		//void addParticles (DEMParticles);
-		//void generateBlock (int, float3, float3, float3, DEMProperties *);
+		vector<int>		type;	// Tipos das partículas
+		vector<int>		followedParticles; // Partículas a serem seguidas
+
+#if USE_BIG_PARTICLE
+		int controlledType;	// Tipo da particula controlada
+#endif
 };
 
 class DEMSimulation {
