@@ -19,6 +19,7 @@
 
 #ifndef FUNCTIONS_CUH
 #define FUNCTIONS_CUH
+#include <vector>
 
 void allocateVectors(ParticleProperties*,
 					 ParticlesValues*,
@@ -31,11 +32,15 @@ uint iDivUp(uint, uint);
 
 void computeGridSize(uint, uint, uint &, uint &);
 
-void initializeParticlePosition (float*, float*, float*, float*, float*,
-								 float*, uint*, uint*, uint*, float*,
-								 float*, uint*, unsigned long, int);
+void createRectangles (float*, uint*, uint*, uint*, float2, float2, 
+					   uint2, uint, uint, uint*, unsigned long);
 
-void initializeBigParticlePosition(float*, float2);
+void createTriangles (float*, uint*, uint*, uint*, float2, uint, 
+					  uint, uint*, float, float, uint, uint);
+
+void createSingleParticles (float*, float*, float*, float*, uint*, 
+							uint*, uint*, float2*, float2*, float*, 
+							float*, uint*, uint, uint);
 
 void calcHash(float*, uint*, uint*, uint);
 
@@ -46,20 +51,28 @@ void reorderDataAndFindCellStart(uint*, uint*, float*, float*, float*,
                                  float*, float*, float*, float*, uint*,
                                  uint*, uint, uint);
 
-void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint
+void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, uint,
 #if USE_BIG_PARTICLE
-	, float2, uint
-#endif
-	);
+	float2, float2, float, float, uint,
+#if USE_ATOMIC
+	float2*, float*,
+#else
+	float*, float*, float*, float*, float*, float*,
+#endif // USE_ATOMIC
+	float2*, float*,
+#endif // USE_BIG_PARTICLE
+	float*);
+
 
 void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, uint);
 
-void plotParticles(uchar4*, float*, float*, uint*, uint, int, int
+void plotParticles(uchar4*, float*, float*, uint*, uint, int, int,
 #if USE_BIG_PARTICLE
-				  , float2, uint, int, int
+				  float2, uint, int, int,
 #endif
-				  );
+				  float*);
 
-void writeOutputFile (DataBlock *, int);
+void writeOutputFile (FILE*, std::vector<int>, float, float2*, float2*, float2*, float*, float*,
+					  float*, uint*, uint*, uint*, float*);
 
 #endif /* FUNCTIONS_CUH */

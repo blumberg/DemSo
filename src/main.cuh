@@ -24,9 +24,11 @@
 
 #include <stdio.h>
 #include "engine.h"
+#include <vector>
 
-#define USE_TEX 0
+// Controle de Compilação
 #define USE_BIG_PARTICLE 1
+#define USE_ATOMIC 0
 
 #define FPS 31.0f
 #define MAX_PARTICLES_TYPES 10
@@ -43,6 +45,8 @@ struct ParticleProperties {
 	float 	normalStiffness;
 	float	shearStiffness;
 	float 	normalDamping;
+	float	boundaryDamping;
+	float	frictionCoefficient;
 	float 	colorR;
 	float 	colorG;
 	float 	colorB;
@@ -53,22 +57,51 @@ struct ParticleProperties {
 // variáveis dessa estrutura serão alocadas na GPU.
 struct ParticlesValues
 {
+	// Posição translacional da partícula
 	float *pos1, *vel1, *acc;
 	float *pos2, *vel2;
-
+	
+	// Posição angular da partícula
 	float *theta1, *omega1, *alpha;
 	float *theta2, *omega2;
+	
+	// Pressão hidrostática na partícula
+	float *pressure;
 
+	// Propriedade das partículas
 	uint *ID1, *type1, *loc1;
 	uint *ID2, *type2, *loc2;
 
+	// Variáveis de localização e organização
 	uint *cellStart, *cellEnd;
 	uint *gridParticleIndex, *gridParticleHash;
 	uint *fixParticleIndex, *ctrlParticleIndex;
-	
-	float2 controlPos;
-	uint controlType;
+
+#if USE_BIG_PARTICLE
+	// Partícula controlada
+	float2 	controlPos;
+	float2 	controlVel;
+	float  	controlTheta;
+	float  	controlOmega;
+	uint 	controlType;
+	float2*	ctrlF;
+	float*	ctrlM;
+
 	mxArray *matlabPosArray;
+
+	// Reação na partícula grande
+#if USE_ATOMIC
+	float2*	controlForce;
+	float*	controlMoment;
+#else
+	float*	controlForceVecX;
+	float*	hCFVx;
+	float*	controlForceVecY;
+	float*	hCFVy;
+	float*	controlMomentVec;
+	float*	hCMV;
+#endif // USE_ATOMIC
+#endif // USE_BIG_PARTICLE
 
 };
 
@@ -88,8 +121,6 @@ struct SystemProperties {
 
 	float boundaryNormalStiffness;
 	float boundaryShearStiffness;
-	float boundaryDamping;
-	float frictionCoefficient;
 };
 
 struct RenderParameters {
@@ -117,7 +148,11 @@ struct DataBlock {
 	RenderParameters renderPar;
 	TimeControl timeCtrl;
 	FILE * outputFile;
+
 	Engine *ep;
+
+	std::vector<int> followedParticles;
+
 };
 
 #endif /* MAIN_CUH */
