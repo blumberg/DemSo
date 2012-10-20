@@ -22,9 +22,9 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-//#include "cutil_math.h"
 #include "datatypes.hpp"
 #include "parser.hpp"
+#include "functions.cuh"
 
 using namespace std;
 
@@ -64,10 +64,8 @@ void DEMSimulation::printConfiguration (void)
 	cout << "timeStep: " << parameters.timeStep << endl;
 	cout << endl;
 	cout << "-- Environment" << endl;
-	cout << "dimensions: (" << environment.dimension.x;
-	cout << ", " << environment.dimension.y << ")" << endl;
-	cout << "gravity: (" << environment.gravity.x;
-	cout << ", " << environment.gravity.y << ")" << endl;
+	cout << "dimensions: " << environment.dimension << endl;
+	cout << "gravity: " << environment.gravity << endl;
 	cout << "boundaryNormalStiffness: " << environment.boundaryNormalStiffness << endl;
 	cout << "boundaryShearStiffness: " << environment.boundaryShearStiffness << endl;
 	cout << endl;
@@ -79,9 +77,7 @@ void DEMSimulation::printConfiguration (void)
 		cout << "\t---- Particle Type " << i << endl;
 		cout << "\tid: " << properties.particleTypes[i].id << endl;
 		cout << "\tname: " << properties.particleTypes[i].name << endl;
-		cout << "\tcolor: (" << properties.particleTypes[i].color.x;
-		cout << ", " << properties.particleTypes[i].color.y;
-		cout << ", " << properties.particleTypes[i].color.z << ")" << endl;
+		cout << "\tcolor: " << properties.particleTypes[i].color << endl;
 		cout << "\tmass: " << properties.particleTypes[i].mass << endl;
 		cout << "\tradius: " << properties.particleTypes[i].radius << endl;
 		cout << "\tnormalStiffness: " << properties.particleTypes[i].normalStiffness << endl;
@@ -96,9 +92,9 @@ void DEMSimulation::printConfiguration (void)
 	for (register int i = 0; i < particles.start.size(); i++)
 	{
 		cout << "\t---- Particle Rectangle " << i << endl;
-		cout << "\tstart: (" << particles.start[i].x << ", " << particles.start[i].y << ")" << endl;
-		cout << "\tend: (" << particles.end[i].x << ", " << particles.end[i].y << ")" << endl;
-		cout << "\tnum: (" << particles.num[i].x << ", " << particles.num[i].y << ")" << endl;
+		cout << "\tstart: " << particles.start[i] << endl;
+		cout << "\tend: " << particles.end[i] << endl;
+		cout << "\tnum: " << particles.num[i] << endl;
 		cout << "\ttypes:";
 		for (register int j = 0; j < particles.types[i].size(); j++)
 			cout << " [" << particles.types[i][j] << "] = "
@@ -111,7 +107,7 @@ void DEMSimulation::printConfiguration (void)
 	for (register int i = 0; i < particles.t_pos.size(); i++)
 	{
 		cout << "\t---- Particle Triangle " << i << endl;
-		cout << "\tpos: (" << particles.t_pos[i].x << ", " << particles.t_pos[i].y << ")" << endl;
+		cout << "\tpos: " << particles.t_pos[i] << endl;
 		cout << "\twidth: " << particles.width[i] << endl;
 		cout << "\tnum: " << particles.t_num[i] << endl;
 		cout << "\ttypes:";
@@ -128,8 +124,8 @@ void DEMSimulation::printConfiguration (void)
 		cout << "\t---- Particle " << i << endl;
 		cout << "\ttype: [" << particles.type[i] << "] = "
 			 << properties.particleTypes[particles.type[i]].id << endl;
-		cout << "\tpos: (" << particles.pos[i].x << ", " << particles.pos[i].y << ")" << endl;
-		cout << "\tvel: (" << particles.vel[i].x << ", " << particles.vel[i].y << ")" << endl;
+		cout << "\tpos: " << particles.pos[i] << endl;
+		cout << "\tvel: " << particles.vel[i] << endl;
 		cout << "\ttheta: " << particles.theta[i] << endl;
 		cout << "\tomega: " << particles.omega[i] << endl;
 		cout << endl;

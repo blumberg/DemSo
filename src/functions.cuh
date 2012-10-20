@@ -20,6 +20,11 @@
 #ifndef FUNCTIONS_CUH
 #define FUNCTIONS_CUH
 #include <vector>
+#include <iostream>
+
+std::ostream& operator<<(std::ostream&, const uint2&);
+std::ostream& operator<<(std::ostream&, const float2&);
+std::ostream& operator<<(std::ostream&, const float3&);
 
 void allocateVectors(ParticleProperties*,
 					 ParticlesValues*,
