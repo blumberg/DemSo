@@ -79,4 +79,8 @@ void set_gravity (SystemProperties *, float2);
 
 void set_viewRotations (RenderParameters *, bool);
 
+void set_colorByPressure (RenderParameters *, bool);
+
+void updatePressureScale (RenderParameters *, float *, int);
+
 #endif /* FUNCTIONS_CUH */

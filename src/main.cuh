@@ -129,6 +129,8 @@ struct RenderParameters
 	float pRadius;
 	int bgColor;
 	bool viewRotations;
+	bool colorByPressure;
+	float maxPressure;
 };
 
 struct TimeControl

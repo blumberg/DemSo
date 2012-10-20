@@ -571,30 +571,18 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 #endif
 }
 
-#define RGB_R 0
-#define RGB_G 1
-#define RGB_B 2
+#define colorbar_R(input) colorbar(input-0.25f)
+#define colorbar_G colorbar
+#define colorbar_B(input) colorbar(input+0.25f)
 // Takes input in normalized form (0 < input < 1) and returns
-// the appropriate color value for the specified component (RGB_R,
-// RGB_G or RGB_B)
+// the appropriate color value for the green component (or red
+// or blue if shifted)
 __device__
-float colorbar (float input, int component)
+float colorbar (float x)
 {
-	float rv, x, top = 1.5f, bottom = -0.5f;
-
-	switch (component) {
-		case RGB_R:
-			x = input - 0.25f;
-			break;
-		case RGB_B:
-			x = input + 0.25f;
-			break;
-		default:
-			x = input;
-	}
+	float rv, top = 1.5f, bottom = -0.5f;
 
 	// Function for the green component
-	// shifted to get red or blue component
 	if (x < 0.5f)
 		rv = x/0.5f*(top-bottom) + bottom;
 	else
@@ -624,7 +612,7 @@ void plotSpheresD(uchar4*	ptr,
 	
 	float2 pos = sortPos[index];
 	float theta = sortTheta[index];
-	float pressure = pressureVec[index]/100; //TODO: escolher um valor de normalização dinamicamente
+	float pressure = pressureVec[index] / renderParD.maxPressure;
 	
 	uint currentType = type[index];
 	float pRadius = renderParD.imageDIMy/sisPropD.cubeDimension.y*partPropD[currentType].radius;
@@ -652,14 +640,19 @@ void plotSpheresD(uchar4*	ptr,
 				if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
 				
 				// define a cor do pixel
-//				ptr[pixel].x = partPropD[currentType].colorR * fscale;
-//				ptr[pixel].y = partPropD[currentType].colorG * fscale;
-//				ptr[pixel].z = partPropD[currentType].colorB * fscale;
+				if (renderParD.colorByPressure)
+				{
+					ptr[pixel].x = colorbar_R(pressure) * fscale;
+					ptr[pixel].y = colorbar_G(pressure) * fscale;
+					ptr[pixel].z = colorbar_B(pressure) * fscale;
+				} else
+				{
+					ptr[pixel].x = partPropD[currentType].colorR * fscale;
+					ptr[pixel].y = partPropD[currentType].colorG * fscale;
+					ptr[pixel].z = partPropD[currentType].colorB * fscale;
+				}
 				ptr[pixel].w = 255.0f * fscale;
 				
-				ptr[pixel].x = colorbar(pressure, RGB_R) * fscale;
-				ptr[pixel].y = colorbar(pressure, RGB_G) * fscale;
-				ptr[pixel].z = colorbar(pressure, RGB_B) * fscale;
 			}
 		}
 	}

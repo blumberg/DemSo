@@ -171,6 +171,7 @@ void PrepareSim (const char *filename,
 	
 	renderPar->bgColor = 0; // Default background color = black;
 	renderPar->viewRotations = true; // Default to draw lines to view rotations
+	renderPar->colorByPressure = false; // Default to not color particles by pressure
 
 	// PARSER: copiando as propriedades de partículas
 	for (register int i = 0; i < sim.properties.particleTypes.size(); i++)
@@ -331,29 +332,31 @@ void PrepareSim (const char *filename,
 	printf("\nNumero de Particulas = %d\n", sisProps->numParticles);
 	printf("grid %d x %d\n\n", sisProps->gridSize.x, sisProps->gridSize.y);
 
+	updatePressureScale (renderPar, partValues->pressure, sisProps->numParticles);
+
 /*************************************************************************/
 /*************************************************************************/	
 // Liberando as variáveis alocadas
 
-if (qtd.rectangle > 0){
-	for (int i = 0 ; i < qtd.rectangle ;  i++){
-		free( rectangle[i].typeVec );
+	if (qtd.rectangle > 0){
+		for (int i = 0 ; i < qtd.rectangle ;  i++){
+			free( rectangle[i].typeVec );
+		}
 	}
-}
 
-if (qtd.triangle > 0){
-	for (int i = 0 ; i < qtd.triangle ;  i++){
-		free( triangle[i].typeVec );
+	if (qtd.triangle > 0){
+		for (int i = 0 ; i < qtd.triangle ;  i++){
+			free( triangle[i].typeVec );
+		}
 	}
-}
 
-if (qtd.singleParticles > 0){
-	free( singleParts.pos );
-	free( singleParts.vel );
-	free( singleParts.theta );
-	free( singleParts.omega );
-	free( singleParts.type );
-}
+	if (qtd.singleParticles > 0){
+		free( singleParts.pos );
+		free( singleParts.vel );
+		free( singleParts.theta );
+		free( singleParts.omega );
+		free( singleParts.type );
+	}
 /*************************************************************************/
 /*************************************************************************/	
 
@@ -502,8 +505,8 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 		partValues->controlPos.x += .003;
 		if (partValues->controlPos.y < -1) partValues->controlPos.y = 10.5;
 		if (partValues->controlPos.x > sisProps->cubeDimension.x + 0.5) partValues->controlPos.x = -0.5;
-		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", partValues->ctrlF->x, partValues->ctrlF->y);
-		printf("\ncontrolMoment = %5.2f\n", partValues->ctrlM[0]);
+//		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", partValues->ctrlF->x, partValues->ctrlF->y);
+//		printf("\ncontrolMoment = %5.2f\n", partValues->ctrlM[0]);
 #endif
 
 		timeCtrl->tempo++;

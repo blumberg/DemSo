@@ -19,9 +19,14 @@
 
 #include "thrust/device_ptr.h"  		   // thrust para utilizar ponteiro
 #include "thrust/sort.h" 					   // thrust para ordenar vetor
+#include <thrust/extrema.h>
 #include "main.cuh"
 #include "particles_kernel.cuh"
+#include <iostream>
+#include <vector>
 
+using std::cout;
+using std::endl;
 using std::vector;
 
 // Esse arquivo prepara as funções que serão executadas na GPU. Ele define
@@ -644,5 +649,22 @@ void set_gravity (SystemProperties *sisProps, float2 gravity)
 void set_viewRotations (RenderParameters *renderPar, bool viewRotations)
 {
 	renderPar->viewRotations = viewRotations;
+	cudaMemcpyToSymbol (renderParD, renderPar, sizeof(RenderParameters));
+}
+
+void set_colorByPressure (RenderParameters *renderPar, bool colorByPressure)
+{
+	renderPar->colorByPressure = colorByPressure;
+	cudaMemcpyToSymbol (renderParD, renderPar, sizeof(RenderParameters));
+}
+
+void updatePressureScale (RenderParameters *renderPar, float *pressure, int numParts)
+{
+	thrust::device_ptr<float> result = thrust::max_element(thrust::device_ptr<float>(pressure),
+										thrust::device_ptr<float>(pressure + numParts));
+	renderPar->maxPressure = *result;
+
+	cout << "Pressure scale updated. New maximum value = " << renderPar->maxPressure << endl;
+
 	cudaMemcpyToSymbol (renderParD, renderPar, sizeof(RenderParameters));
 }

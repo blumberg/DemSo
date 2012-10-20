@@ -156,11 +156,17 @@ struct GPUAnimBitmap {
     // static method used for glut callbacks
     static void Key(unsigned char key, int x, int y)
 	{
-		GPUAnimBitmap*	bitmap = *(get_bitmap_ptr());
-		DataBlock*		simBlock = (DataBlock*) bitmap->dataBlock;
-		int*			bgColor = &simBlock->renderPar.bgColor;
-		bool*			viewRotations = &simBlock->renderPar.viewRotations;
-		float2*			gravity = &simBlock->sisProps.gravity;
+		GPUAnimBitmap*		bitmap = *(get_bitmap_ptr());
+		DataBlock*			simBlock = (DataBlock*) bitmap->dataBlock;
+		SystemProperties*	sisProps = &simBlock->sisProps;
+		RenderParameters*	renderPar = &simBlock->renderPar;
+
+		int*	bgColor = &renderPar->bgColor;
+		float2*	gravity = &sisProps->gravity;
+		bool*	viewRotations = &renderPar->viewRotations;
+		bool*	colorByPressure = &renderPar->colorByPressure;
+		float*	pressure = &simBlock->partValues.pressure[0];
+		int		numParts = sisProps->numParticles;
 
         switch (key)
 		{
@@ -170,13 +176,22 @@ struct GPUAnimBitmap {
 				break;
 
 			case 'g':
-				if (gravity->y != 0) set_gravity (&simBlock->sisProps, make_float2(0.0f));
-				else set_gravity (&simBlock->sisProps, make_float2(0.0, -9.81f));
+				if (gravity->y != 0) set_gravity (sisProps, make_float2(0.0f));
+				else set_gravity (sisProps, make_float2(0.0, -9.81f));
 				break;
 
 			case 'r':
-				if (*viewRotations) set_viewRotations (&simBlock->renderPar, false);
-				else set_viewRotations (&simBlock->renderPar, true);
+				if (*viewRotations) set_viewRotations (renderPar, false);
+				else set_viewRotations (renderPar, true);
+				break;
+
+			case 'p':
+				if (*colorByPressure) set_colorByPressure (renderPar, false);
+				else set_colorByPressure (renderPar, true);
+				break;
+
+			case 'u':
+				updatePressureScale (renderPar, pressure, numParts);
 				break;
 
             case 27:
