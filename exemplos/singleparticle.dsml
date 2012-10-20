@@ -1,5 +1,5 @@
-<?xml version="1.0" xmlns="http://fem.unicamp.br/ns/dsml"?>
-<simulation>
+<?xml version="1.0"?>
+<simulation xmlns="http://fem.unicamp.br/ns/dsml">
 	<parameters>
 		<timestep>10.0e-4</timestep>
 		<imageheight>800</imageheight>

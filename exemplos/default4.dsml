@@ -1,10 +1,10 @@
-<?xml version="1.0" xmlns="http://fem.unicamp.br/ns/dsml"?>
-<simulation>
+<?xml version="1.0"?>
+<simulation xmlns="http://fem.unicamp.br/ns/dsml">
 	<parameters>
 		<timestep>1e-3</timestep>
 		<imageheight>800</imageheight>
-<!--		<follow>1</follow>-->
-<!--		<follow>15</follow>-->
+		<follow>500</follow>
+		<follow>2200</follow>
 	</parameters>
 
 	<environment>
