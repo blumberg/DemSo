@@ -32,6 +32,14 @@ __constant__ SystemProperties sisPropD;
 __constant__ ParticleProperties partPropD[MAX_PARTICLES_TYPES];
 __constant__ RenderParameters renderParD;
 
+// Return the equivalent value of a series association of a and b
+__device__
+float seriesAssociation (float a, float b)
+{
+	if (a == 0.0 || b == 0.0) return 0.0;
+	return (a*b)/(a+b);
+}
+
 __global__
 void createRectanglesD(float2*			pos,
 					  uint*				ID,
@@ -257,13 +265,13 @@ float2 collideSpheres(float2 posA, float2 posB,
 		float  relVel_n = dot(relVel, norm);
         float2 relVel_t = relVel - relVel_n*norm;
 
-		// Series association of normal damping and stiffness
-		float normalStiffness = (partPropD[typeA].normalStiffness*partPropD[typeB].normalStiffness)
-							   /(partPropD[typeA].normalStiffness+partPropD[typeB].normalStiffness);
-		float shearStiffness = (partPropD[typeA].shearStiffness*partPropD[typeB].shearStiffness)
-							  /(partPropD[typeA].shearStiffness+partPropD[typeB].shearStiffness);
-		float normalDamping = (partPropD[typeA].normalDamping*partPropD[typeB].normalDamping)
-							 /(partPropD[typeA].normalDamping+partPropD[typeB].normalDamping);
+		// Series association of stiffnesses and damping
+		float normalStiffness = seriesAssociation (partPropD[typeA].normalStiffness,
+												   partPropD[typeB].normalStiffness);
+		float shearStiffness = seriesAssociation (partPropD[typeA].shearStiffness,
+												  partPropD[typeB].shearStiffness);
+		float normalDamping = seriesAssociation (partPropD[typeA].normalDamping,
+												 partPropD[typeB].normalDamping);
 		float frictionCoefficient = (partPropD[typeA].frictionCoefficient+partPropD[typeB].frictionCoefficient)/2;
 
         // spring force
@@ -367,13 +375,13 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		float  relVel_n = dot(relVel, norm);
         float2 relVel_t = relVel - relVel_n*norm;
 
-		// Series association of normal damping and stiffness
-		float normalStiffness = (partPropD[type].normalStiffness*sisPropD.boundaryNormalStiffness)
-							   /(partPropD[type].normalStiffness+sisPropD.boundaryNormalStiffness);
-		float shearStiffness = (partPropD[type].shearStiffness*sisPropD.boundaryShearStiffness)
-							  /(partPropD[type].shearStiffness+sisPropD.boundaryShearStiffness);
-		float normalDamping = (partPropD[type].normalDamping*partPropD[type].boundaryDamping)
-							 /(partPropD[type].normalDamping+partPropD[type].boundaryDamping);
+		// Series association of stiffnesses and damping
+		float normalStiffness = seriesAssociation (partPropD[type].normalStiffness,
+												   sisPropD.boundaryNormalStiffness);
+		float shearStiffness = seriesAssociation (partPropD[type].shearStiffness,
+												  sisPropD.boundaryShearStiffness);
+		float normalDamping = seriesAssociation (partPropD[type].normalDamping,
+												 partPropD[type].boundaryDamping);
 
         // spring force
         force = -normalStiffness*(radius - dist) * norm;
