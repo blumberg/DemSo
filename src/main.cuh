@@ -120,26 +120,26 @@ struct SystemProperties {
 	float boundaryShearStiffness;
 };
 
-struct RenderParameters {
-
+struct RenderParameters
+{
 	int imageDIMx;
     int imageDIMy;
 	int dimx;
 	int dimy;
 	float pRadius;
-
+	int bgColor;
 };
 
-struct TimeControl {
-
+struct TimeControl
+{
 	clock_t start, totalStart;
 	int tempo;
 	int IPS;
 };
 
 // Estrutura principal da simulação. Ela contem as 3 outras subestruturas.
-struct DataBlock {
-
+struct DataBlock
+{
 	ParticlesValues partValues;
 	SystemProperties sisProps;
 	RenderParameters renderPar;

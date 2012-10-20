@@ -536,6 +536,7 @@ void plotParticles(uchar4*	ptr,
 				   uint 	numParticles,
 				   int 		DIMx,
 				   int		DIMy,
+				   int		bgColor,
 #if USE_BIG_PARTICLE
 				   float2 	controlPos,
 				   uint		controlType,
@@ -545,7 +546,7 @@ void plotParticles(uchar4*	ptr,
 				   float*	pressure){
 
 	// pinta o fundo de preto
-	cudaMemset(ptr, 0, DIMx*DIMy*sizeof(uchar4));
+	cudaMemset(ptr, bgColor, DIMx*DIMy*sizeof(uchar4));
 	
 	uint numThreads, numBlocks;
 	computeGridSize(numParticles, 256, numBlocks, numThreads);
@@ -632,4 +633,10 @@ void writeOutputFile (FILE*			outputFile,
 	}
 	// Go to next line for next time step
 	fprintf (outputFile, "\n");
+}
+
+void set_gravity (SystemProperties *sisProps, float2 gravity)
+{
+	sisProps->gravity = gravity;
+	cudaMemcpyToSymbol (sisPropD, sisProps, sizeof(SystemProperties));
 }

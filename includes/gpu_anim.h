@@ -23,6 +23,9 @@
 #include "cuda.h"
 #include "cuda_gl_interop.h"
 #include <iostream>
+#include "cutil_math.h"
+#include "../src/main.cuh"
+#include "../src/functions.cuh"
 
 
 PFNGLBINDBUFFERARBPROC    glBindBuffer     = NULL;
@@ -151,10 +154,26 @@ struct GPUAnimBitmap {
     }
 
     // static method used for glut callbacks
-    static void Key(unsigned char key, int x, int y) {
-        switch (key) {
+    static void Key(unsigned char key, int x, int y)
+	{
+		GPUAnimBitmap*	bitmap = *(get_bitmap_ptr());
+		DataBlock*		simBlock = (DataBlock*) bitmap->dataBlock;
+		int*			bgColor = &simBlock->renderPar.bgColor;
+		float2*			gravity = &simBlock->sisProps.gravity;
+
+        switch (key)
+		{
+			case 'b':
+				if (*bgColor == 0) *bgColor = 255;
+				else *bgColor = 0;
+				break;
+
+			case 'g':
+				if (gravity->y != 0) set_gravity (&simBlock->sisProps, make_float2(0.0f));
+				else set_gravity (&simBlock->sisProps, make_float2(0.0, -9.81f));
+				break;
+
             case 27:
-                GPUAnimBitmap*   bitmap = *(get_bitmap_ptr());
                 if (bitmap->animExit)
                     bitmap->animExit( bitmap->dataBlock );
                 bitmap->free_resources();

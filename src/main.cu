@@ -168,6 +168,8 @@ void PrepareSim (const char *filename,
 	
 	renderPar->imageDIMy = sim.parameters.imageDIMy;
 	renderPar->imageDIMx = sisProps->cubeDimension.x/sisProps->cubeDimension.y*renderPar->imageDIMy;
+	
+	renderPar->bgColor = 0; // Default background color = black;
 
 	// PARSER: copiando as propriedades de partículas
 	for (register int i = 0; i < sim.properties.particleTypes.size(); i++)
@@ -514,6 +516,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  sisProps->numParticles,
 				  renderPar->imageDIMx,
 				  renderPar->imageDIMy,
+				  renderPar->bgColor,
 #if USE_BIG_PARTICLE
 				  partValues->controlPos,
 				  partValues->controlType,
