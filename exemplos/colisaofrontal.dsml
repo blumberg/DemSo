@@ -1,17 +1,15 @@
-<?xml version="1.0" xmlns="http://fem.unicamp.br/ns/dsml"?>
-<simulation>
+<?xml version="1.0"?>
+<simulation xmlns="http://fem.unicamp.br/ns/dsml">
 	<parameters>
 		<timestep>10.0e-4</timestep>
-		<imageHeight>800</imageHeight>
-		<follow>0</follow>
-		<follow>1</follow>
+		<imageheight>800</imageheight>
 	</parameters>
 
 	<environment>
 		<dimensions><x>10</x><y>10</y></dimensions>
 		<gravity><y>0</y></gravity>
 		<stiffness dir="normal">1000</stiffness>
-		<stiffness dir="shear">100</stiffness>
+		<stiffness dir="shear">1000</stiffness>
 	</environment>
 
 	<properties>
@@ -27,19 +25,19 @@
 	</properties>
 
 	<particles>
-		<particle particletype="amarela">
+		<particle follow="true" particletype="amarela">
 			<pos><x>4</x><y>5</y></pos>
-			<vel><x>1</x><y>0</y></vel>
+			<vel><x>5</x><y>0</y></vel>
 			<theta>0</theta>
 			<omega>0</omega>
 		</particle>
-		<particle particletype="amarela">
+		<particle follow="true" particletype="amarela">
 			<pos><x>6</x><y>5</y></pos>
-			<vel><x>-1</x><y>0</y></vel>
+			<vel><x>-5</x><y>0</y></vel>
 			<theta>0</theta>
 			<omega>0</omega>
 		</particle>
 
-		<controlled particletype="MOVE" />
+		<controlled particletype="amarela" />
 	</particles>
 </simulation>

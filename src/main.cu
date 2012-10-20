@@ -510,6 +510,22 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 #endif
 
 		timeCtrl->tempo++;
+
+		// Escreve no arquivo de output os dados de saída
+		if (!simBlock->followedParticles.empty())
+			writeOutputFile (simBlock->outputFile,
+							 simBlock->followedParticles,
+							 sisProps->timeStep * timeCtrl->tempo, // Current elapsed time
+							 (float2*)sortPos,
+							 (float2*)sortVel,
+							 (float2*)partValues->acc,
+							 sortTheta,
+							 sortOmega,
+							 partValues->alpha,
+							 sortID,
+							 sortType,
+							 sortLoc,
+							 partValues->pressure);
 	}
 
 	// Saida grarica quando necessario
@@ -529,22 +545,6 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 #endif
 				  partValues->pressure);
 
-	// Escreve no arquivo de output os dados de saída
-	if (!simBlock->followedParticles.empty())
-		writeOutputFile (simBlock->outputFile,
-						 simBlock->followedParticles,
-						 sisProps->timeStep * timeCtrl->tempo, // Current elapsed time
-						 (float2*)sortPos,
-						 (float2*)sortVel,
-						 (float2*)partValues->acc,
-						 sortTheta,
-						 sortOmega,
-						 partValues->alpha,
-						 sortID,
-						 sortType,
-						 sortLoc,
-						 partValues->pressure);
-	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;
 	if (time < 0.003f) time = 0.03f;
@@ -555,7 +555,6 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// duas vezes a mesma iteração (por causa do switch)
 	timeCtrl->IPS = floor(1.0f/time/FPS*timeCtrl->IPS);
 	timeCtrl->IPS = timeCtrl->IPS | 0x0001;
-
 }
 
 void FinalizingSim( DataBlock *simBlock) {
