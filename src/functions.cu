@@ -640,3 +640,9 @@ void set_gravity (SystemProperties *sisProps, float2 gravity)
 	sisProps->gravity = gravity;
 	cudaMemcpyToSymbol (sisPropD, sisProps, sizeof(SystemProperties));
 }
+
+void set_viewRotations (RenderParameters *renderPar, bool viewRotations)
+{
+	renderPar->viewRotations = viewRotations;
+	cudaMemcpyToSymbol (renderParD, renderPar, sizeof(RenderParameters));
+}

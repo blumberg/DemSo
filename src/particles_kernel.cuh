@@ -664,23 +664,25 @@ void plotSpheresD(uchar4*	ptr,
 		}
 	}
 	// Drawing line to view rotations
-	for(register int r = 0; r < pRadius; r++)
+	if (renderParD.viewRotations)
 	{
-		// posição do ponto atual (em pixel)
-		uint gPixelx = cPixelx + r * cosf(theta);
-		uint gPixely = cPixely + r * sinf(theta);
-		
-		// posição do pixel no vetor da imagem
-		uint pixel = gPixelx + gPixely*renderParD.imageDIMx;
-		if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
+		for(register int r = 0; r < pRadius; r++)
+		{
+			// posição do ponto atual (em pixel)
+			uint gPixelx = cPixelx + r * cosf(theta);
+			uint gPixely = cPixely + r * sinf(theta);
+			
+			// posição do pixel no vetor da imagem
+			uint pixel = gPixelx + gPixely*renderParD.imageDIMx;
+			if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
 
-		// define a cor do pixel
-		ptr[pixel].x = 0.0f;
-		ptr[pixel].y = 0.0f;
-		ptr[pixel].z = 0.0f;
-		ptr[pixel].w = 0.0f;
+			// define a cor do pixel
+			ptr[pixel].x = 0.0f;
+			ptr[pixel].y = 0.0f;
+			ptr[pixel].z = 0.0f;
+			ptr[pixel].w = 0.0f;
+		}
 	}
-	
 }
 
 __global__

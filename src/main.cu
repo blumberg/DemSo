@@ -170,6 +170,7 @@ void PrepareSim (const char *filename,
 	renderPar->imageDIMx = sisProps->cubeDimension.x/sisProps->cubeDimension.y*renderPar->imageDIMy;
 	
 	renderPar->bgColor = 0; // Default background color = black;
+	renderPar->viewRotations = true; // Default to draw lines to view rotations
 
 	// PARSER: copiando as propriedades de partículas
 	for (register int i = 0; i < sim.properties.particleTypes.size(); i++)

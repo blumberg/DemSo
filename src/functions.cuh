@@ -77,4 +77,6 @@ void writeOutputFile (FILE*, std::vector<int>, float, float2*, float2*, float2*,
 
 void set_gravity (SystemProperties *, float2);
 
+void set_viewRotations (RenderParameters *, bool);
+
 #endif /* FUNCTIONS_CUH */

@@ -128,6 +128,7 @@ struct RenderParameters
 	int dimy;
 	float pRadius;
 	int bgColor;
+	bool viewRotations;
 };
 
 struct TimeControl

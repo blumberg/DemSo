@@ -159,6 +159,7 @@ struct GPUAnimBitmap {
 		GPUAnimBitmap*	bitmap = *(get_bitmap_ptr());
 		DataBlock*		simBlock = (DataBlock*) bitmap->dataBlock;
 		int*			bgColor = &simBlock->renderPar.bgColor;
+		bool*			viewRotations = &simBlock->renderPar.viewRotations;
 		float2*			gravity = &simBlock->sisProps.gravity;
 
         switch (key)
@@ -171,6 +172,11 @@ struct GPUAnimBitmap {
 			case 'g':
 				if (gravity->y != 0) set_gravity (&simBlock->sisProps, make_float2(0.0f));
 				else set_gravity (&simBlock->sisProps, make_float2(0.0, -9.81f));
+				break;
+
+			case 'r':
+				if (*viewRotations) set_viewRotations (&simBlock->renderPar, false);
+				else set_viewRotations (&simBlock->renderPar, true);
 				break;
 
             case 27:
