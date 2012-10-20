@@ -36,21 +36,25 @@ for i = 0:N-1
 	subplot(3,3,7)
 	plot(M(:,1), M(:,10+i*12), '.', 'MarkerSize', 5);
 	title('\theta: Particle angular position');
+    xlabel('Elapsed time (s)');
 
 	subplot(3,3,8)
 	plot(M(:,1), M(:,11+i*12), '.', 'MarkerSize', 5);
 	title('\omega: Particle angular velocity');
+    xlabel('Elapsed time (s)');
 
 	subplot(3,3,9)
 	plot(M(:,1), M(:,12+i*12), '.', 'MarkerSize', 5);
 	title('\alpha: Particle angular acceleration');
+    xlabel('Elapsed time (s)');
 	
 	figure('Name', ['Pressure for Particle ' num2str(M(1,2+i*12))], 'NumberTitle', 'off');
 	plot(M(:,1), M(:,13+i*12), '-*', 'MarkerSize', 5);
 	title('Hydrostatic pressure on particle [N/m^2]');
+    xlabel('Elapsed time (s)');
 end
 
-% Live replay of particle movement
+% Replay of particle movement
 h = figure('Name', 'Particle movement replay', 'NumberTitle', 'off');
 for i = 1:size(M,1)
     set(0, 'CurrentFigure', h)
@@ -60,7 +64,7 @@ for i = 1:size(M,1)
 		hold on
     end
     axis([0 10 0 10]);
-    title('Particle movement replay');
+    title(['Particle movement replay t = ' num2str(M(i,1),'%.5f')]);
     drawnow;
     hold off
 end

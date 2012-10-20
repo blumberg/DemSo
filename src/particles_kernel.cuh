@@ -34,7 +34,7 @@ __constant__ RenderParameters renderParD;
 
 // Return the equivalent value of a series association of a and b
 __device__
-float seriesAssociation (float a, float b)
+inline float seriesAssociation (float a, float b)
 {
 	if (a == 0.0 || b == 0.0) return 0.0;
 	return (a*b)/(a+b);
