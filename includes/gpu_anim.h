@@ -111,6 +111,7 @@ struct GPUAnimBitmap {
             glutMouseFunc( mouse_func );
         glutIdleFunc( idle_func );
         glutMainLoop();
+        
     }
 
     // static method used for glut callbacks
@@ -142,6 +143,7 @@ struct GPUAnimBitmap {
         GPUAnimBitmap*  bitmap = *(get_bitmap_ptr());
         uchar4*         devPtr;
         size_t  size;
+		DataBlock*		simBlock = (DataBlock*) bitmap->dataBlock;
 
         HANDLE_ERROR( cudaGraphicsMapResources( 1, &(bitmap->resource), NULL ) );
         HANDLE_ERROR( cudaGraphicsResourceGetMappedPointer( (void**)&devPtr, &size, bitmap->resource) );
@@ -151,6 +153,9 @@ struct GPUAnimBitmap {
         HANDLE_ERROR( cudaGraphicsUnmapResources( 1, &(bitmap->resource), NULL ) );
 
         glutPostRedisplay();
+        
+        // Testando se o tempo de simulação já foi atingido (-1 = tempo infinito)
+		if (simBlock->timeCtrl.simDuration != -1 && simBlock->timeCtrl.tempo >= simBlock->timeCtrl.simDuration) Key(27,0,0);
     }
 
     // static method used for glut callbacks

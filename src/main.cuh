@@ -113,7 +113,7 @@ struct SystemProperties {
 	uint numCells;
     
     float timeStep;
-    
+	
     float2 gravity;
 
 	float boundaryNormalStiffness;
@@ -137,6 +137,7 @@ struct TimeControl
 {
 	clock_t start, totalStart;
 	int tempo;
+	int simDuration; // In timesteps
 	int IPS;
 };
 

@@ -59,11 +59,12 @@ void PrepareSim (const char *filename,
     SystemProperties *sisProps = &simBlock->sisProps;
     ParticlesValues *partValues = &simBlock->partValues;
 	RenderParameters *renderPar = &simBlock->renderPar;
+	TimeControl *timeCtrl = &simBlock->timeCtrl;
 
 	/* Usamos a estrutura de dados C++ e carregamos o arquivo de estado */
 	DEMSimulation sim;
 	sim.loadFromFile(filename);
-	sim.printConfiguration();
+//	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
 /*************************************************************************/
@@ -153,6 +154,7 @@ void PrepareSim (const char *filename,
 	sisProps->cubeDimension = sim.environment.dimension;
 
 	sisProps->timeStep = sim.parameters.timeStep;
+	timeCtrl->simDuration = (sim.parameters.simDuration != -1) ? sim.parameters.simDuration/sisProps->timeStep : -1;
 
 	simBlock->followedParticles = sim.particles.followedParticles;
 

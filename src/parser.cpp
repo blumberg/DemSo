@@ -54,6 +54,9 @@ DEMParameters DEMParser::loadParameters (void)
 	// Valor padrão do passo de tempo
 	params.timeStep = -1; // Inválido, assim podemos checar se foi especificado
 
+	// Valor padrão = simulação forever
+	params.simDuration = -1;
+
 	// Tamanho padrão da janela de simulação (pixels)
 	params.imageDIMy = 800;
 
@@ -61,6 +64,7 @@ DEMParameters DEMParser::loadParameters (void)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("timestep")) params.timeStep = atof(node->value());
+		else if (node->name() == string("simduration")) params.simDuration = atof(node->value());
 		else if (node->name() == string("imageheight")) params.imageDIMy = atoi(node->value());
 		else if (node->name() == string("follow")) params.followedParticles.push_back(atoi(node->value()));
 	}

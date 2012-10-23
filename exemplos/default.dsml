@@ -2,6 +2,7 @@
 <simulation xmlns="http://fem.unicamp.br/ns/dsml">
 	<parameters>
 		<timestep>1e-3</timestep>
+		<simduration>7.5</simduration>
 		<imageheight>800</imageheight>
 		<follow>500</follow>
 		<follow>2200</follow>
