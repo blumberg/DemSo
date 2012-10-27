@@ -292,7 +292,7 @@ float2 collideSpheres(float2 posA, float2 posB,
 		else Ft = Ftmax * contactVel_t / length(contactVel_t);
 		
 		// Cálculo da pressão hidrostática na partícula
-		pressure += length(force)/(2*M_PI*partPropD[typeA].radius);
+		pressure += length(force)/(4*M_PI*partPropD[typeA].radius*partPropD[typeA].radius);
 
 		// Shear force
 		force += Ft;

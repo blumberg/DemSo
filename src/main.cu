@@ -188,8 +188,8 @@ void PrepareSim (const char *filename,
 		partProps[i].colorR = sim.properties.particleTypes[i].color.x;
 		partProps[i].colorG = sim.properties.particleTypes[i].color.y;
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
-
-		partProps[i].inertia = partProps[i].mass*partProps[i].radius*partProps[i].radius / 2;
+		// Momento de inércia: a m r^2, onde a = 2/5 p/ esfera e a = 1/2 p/ cilindro
+		partProps[i].inertia = 2 * partProps[i].mass*partProps[i].radius*partProps[i].radius / 5;
 	}
 
 	// Definindo o maior raio da simulação
