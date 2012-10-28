@@ -2,42 +2,41 @@
 <simulation xmlns="http://fem.unicamp.br/ns/dsml">
 	<parameters>
 		<timestep>10.0e-4</timestep>
+		<simduration>1</simduration>
 		<imageheight>800</imageheight>
 	</parameters>
 
 	<environment>
-		<dimensions><x>10</x><y>10</y></dimensions>
+		<dimensions><x>5</x><y>5</y></dimensions>
 		<gravity><y>0</y></gravity>
 		<stiffness dir="normal">1000</stiffness>
 		<stiffness dir="shear">1000</stiffness>
 	</environment>
 
 	<properties>
-		<particletype id="amarela" name="Partículas Amarelas" color="ffff00">
-			<mass>1</mass>
-			<radius>200e-3</radius>
-			<stiffness dir="normal">1000000</stiffness>
-			<stiffness dir="shear">1000000</stiffness>
-			<damping>0.2</damping>
+		<particletype id="1" name="Partícula" color="ffff00">
+			<mass>0.1</mass>
+			<radius>0.1</radius>
+			<stiffness dir="normal">1000</stiffness>
+			<stiffness dir="shear">1000</stiffness>
+			<damping>0</damping>
 			<damping type="boundary">0.5</damping>
 			<friction>0.4</friction>
 		</particletype>
 	</properties>
 
 	<particles>
-		<particle follow="true" particletype="amarela">
-			<pos><x>4</x><y>5</y></pos>
-			<vel><x>5</x><y>0</y></vel>
+		<particle follow="true" particletype="1">
+			<pos><x>2</x><y>2.55</y></pos>
+			<vel><x>2</x><y>0</y></vel>
 			<theta>0</theta>
 			<omega>0</omega>
 		</particle>
-		<particle follow="true" particletype="amarela">
-			<pos><x>6</x><y>5</y></pos>
-			<vel><x>-5</x><y>0</y></vel>
+		<particle follow="true" particletype="1">
+			<pos><x>3</x><y>2.45</y></pos>
+			<vel><x>0</x><y>0</y></vel>
 			<theta>0</theta>
 			<omega>0</omega>
 		</particle>
-
-		<controlled particletype="amarela" />
 	</particles>
 </simulation>
