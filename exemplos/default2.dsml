@@ -18,15 +18,26 @@
 	<properties>
 		<particletype id="branca" name="Partículas Brancas" color="ffffff">
 			<mass>1e-2</mass>
-			<radius>125e-3</radius>
-			<stiffness dir="normal">1000</stiffness>
+			<radius>40e-3</radius>
+			<stiffness dir="normal">10000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
 			<damping type="boundary">0.5</damping>
-			<friction>0.6</friction>
-			<attraction>10</attraction>
+			<friction>0.4</friction>
+			<attraction>500</attraction>
 		</particletype>
-		
+
+		<particletype id="vermelha" name="Partículas Vermelhas" color="ff0000">
+			<mass>1e-2</mass>
+			<radius>40e-3</radius>
+			<stiffness dir="normal">10000</stiffness>
+			<stiffness dir="shear">1000</stiffness>
+			<damping>0.2</damping>
+			<damping type="boundary">0.5</damping>
+			<friction>0.4</friction>
+			<attraction>500</attraction>
+		</particletype>
+
 		<particletype id="MOVE" color="3a9933">
 			<mass>100</mass>
 			<radius>500e-3</radius>
@@ -40,12 +51,12 @@
 	</properties>
 
 	<particles>
-		<triangle particletype="branca">
-			<pos><x>5</x><y>0.125</y></pos>
-			<width>3.75</width>
-			<num>16</num>
-		</triangle>
-
+		<rectangle particletype="branca,vermelha">
+			<start><x>1.0</x><y>1.0</y></start>
+			<end><x>9.0</x><y>9.0</y></end>
+			<num><x>100</x><y>100</y></num>
+		</rectangle>
+		
 		<controlled particletype="MOVE" />
 	</particles>
 </simulation>

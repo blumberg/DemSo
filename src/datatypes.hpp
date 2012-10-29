@@ -53,6 +53,7 @@ class DEMParticleType {
 		float normalDamping;
 		float boundaryDamping;
 		float frictionCoefficient;
+		float attractCoefficient;
 		float3 color;
 		DEMParticleType () {};
 };

@@ -193,7 +193,7 @@ void PrepareSim (const char *filename,
 		partProps[i].inertia = 2 * partProps[i].mass*partProps[i].radius*partProps[i].radius / 5;
 		
 		// Força de atração definida aqui
-		partProps[i].attractCoefficient = 1;
+		partProps[i].attractCoefficient = sim.properties.particleTypes[i].attractCoefficient;
 	}
 
 	// Definindo o maior raio da simulação
@@ -508,7 +508,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 
 #if USE_BIG_PARTICLE
 		partValues->controlPos.y += -.005;
-		partValues->controlPos.x += .003;
+//		partValues->controlPos.x += .003;
 		if (partValues->controlPos.y < -1) partValues->controlPos.y = 10.5;
 		if (partValues->controlPos.x > sisProps->cubeDimension.x + 0.5) partValues->controlPos.x = -0.5;
 //		printf("\ncontrolFoce = [ %5.2f , %5.2f ]", partValues->ctrlF->x, partValues->ctrlF->y);

@@ -110,6 +110,10 @@ DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 {
 	DEMParticleType ptype;
 	
+	// Define valores padrão
+	ptype.attractCoefficient = 0;
+	ptype.frictionCoefficient = 0;
+	
 	if (root->first_attribute("id")) ptype.id = root->first_attribute("id")->value();
 	if (root->first_attribute("name")) ptype.name = root->first_attribute("name")->value();
 	if (root->first_attribute("color"))
@@ -156,6 +160,7 @@ DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 			else ptype.normalDamping = atof(node->value());
 		}
 		else if (node->name() == string("friction")) ptype.frictionCoefficient = atof(node->value());
+		else if (node->name() == string("attraction")) ptype.attractCoefficient = atof(node->value());
 		else throw string("Unrecognized tag inside <particletype>");
 	}
 	return ptype;

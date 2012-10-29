@@ -24,6 +24,7 @@
 			<damping>0.2</damping>
 			<damping type="boundary">0.5</damping>
 			<friction>0.4</friction>
+			<attraction>10</attraction>
 		</particletype>
 
 		<particletype id="azul" name="Partículas Azuis" color="0000ff">
@@ -34,6 +35,7 @@
 			<damping>0.2</damping>
 			<damping type="boundary">0.5</damping>
 			<friction>0.4</friction>
+			<attraction>10</attraction>
 		</particletype>
 		
 		<particletype id="verde" name="Partículas Verdes" color="00ff00">
@@ -44,6 +46,7 @@
 			<damping>0.2</damping>
 			<damping type="boundary">0.5</damping>
 			<friction>0.4</friction>
+			<attraction>0</attraction>
 		</particletype>
 		
 		<particletype id="vermelha" name="Partículas Vermelhas" color="ff0000">
@@ -54,6 +57,7 @@
 			<damping>0.2</damping>
 			<damping type="boundary">0.5</damping>
 			<friction>0.4</friction>
+			<attraction>0</attraction>
 		</particletype>
 		
 		<particletype id="amarela" name="Partículas Amarelas" color="ffff00">
@@ -64,6 +68,7 @@
 			<damping>0.2</damping>
 			<damping type="boundary">0.5</damping>
 			<friction>0.4</friction>
+			<attraction>0</attraction>
 		</particletype>
 
 		<particletype id="MOVE" color="3a9933">
@@ -74,6 +79,7 @@
 			<damping>0.2</damping>
 			<damping type="boundary">0.5</damping>
 			<friction>0.4</friction>
+			<attraction>0</attraction>
 		</particletype>
 	</properties>
 
