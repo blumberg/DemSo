@@ -85,7 +85,7 @@ void PrepareSim (const char *filename,
 	Rectangle rectangle[qtd.rectangle];
 	Triangle triangle[qtd.triangle];
 	SingleParticles singleParts;
-#if BIG_PARTICLE
+#if USE_BIG_PARTICLE
 	ControlParticle ctrlParticle;
 #endif
 	// Load rectangles' properties
