@@ -348,7 +348,7 @@ float2 collideCell(int2		gridPos,
 
 
 __device__
-float2 collideBoundary(float2 &pos, float2 &vel, float omega,
+float2 collideBoundary(float2 pos, float2 vel, float omega,
                        uint type, float2 boundPos, float &alpha)
 {
 	// Getting radius
@@ -380,12 +380,14 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 												   sisPropD.boundaryNormalStiffness);
 		float shearStiffness = seriesAssociation (partPropD[type].shearStiffness,
 												  sisPropD.boundaryShearStiffness);
-		float normalDamping = seriesAssociation (partPropD[type].normalDamping,
-												 partPropD[type].boundaryDamping);
+		float normalDamping = partPropD[type].normalDamping;
 
-        // spring force
-        force = -normalStiffness*(radius - dist) * norm;
-
+		// Spring force somehow does not work well...
+        //force = -normalStiffness*(radius - dist) * norm;
+		
+        // applying normal force
+		force = -partPropD[type].mass * sisPropD.gravity;
+		
         // dashpot (damping) force (not present when particles are moving away from each-other)
         if (relVel_n < 0.0f) force += normalDamping * relVel_n*norm;
 
@@ -406,7 +408,7 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		alpha += radius * dot(Ft, tang) / partPropD[type].inertia; 
     }
 
-    return force / partPropD[type].inertia;
+    return force / partPropD[type].mass;
 }
 
 
@@ -567,7 +569,7 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 	if (pos[index].y < radius) {
 		float2 wallAcc; float wallAlpha = 0.0f;
 		wallAcc = collideBoundary (pos[index], vel[index], omega[index], type[index],
-								   make_float2(pos[index].x, 0.1f), wallAlpha);
+								   make_float2(pos[index].x, 0.0f), wallAlpha);
 		vel[index] += wallAcc * sisPropD.timeStep;
 		pos[index] += wallAcc * sisPropD.timeStep * sisPropD.timeStep;
 		omega[index] += wallAlpha * sisPropD.timeStep;
