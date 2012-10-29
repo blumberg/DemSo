@@ -191,6 +191,9 @@ void PrepareSim (const char *filename,
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
 		// Momento de inércia: a m r^2, onde a = 2/5 p/ esfera e a = 1/2 p/ cilindro
 		partProps[i].inertia = 2 * partProps[i].mass*partProps[i].radius*partProps[i].radius / 5;
+		
+		// Força de atração definida aqui
+		partProps[i].attractCoefficient = 1;
 	}
 
 	// Definindo o maior raio da simulação

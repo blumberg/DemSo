@@ -304,6 +304,40 @@ float2 collideSpheres(float2 posA, float2 posB,
 }
 
 
+// Attract two spheres
+__device__
+float2 attractSpheres(float2 posA, float2 posB,
+                      uint typeA, uint typeB, float &pressure)
+{
+	// Getting radius
+	float radiusA = partPropD[typeA].radius;
+	float radiusB = partPropD[typeB].radius;
+	
+	// calculate relative position
+    float2 relPos = posB - posA;
+
+    float dist = length(relPos);
+    float attractDistA = radiusA * 2 * 1.2;
+    float attractDistB = radiusB * 2 * 1.2;
+
+	// Normal contact vector
+    float2 norm = relPos / dist;
+
+    float2 force = make_float2(0.0f);
+    if (dist < attractDistA)
+	{
+        force += partPropD[typeA].attractCoefficient * (attractDistA - dist) * norm;
+	}
+	if (dist < attractDistB)
+	{
+        force += partPropD[typeB].attractCoefficient * (attractDistB - dist) * norm;
+	}
+	
+	pressure += length(force)/(4*M_PI*partPropD[typeA].radius*partPropD[typeA].radius);
+	
+	return force;
+}
+
 
 // collide a particle against all other particles in a given cell
 __device__
@@ -339,7 +373,8 @@ float2 collideCell(int2		gridPos,
                 uint type2 = oldType[j];
 
                 // collide two spheres
-                force += collideSpheres(pos, pos2, vel, vel2, omega, omega2, type, type2, moment,pressure);
+                force += collideSpheres(pos, pos2, vel, vel2, omega, omega2, type, type2, moment, pressure);
+                force += attractSpheres(pos, pos2, type, type2, pressure);
             }
         }
     }
@@ -483,6 +518,7 @@ void collideD(float2*	oldPos,               // input: sorted positions
 	float m = 0.0f;
 	float2 f = collideSpheres(pos, controlPos, vel, controlVel, omega,
     						  controlOmega, type, controlType, m, pressure[index]);
+	f += attractSpheres(pos, controlPos, type, controlType, pressure[index]);
     force += f;
     moment += m;
     

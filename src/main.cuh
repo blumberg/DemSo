@@ -46,6 +46,7 @@ struct ParticleProperties {
 	float 	normalDamping;
 	float	boundaryDamping;
 	float	frictionCoefficient;
+	float	attractCoefficient;
 	float 	colorR;
 	float 	colorG;
 	float 	colorB;
