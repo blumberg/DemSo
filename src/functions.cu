@@ -17,11 +17,17 @@
  *
  */
 
-#include "thrust/device_ptr.h"  		   // thrust para utilizar ponteiro
-#include "thrust/sort.h" 					   // thrust para ordenar vetor
+#include <iostream>
+#include <vector>
+#include <thrust/device_ptr.h>  		   // thrust para utilizar ponteiro
+#include <thrust/sort.h> 					   // thrust para ordenar vetor
+#include <thrust/extrema.h>
 #include "main.cuh"
+#include "functions.cuh"
 #include "particles_kernel.cuh"
 
+using std::cout;
+using std::endl;
 using std::vector;
 
 // Esse arquivo prepara as funções que serão executadas na GPU. Ele define
@@ -31,6 +37,23 @@ using std::vector;
 // Função para retornar o maior inteiro da divisão a/b
 inline uint iDivUp(uint a, uint b){
     return (a % b != 0) ? (a / b + 1) : (a / b);
+}
+
+// << Operator overloadings for cout
+std::ostream& operator<<(std::ostream& output, const uint2& p)
+{
+	output << "(" << p.x << ", " << p.y << ")";
+	return output;
+}
+std::ostream& operator<<(std::ostream& output, const float2& p)
+{
+	output << "(" << p.x << ", " << p.y << ")";
+	return output;
+}
+std::ostream& operator<<(std::ostream& output, const float3& p)
+{
+	output << "(" << p.x << ", " << p.y << ", " << p.z << ")";
+	return output;
 }
 
 // compute grid and thread block size for a given number of elements
@@ -536,6 +559,7 @@ void plotParticles(uchar4*	ptr,
 				   uint 	numParticles,
 				   int 		DIMx,
 				   int		DIMy,
+				   int		bgColor,
 #if USE_BIG_PARTICLE
 				   float2 	controlPos,
 				   uint		controlType,
@@ -545,7 +569,7 @@ void plotParticles(uchar4*	ptr,
 				   float*	pressure){
 
 	// pinta o fundo de preto
-	cudaMemset(ptr, 0, DIMx*DIMy*sizeof(uchar4));
+	cudaMemset(ptr, bgColor, DIMx*DIMy*sizeof(uchar4));
 	
 	uint numThreads, numBlocks;
 	computeGridSize(numParticles, 256, numBlocks, numThreads);
@@ -632,4 +656,36 @@ void writeOutputFile (FILE*			outputFile,
 	}
 	// Go to next line for next time step
 	fprintf (outputFile, "\n");
+}
+
+void set_gravity (SystemProperties *sisProps, float2 gravity)
+{
+	sisProps->gravity = gravity;
+	cout << "Gravity updated. New value = " << gravity << endl;
+	cudaMemcpyToSymbol (sisPropD, sisProps, sizeof(SystemProperties));
+}
+
+void set_viewRotations (RenderParameters *renderPar, bool viewRotations)
+{
+	renderPar->viewRotations = viewRotations;
+	cout << "Display of rotations turned " << ((viewRotations) ? "ON" : "OFF") << endl;
+	cudaMemcpyToSymbol (renderParD, renderPar, sizeof(RenderParameters));
+}
+
+void set_colorByPressure (RenderParameters *renderPar, bool colorByPressure)
+{
+	renderPar->colorByPressure = colorByPressure;
+	cout << "Coloration of particles by pressure value turned " << ((colorByPressure) ? "ON" : "OFF") << endl;
+	cudaMemcpyToSymbol (renderParD, renderPar, sizeof(RenderParameters));
+}
+
+void updatePressureScale (RenderParameters *renderPar, float *pressure, int numParts)
+{
+	thrust::device_ptr<float> result = thrust::max_element(thrust::device_ptr<float>(pressure),
+										thrust::device_ptr<float>(pressure + numParts));
+	renderPar->maxPressure = (*result > 0.0) ? *result : 1.0;
+
+	cout << "Pressure scale updated. New maximum value = " << renderPar->maxPressure << endl;
+
+	cudaMemcpyToSymbol (renderParD, renderPar, sizeof(RenderParameters));
 }

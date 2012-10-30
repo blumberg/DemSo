@@ -47,6 +47,7 @@ struct ParticleProperties {
 	float 	normalDamping;
 	float	boundaryDamping;
 	float	frictionCoefficient;
+	float	attractCoefficient;
 	float 	colorR;
 	float 	colorG;
 	float 	colorB;
@@ -116,33 +117,37 @@ struct SystemProperties {
 	uint numCells;
     
     float timeStep;
-    
+	
     float2 gravity;
 
 	float boundaryNormalStiffness;
 	float boundaryShearStiffness;
 };
 
-struct RenderParameters {
-
+struct RenderParameters
+{
 	int imageDIMx;
     int imageDIMy;
 	int dimx;
 	int dimy;
 	float pRadius;
-
+	int bgColor;
+	bool viewRotations;
+	bool colorByPressure;
+	float maxPressure;
 };
 
-struct TimeControl {
-
+struct TimeControl
+{
 	clock_t start, totalStart;
 	int tempo;
+	int simDuration; // In timesteps
 	int IPS;
 };
 
 // Estrutura principal da simulação. Ela contem as 3 outras subestruturas.
-struct DataBlock {
-
+struct DataBlock
+{
 	ParticlesValues partValues;
 	SystemProperties sisProps;
 	RenderParameters renderPar;

@@ -32,6 +32,14 @@ __constant__ SystemProperties sisPropD;
 __constant__ ParticleProperties partPropD[MAX_PARTICLES_TYPES];
 __constant__ RenderParameters renderParD;
 
+// Return the equivalent value of a series association of a and b
+__device__
+inline float seriesAssociation (float a, float b)
+{
+	if (a == 0.0 || b == 0.0) return 0.0;
+	return (a*b)/(a+b);
+}
+
 __global__
 void createRectanglesD(float2*			pos,
 					  uint*				ID,
@@ -257,13 +265,13 @@ float2 collideSpheres(float2 posA, float2 posB,
 		float  relVel_n = dot(relVel, norm);
         float2 relVel_t = relVel - relVel_n*norm;
 
-		// Series association of normal damping and stiffness
-		float normalStiffness = (partPropD[typeA].normalStiffness*partPropD[typeB].normalStiffness)
-							   /(partPropD[typeA].normalStiffness+partPropD[typeB].normalStiffness);
-		float shearStiffness = (partPropD[typeA].shearStiffness*partPropD[typeB].shearStiffness)
-							  /(partPropD[typeA].shearStiffness+partPropD[typeB].shearStiffness);
-		float normalDamping = (partPropD[typeA].normalDamping*partPropD[typeB].normalDamping)
-							 /(partPropD[typeA].normalDamping+partPropD[typeB].normalDamping);
+		// Series association of stiffnesses and damping
+		float normalStiffness = seriesAssociation (partPropD[typeA].normalStiffness,
+												   partPropD[typeB].normalStiffness);
+		float shearStiffness = seriesAssociation (partPropD[typeA].shearStiffness,
+												  partPropD[typeB].shearStiffness);
+		float normalDamping = seriesAssociation (partPropD[typeA].normalDamping,
+												 partPropD[typeB].normalDamping);
 		float frictionCoefficient = (partPropD[typeA].frictionCoefficient+partPropD[typeB].frictionCoefficient)/2;
 
         // spring force
@@ -284,7 +292,7 @@ float2 collideSpheres(float2 posA, float2 posB,
 		else Ft = Ftmax * contactVel_t / length(contactVel_t);
 		
 		// Cálculo da pressão hidrostática na partícula
-		pressure += length(force)/(2*M_PI*partPropD[typeA].radius);
+		pressure += length(force)/(4*M_PI*partPropD[typeA].radius*partPropD[typeA].radius);
 
 		// Shear force
 		force += Ft;
@@ -296,6 +304,40 @@ float2 collideSpheres(float2 posA, float2 posB,
     return force;
 }
 
+
+// Attract two spheres
+__device__
+float2 attractSpheres(float2 posA, float2 posB,
+                      uint typeA, uint typeB, float &pressure)
+{
+	// Getting radius
+	float radiusA = partPropD[typeA].radius;
+	float radiusB = partPropD[typeB].radius;
+	
+	// calculate relative position
+    float2 relPos = posB - posA;
+
+    float dist = length(relPos);
+    float attractDistA = radiusA * 2 * 1.2;
+    float attractDistB = radiusB * 2 * 1.2;
+
+	// Normal contact vector
+    float2 norm = relPos / dist;
+
+    float2 force = make_float2(0.0f);
+    if (dist < attractDistA)
+	{
+        force += partPropD[typeA].attractCoefficient * (attractDistA - dist) * norm;
+	}
+	if (dist < attractDistB)
+	{
+        force += partPropD[typeB].attractCoefficient * (attractDistB - dist) * norm;
+	}
+	
+	pressure += length(force)/(4*M_PI*partPropD[typeA].radius*partPropD[typeA].radius);
+	
+	return force;
+}
 
 
 // collide a particle against all other particles in a given cell
@@ -332,7 +374,8 @@ float2 collideCell(int2		gridPos,
                 uint type2 = oldType[j];
 
                 // collide two spheres
-                force += collideSpheres(pos, pos2, vel, vel2, omega, omega2, type, type2, moment,pressure);
+                force += collideSpheres(pos, pos2, vel, vel2, omega, omega2, type, type2, moment, pressure);
+                force += attractSpheres(pos, pos2, type, type2, pressure);
             }
         }
     }
@@ -341,7 +384,7 @@ float2 collideCell(int2		gridPos,
 
 
 __device__
-float2 collideBoundary(float2 &pos, float2 &vel, float omega,
+float2 collideBoundary(float2 pos, float2 vel, float omega,
                        uint type, float2 boundPos, float &alpha)
 {
 	// Getting radius
@@ -368,17 +411,19 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		float  relVel_n = dot(relVel, norm);
         float2 relVel_t = relVel - relVel_n*norm;
 
-		// Series association of normal damping and stiffness
-		float normalStiffness = (partPropD[type].normalStiffness*sisPropD.boundaryNormalStiffness)
-							   /(partPropD[type].normalStiffness+sisPropD.boundaryNormalStiffness);
-		float shearStiffness = (partPropD[type].shearStiffness*sisPropD.boundaryShearStiffness)
-							  /(partPropD[type].shearStiffness+sisPropD.boundaryShearStiffness);
-		float normalDamping = (partPropD[type].normalDamping*partPropD[type].boundaryDamping)
-							 /(partPropD[type].normalDamping+partPropD[type].boundaryDamping);
+		// Series association of stiffnesses and damping
+		float normalStiffness = seriesAssociation (partPropD[type].normalStiffness,
+												   sisPropD.boundaryNormalStiffness);
+		float shearStiffness = seriesAssociation (partPropD[type].shearStiffness,
+												  sisPropD.boundaryShearStiffness);
+		float normalDamping = partPropD[type].normalDamping;
 
-        // spring force
-        force = -normalStiffness*(radius - dist) * norm;
-
+		// Spring force somehow does not work well...
+        //force = -normalStiffness*(radius - dist) * norm;
+		
+        // applying normal force
+		force = -partPropD[type].mass * sisPropD.gravity;
+		
         // dashpot (damping) force (not present when particles are moving away from each-other)
         if (relVel_n < 0.0f) force += normalDamping * relVel_n*norm;
 
@@ -399,7 +444,7 @@ float2 collideBoundary(float2 &pos, float2 &vel, float omega,
 		alpha += radius * dot(Ft, tang) / partPropD[type].inertia; 
     }
 
-    return force / partPropD[type].inertia;
+    return force / partPropD[type].mass;
 }
 
 
@@ -474,6 +519,7 @@ void collideD(float2*	oldPos,               // input: sorted positions
 	float m = 0.0f;
 	float2 f = collideSpheres(pos, controlPos, vel, controlVel, omega,
     						  controlOmega, type, controlType, m, pressure[index]);
+	f += attractSpheres(pos, controlPos, type, controlType, pressure[index]);
     force += f;
     moment += m;
     
@@ -560,7 +606,7 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 	if (pos[index].y < radius) {
 		float2 wallAcc; float wallAlpha = 0.0f;
 		wallAcc = collideBoundary (pos[index], vel[index], omega[index], type[index],
-								   make_float2(pos[index].x, 0.1f), wallAlpha);
+								   make_float2(pos[index].x, 0.0f), wallAlpha);
 		vel[index] += wallAcc * sisPropD.timeStep;
 		pos[index] += wallAcc * sisPropD.timeStep * sisPropD.timeStep;
 		omega[index] += wallAlpha * sisPropD.timeStep;
@@ -572,30 +618,18 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 #endif
 }
 
-#define RGB_R 0
-#define RGB_G 1
-#define RGB_B 2
+#define colorbar_R(input) colorbar(input-0.25f)
+#define colorbar_G colorbar
+#define colorbar_B(input) colorbar(input+0.25f)
 // Takes input in normalized form (0 < input < 1) and returns
-// the appropriate color value for the specified component (RGB_R,
-// RGB_G or RGB_B)
+// the appropriate color value for the green component (or red
+// or blue if shifted)
 __device__
-float colorbar (float input, int component)
+float colorbar (float x)
 {
-	float rv, x, top = 1.5f, bottom = -0.5f;
-
-	switch (component) {
-		case RGB_R:
-			x = input - 0.25f;
-			break;
-		case RGB_B:
-			x = input + 0.25f;
-			break;
-		default:
-			x = input;
-	}
+	float rv, top = 1.5f, bottom = -0.5f;
 
 	// Function for the green component
-	// shifted to get red or blue component
 	if (x < 0.5f)
 		rv = x/0.5f*(top-bottom) + bottom;
 	else
@@ -625,7 +659,7 @@ void plotSpheresD(uchar4*	ptr,
 	
 	float2 pos = sortPos[index];
 	float theta = sortTheta[index];
-	float pressure = pressureVec[index]/100; //TODO: escolher um valor de normalização dinamicamente
+	float pressure = pressureVec[index] / renderParD.maxPressure;
 	
 	uint currentType = type[index];
 	float pRadius = renderParD.imageDIMy/sisPropD.cubeDimension.y*partPropD[currentType].radius;
@@ -653,35 +687,42 @@ void plotSpheresD(uchar4*	ptr,
 				if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
 				
 				// define a cor do pixel
-//				ptr[pixel].x = partPropD[currentType].colorR * fscale;
-//				ptr[pixel].y = partPropD[currentType].colorG * fscale;
-//				ptr[pixel].z = partPropD[currentType].colorB * fscale;
+				if (renderParD.colorByPressure)
+				{
+					ptr[pixel].x = colorbar_R(pressure) * fscale;
+					ptr[pixel].y = colorbar_G(pressure) * fscale;
+					ptr[pixel].z = colorbar_B(pressure) * fscale;
+				} else
+				{
+					ptr[pixel].x = partPropD[currentType].colorR * fscale;
+					ptr[pixel].y = partPropD[currentType].colorG * fscale;
+					ptr[pixel].z = partPropD[currentType].colorB * fscale;
+				}
 				ptr[pixel].w = 255.0f * fscale;
 				
-				ptr[pixel].x = colorbar(pressure, RGB_R) * fscale;
-				ptr[pixel].y = colorbar(pressure, RGB_G) * fscale;
-				ptr[pixel].z = colorbar(pressure, RGB_B) * fscale;
 			}
 		}
 	}
 	// Drawing line to view rotations
-	for(register int r = 0; r < pRadius; r++)
+	if (renderParD.viewRotations)
 	{
-		// posição do ponto atual (em pixel)
-		uint gPixelx = cPixelx + r * cosf(theta);
-		uint gPixely = cPixely + r * sinf(theta);
-		
-		// posição do pixel no vetor da imagem
-		uint pixel = gPixelx + gPixely*renderParD.imageDIMx;
-		if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
+		for(register int r = 0; r < pRadius; r++)
+		{
+			// posição do ponto atual (em pixel)
+			uint gPixelx = cPixelx + r * cosf(theta);
+			uint gPixely = cPixely + r * sinf(theta);
+			
+			// posição do pixel no vetor da imagem
+			uint pixel = gPixelx + gPixely*renderParD.imageDIMx;
+			if (pixel >= renderParD.imageDIMx*renderParD.imageDIMy) pixel = renderParD.imageDIMx*renderParD.imageDIMy-1;
 
-		// define a cor do pixel
-		ptr[pixel].x = 0.0f;
-		ptr[pixel].y = 0.0f;
-		ptr[pixel].z = 0.0f;
-		ptr[pixel].w = 0.0f;
+			// define a cor do pixel
+			ptr[pixel].x = 0.0f;
+			ptr[pixel].y = 0.0f;
+			ptr[pixel].z = 0.0f;
+			ptr[pixel].w = 0.0f;
+		}
 	}
-	
 }
 
 __global__

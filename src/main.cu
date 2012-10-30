@@ -64,11 +64,12 @@ void PrepareSim (const char *filename,
     SystemProperties *sisProps = &simBlock->sisProps;
     ParticlesValues *partValues = &simBlock->partValues;
 	RenderParameters *renderPar = &simBlock->renderPar;
+	TimeControl *timeCtrl = &simBlock->timeCtrl;
 
 	/* Usamos a estrutura de dados C++ e carregamos o arquivo de estado */
 	DEMSimulation sim;
 	sim.loadFromFile(filename);
-	sim.printConfiguration();
+//	sim.printConfiguration();
 	/* Agora vamos copiar para a estrutura C */
 
 /*************************************************************************/
@@ -89,8 +90,9 @@ void PrepareSim (const char *filename,
 	Rectangle rectangle[qtd.rectangle];
 	Triangle triangle[qtd.triangle];
 	SingleParticles singleParts;
+#if USE_BIG_PARTICLE
 	ControlParticle ctrlParticle;
-
+#endif
 	// Load rectangles' properties
 	for (register int i = 0; i < qtd.rectangle; i++)
 	{
@@ -158,6 +160,7 @@ void PrepareSim (const char *filename,
 	sisProps->cubeDimension = sim.environment.dimension;
 
 	sisProps->timeStep = sim.parameters.timeStep;
+	timeCtrl->simDuration = (sim.parameters.simDuration != -1) ? sim.parameters.simDuration/sisProps->timeStep : -1;
 
 	simBlock->followedParticles = sim.particles.followedParticles;
 
@@ -173,6 +176,10 @@ void PrepareSim (const char *filename,
 	
 	renderPar->imageDIMy = sim.parameters.imageDIMy;
 	renderPar->imageDIMx = sisProps->cubeDimension.x/sisProps->cubeDimension.y*renderPar->imageDIMy;
+	
+	renderPar->bgColor = 0; // Default background color = black;
+	renderPar->viewRotations = true; // Default to draw lines to view rotations
+	renderPar->colorByPressure = false; // Default to not color particles by pressure
 
 	// PARSER: copiando as propriedades de partículas
 	for (register int i = 0; i < sim.properties.particleTypes.size(); i++)
@@ -187,8 +194,11 @@ void PrepareSim (const char *filename,
 		partProps[i].colorR = sim.properties.particleTypes[i].color.x;
 		partProps[i].colorG = sim.properties.particleTypes[i].color.y;
 		partProps[i].colorB = sim.properties.particleTypes[i].color.z;
-
-		partProps[i].inertia = partProps[i].mass*partProps[i].radius*partProps[i].radius / 2;
+		// Momento de inércia: a m r^2, onde a = 2/5 p/ esfera e a = 1/2 p/ cilindro
+		partProps[i].inertia = 2 * partProps[i].mass*partProps[i].radius*partProps[i].radius / 5;
+		
+		// Força de atração definida aqui
+		partProps[i].attractCoefficient = sim.properties.particleTypes[i].attractCoefficient;
 	}
 
 	// Definindo o maior raio da simulação
@@ -347,29 +357,31 @@ void PrepareSim (const char *filename,
 	printf("\nNumero de Particulas = %d\n", sisProps->numParticles);
 	printf("grid %d x %d\n\n", sisProps->gridSize.x, sisProps->gridSize.y);
 
+	updatePressureScale (renderPar, partValues->pressure, sisProps->numParticles);
+
 /*************************************************************************/
 /*************************************************************************/	
 // Liberando as variáveis alocadas
 
-if (qtd.rectangle > 0){
-	for (int i = 0 ; i < qtd.rectangle ;  i++){
-		free( rectangle[i].typeVec );
+	if (qtd.rectangle > 0){
+		for (int i = 0 ; i < qtd.rectangle ;  i++){
+			free( rectangle[i].typeVec );
+		}
 	}
-}
 
-if (qtd.triangle > 0){
-	for (int i = 0 ; i < qtd.triangle ;  i++){
-		free( triangle[i].typeVec );
+	if (qtd.triangle > 0){
+		for (int i = 0 ; i < qtd.triangle ;  i++){
+			free( triangle[i].typeVec );
+		}
 	}
-}
 
-if (qtd.singleParticles > 0){
-	free( singleParts.pos );
-	free( singleParts.vel );
-	free( singleParts.theta );
-	free( singleParts.omega );
-	free( singleParts.type );
-}
+	if (qtd.singleParticles > 0){
+		free( singleParts.pos );
+		free( singleParts.vel );
+		free( singleParts.theta );
+		free( singleParts.omega );
+		free( singleParts.type );
+	}
 /*************************************************************************/
 /*************************************************************************/	
 
@@ -525,6 +537,22 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 #endif
 
 		timeCtrl->tempo++;
+
+		// Escreve no arquivo de output os dados de saída
+		if (!simBlock->followedParticles.empty())
+			writeOutputFile (simBlock->outputFile,
+							 simBlock->followedParticles,
+							 sisProps->timeStep * timeCtrl->tempo, // Current elapsed time
+							 (float2*)sortPos,
+							 (float2*)sortVel,
+							 (float2*)partValues->acc,
+							 sortTheta,
+							 sortOmega,
+							 partValues->alpha,
+							 sortID,
+							 sortType,
+							 sortLoc,
+							 partValues->pressure);
 	}
 
 	// Saida grarica quando necessario
@@ -535,6 +563,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  sisProps->numParticles,
 				  renderPar->imageDIMx,
 				  renderPar->imageDIMy,
+				  renderPar->bgColor,
 #if USE_BIG_PARTICLE
 				  partValues->controlPos,
 				  partValues->controlType,
@@ -545,22 +574,6 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 				  
 	engEvalString(simBlock->ep,"PlotParticle");
 
-	// Escreve no arquivo de output os dados de saída
-	if (!simBlock->followedParticles.empty())
-		writeOutputFile (simBlock->outputFile,
-						 simBlock->followedParticles,
-						 sisProps->timeStep * timeCtrl->tempo, // Current elapsed time
-						 (float2*)sortPos,
-						 (float2*)sortVel,
-						 (float2*)partValues->acc,
-						 sortTheta,
-						 sortOmega,
-						 partValues->alpha,
-						 sortID,
-						 sortType,
-						 sortLoc,
-						 partValues->pressure);
-	
 	// calcula o tempo de exibição do frame
 	double time = ((double)clock() - timeCtrl->start)/CLOCKS_PER_SEC;
 	if (time < 0.003f) time = 0.03f;
@@ -571,7 +584,6 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 	// duas vezes a mesma iteração (por causa do switch)
 	timeCtrl->IPS = floor(1.0f/time/FPS*timeCtrl->IPS);
 	timeCtrl->IPS = timeCtrl->IPS | 0x0001;
-
 }
 
 void FinalizingSim( DataBlock *simBlock) {

@@ -20,6 +20,11 @@
 #ifndef FUNCTIONS_CUH
 #define FUNCTIONS_CUH
 #include <vector>
+#include <iostream>
+
+std::ostream& operator<<(std::ostream&, const uint2&);
+std::ostream& operator<<(std::ostream&, const float2&);
+std::ostream& operator<<(std::ostream&, const float3&);
 
 void allocateVectors(ParticleProperties*,
 					 ParticlesValues*,
@@ -66,7 +71,7 @@ void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, 
 
 void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, uint);
 
-void plotParticles(uchar4*, float*, float*, uint*, uint, int, int,
+void plotParticles(uchar4*, float*, float*, uint*, uint, int, int, int,
 #if USE_BIG_PARTICLE
 				  float2, uint, int, int,
 #endif
@@ -74,5 +79,13 @@ void plotParticles(uchar4*, float*, float*, uint*, uint, int, int,
 
 void writeOutputFile (FILE*, std::vector<int>, float, float2*, float2*, float2*, float*, float*,
 					  float*, uint*, uint*, uint*, float*);
+
+void set_gravity (SystemProperties *, float2);
+
+void set_viewRotations (RenderParameters *, bool);
+
+void set_colorByPressure (RenderParameters *, bool);
+
+void updatePressureScale (RenderParameters *, float *, int);
 
 #endif /* FUNCTIONS_CUH */

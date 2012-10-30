@@ -29,6 +29,7 @@ using std::vector;
 class DEMParameters {
 	public:
 		float timeStep;
+		float simDuration;
 		vector<int> followedParticles;
 		uint imageDIMy;
 };
@@ -52,6 +53,7 @@ class DEMParticleType {
 		float normalDamping;
 		float boundaryDamping;
 		float frictionCoefficient;
+		float attractCoefficient;
 		float3 color;
 		DEMParticleType () {};
 };

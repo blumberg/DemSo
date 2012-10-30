@@ -54,6 +54,9 @@ DEMParameters DEMParser::loadParameters (void)
 	// Valor padrão do passo de tempo
 	params.timeStep = -1; // Inválido, assim podemos checar se foi especificado
 
+	// Valor padrão = simulação forever
+	params.simDuration = -1;
+
 	// Tamanho padrão da janela de simulação (pixels)
 	params.imageDIMy = 800;
 
@@ -61,6 +64,7 @@ DEMParameters DEMParser::loadParameters (void)
 	for (xml_node<> *node = root->first_node(); node; node = node->next_sibling())
 	{
 		if (node->name() == string("timestep")) params.timeStep = atof(node->value());
+		else if (node->name() == string("simduration")) params.simDuration = atof(node->value());
 		else if (node->name() == string("imageheight")) params.imageDIMy = atoi(node->value());
 		else if (node->name() == string("follow")) params.followedParticles.push_back(atoi(node->value()));
 	}
@@ -105,6 +109,10 @@ DEMProperties DEMParser::loadProperties (void)
 DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 {
 	DEMParticleType ptype;
+	
+	// Define valores padrão
+	ptype.attractCoefficient = 0;
+	ptype.frictionCoefficient = 0;
 	
 	if (root->first_attribute("id")) ptype.id = root->first_attribute("id")->value();
 	if (root->first_attribute("name")) ptype.name = root->first_attribute("name")->value();
@@ -152,6 +160,7 @@ DEMParticleType DEMParser::loadParticleType (xml_node<> *root)
 			else ptype.normalDamping = atof(node->value());
 		}
 		else if (node->name() == string("friction")) ptype.frictionCoefficient = atof(node->value());
+		else if (node->name() == string("attraction")) ptype.attractCoefficient = atof(node->value());
 		else throw string("Unrecognized tag inside <particletype>");
 	}
 	return ptype;

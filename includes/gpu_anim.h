@@ -23,6 +23,9 @@
 #include "cuda.h"
 #include "cuda_gl_interop.h"
 #include <iostream>
+#include "cutil_math.h"
+#include "../src/main.cuh"
+#include "../src/functions.cuh"
 
 
 PFNGLBINDBUFFERARBPROC    glBindBuffer     = NULL;
@@ -108,6 +111,7 @@ struct GPUAnimBitmap {
             glutMouseFunc( mouse_func );
         glutIdleFunc( idle_func );
         glutMainLoop();
+        
     }
 
     // static method used for glut callbacks
@@ -139,6 +143,7 @@ struct GPUAnimBitmap {
         GPUAnimBitmap*  bitmap = *(get_bitmap_ptr());
         uchar4*         devPtr;
         size_t  size;
+		DataBlock*		simBlock = (DataBlock*) bitmap->dataBlock;
 
         HANDLE_ERROR( cudaGraphicsMapResources( 1, &(bitmap->resource), NULL ) );
         HANDLE_ERROR( cudaGraphicsResourceGetMappedPointer( (void**)&devPtr, &size, bitmap->resource) );
@@ -148,13 +153,53 @@ struct GPUAnimBitmap {
         HANDLE_ERROR( cudaGraphicsUnmapResources( 1, &(bitmap->resource), NULL ) );
 
         glutPostRedisplay();
+        
+        // Testando se o tempo de simulação já foi atingido (-1 = tempo infinito)
+		if (simBlock->timeCtrl.simDuration != -1 && simBlock->timeCtrl.tempo >= simBlock->timeCtrl.simDuration) Key(27,0,0);
     }
 
     // static method used for glut callbacks
-    static void Key(unsigned char key, int x, int y) {
-        switch (key) {
+    static void Key(unsigned char key, int x, int y)
+	{
+		GPUAnimBitmap*		bitmap = *(get_bitmap_ptr());
+		DataBlock*			simBlock = (DataBlock*) bitmap->dataBlock;
+		SystemProperties*	sisProps = &simBlock->sisProps;
+		RenderParameters*	renderPar = &simBlock->renderPar;
+
+		int*	bgColor = &renderPar->bgColor;
+		float2*	gravity = &sisProps->gravity;
+		bool*	viewRotations = &renderPar->viewRotations;
+		bool*	colorByPressure = &renderPar->colorByPressure;
+		float*	pressure = &simBlock->partValues.pressure[0];
+		int		numParts = sisProps->numParticles;
+
+        switch (key)
+		{
+			case 'b':
+				if (*bgColor == 0) *bgColor = 255;
+				else *bgColor = 0;
+				break;
+
+			case 'g':
+				if (gravity->y != 0) set_gravity (sisProps, make_float2(0.0f));
+				else set_gravity (sisProps, make_float2(0.0, -9.81f));
+				break;
+
+			case 'r':
+				if (*viewRotations) set_viewRotations (renderPar, false);
+				else set_viewRotations (renderPar, true);
+				break;
+
+			case 'p':
+				if (*colorByPressure) set_colorByPressure (renderPar, false);
+				else set_colorByPressure (renderPar, true);
+				break;
+
+			case 'u':
+				updatePressureScale (renderPar, pressure, numParts);
+				break;
+
             case 27:
-                GPUAnimBitmap*   bitmap = *(get_bitmap_ptr());
                 if (bitmap->animExit)
                     bitmap->animExit( bitmap->dataBlock );
                 bitmap->free_resources();
