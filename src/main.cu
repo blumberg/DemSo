@@ -503,6 +503,7 @@ void SimLooping( uchar4 *image, DataBlock *simBlock, int ticks ) {
 						sortOmega,
 						partValues->alpha,
 			 	  		sortType,
+						partValues->pressure,
 			 	  		sisProps->numParticles);
 
 

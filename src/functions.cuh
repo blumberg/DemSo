@@ -69,7 +69,7 @@ void collide(float*, float*, float*, float*, float*, uint*, uint*, uint*, uint, 
 	float*);
 
 
-void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, uint);
+void integrateSystem(float*, float*, float*, float*, float*, float*, uint*, float*, uint);
 
 void plotParticles(uchar4*, float*, float*, uint*, uint, int, int, int,
 #if USE_BIG_PARTICLE

@@ -533,6 +533,7 @@ void integrateSystem(float*	pos,
 					 float* omega,
 					 float* alpha,
 					 uint*	type,
+					 float*	pressure,
 					 uint	numParticles)
 {
 	uint numThreads, numBlocks;
@@ -545,7 +546,8 @@ void integrateSystem(float*	pos,
 											   theta,
 											   omega,
 											   alpha,
-				 							   type);
+				 							   type,
+											   pressure);
 }
 
 // Desenha as partículas em uma imagem de DIMx x DIMy pixels e mostra na

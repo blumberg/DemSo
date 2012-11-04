@@ -280,24 +280,27 @@ float2 collideSpheres(float2 posA, float2 posB,
         // dashpot (damping) force (not present when particles are moving away from each-other)
         if (relVel_n < 0.0f) force += normalDamping * relVel_n*norm;
 
-        // tangential shear force
-		float2 contactVel_t = relVel_t - (radiusA*omegaA + radiusB*omegaB) * tang;
-		float2 Ftrial = shearStiffness * contactVel_t * sisPropD.timeStep;
-	
-		// Max tangential friction force
-		float Ftmax = frictionCoefficient*length(force);
-
-		float2 Ft = make_float2(0.0f);
-		if (length(Ftrial) < Ftmax) Ft = Ftrial;
-		else Ft = Ftmax * contactVel_t / length(contactVel_t);
-		
 		// Cálculo da pressão hidrostática na partícula
-		pressure += length(force)/(4*M_PI*partPropD[typeA].radius*partPropD[typeA].radius);
+		pressure += length(force)/(4*M_PI*radiusA*radiusA);
 
-		// Shear force
-		force += Ft;
-		// Moment
-		moment += radiusA * dot(Ft, tang); 
+		if (frictionCoefficient != 0.0)
+		{
+			// tangential shear force
+			float2 contactVel_t = relVel_t - (radiusA*omegaA + radiusB*omegaB) * tang;
+			float2 Ftrial = shearStiffness * contactVel_t * sisPropD.timeStep;
+		
+			// Max tangential friction force
+			float Ftmax = frictionCoefficient*length(force);
+
+			float2 Ft = make_float2(0.0f);
+			if (length(Ftrial) < Ftmax) Ft = Ftrial;
+			else Ft = Ftmax * contactVel_t / length(contactVel_t);
+			
+			// Shear force
+			force += Ft;
+			// Moment
+			moment += radiusA * dot(Ft, tang); 
+		}
     }
 	
     return force;
@@ -384,7 +387,7 @@ float2 collideCell(int2		gridPos,
 
 __device__
 float2 collideBoundary(float2 pos, float2 vel, float omega,
-                       uint type, float2 boundPos, float &alpha)
+                       uint type, float2 boundPos, float &alpha, float &pressure)
 {
 	// Getting radius
 	float radius = partPropD[type].radius;
@@ -426,21 +429,27 @@ float2 collideBoundary(float2 pos, float2 vel, float omega,
         // dashpot (damping) force (not present when particles are moving away from each-other)
         if (relVel_n < 0.0f) force += normalDamping * relVel_n*norm;
 
-        // tangential shear force
-		float2 contactVel_t = relVel_t - radius*omega*tang;
-		float2 Ftrial = shearStiffness * contactVel_t * sisPropD.timeStep;
-	
-		// Max tangential friction force
-		float Ftmax = partPropD[type].frictionCoefficient*length(force);
+		// Cálculo da pressão hidrostática na partícula
+		pressure += length(force)/(4*M_PI*radius*radius);
 
-		float2 Ft = make_float2(0.0f);
-		if (length(Ftrial) < Ftmax) Ft = Ftrial;
-		else Ft = Ftmax * contactVel_t / length(contactVel_t);
+		if (partPropD[type].frictionCoefficient != 0.0)
+		{
+			// tangential shear force
+			float2 contactVel_t = relVel_t - radius*omega*tang;
+			float2 Ftrial = shearStiffness * contactVel_t * sisPropD.timeStep;
+		
+			// Max tangential friction force
+			float Ftmax = partPropD[type].frictionCoefficient*length(force);
 
-		// Shear force
-		force = Ft;
-		// Moment
-		alpha += radius * dot(Ft, tang) / partPropD[type].inertia; 
+			float2 Ft = make_float2(0.0f);
+			if (length(Ftrial) < Ftmax) Ft = Ftrial;
+			else Ft = Ftmax * contactVel_t / length(contactVel_t);
+
+			// Shear force
+			force = Ft;
+			// Moment
+			alpha += radius * dot(Ft, tang) / partPropD[type].inertia; 
+		}
     }
 
     return force / partPropD[type].mass;
@@ -570,7 +579,7 @@ void reduceVecD(float* vector,
 
 __global__
 void integrateSystemD(float2* pos, float2* vel, float2* acc,
-					  float* theta, float* omega, float* alpha, uint* type)
+					  float* theta, float* omega, float* alpha, uint* type, float* pressure)
 {	
     uint index = blockIdx.x * blockDim.x + threadIdx.x;
     if (index >= sisPropD.numParticles) return;  
@@ -605,7 +614,7 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 	if (pos[index].y < radius) {
 		float2 wallAcc; float wallAlpha = 0.0f;
 		wallAcc = collideBoundary (pos[index], vel[index], omega[index], type[index],
-								   make_float2(pos[index].x, 0.0f), wallAlpha);
+								   make_float2(pos[index].x, 0.0f), wallAlpha, pressure[index]);
 		vel[index] += wallAcc * sisPropD.timeStep;
 		pos[index] += wallAcc * sisPropD.timeStep * sisPropD.timeStep;
 		omega[index] += wallAlpha * sisPropD.timeStep;
