@@ -601,17 +601,40 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 	//colidir com a borda, calcula as forcas/momentos, atualiza as
 	//aceleracões mas reverte as velocidades e trava a posicão
 	float radius = partPropD[type[index]].radius;
-#if 1
-	if (pos[index].x > sisPropD.cubeDimension.x - radius) {
+
+	if (pos[index].x > sisPropD.cubeDimension.x - radius)
+	{
+		float2 wallAcc; float wallAlpha = 0.0f;
+		wallAcc = collideBoundary (pos[index], vel[index], omega[index], type[index],
+								   make_float2(sisPropD.cubeDimension.x,pos[index].y),
+								   wallAlpha, pressure[index]);
+		vel[index] += wallAcc * sisPropD.timeStep;
+		pos[index] += wallAcc * sisPropD.timeStep * sisPropD.timeStep;
+		omega[index] += wallAlpha * sisPropD.timeStep;
+		theta[index] += wallAlpha * sisPropD.timeStep * sisPropD.timeStep;
+
 		pos[index].x = sisPropD.cubeDimension.x - radius;
-		vel[index].x *= -partPropD[type[index]].boundaryDamping; }
-	if (pos[index].x < radius) {
+		vel[index].x *= -partPropD[type[index]].boundaryDamping;
+	}
+	if (pos[index].x < radius)
+	{
+		float2 wallAcc; float wallAlpha = 0.0f;
+		wallAcc = collideBoundary (pos[index], vel[index], omega[index], type[index],
+								   make_float2(0.0f, pos[index].y),
+								   wallAlpha, pressure[index]);
+		vel[index] += wallAcc * sisPropD.timeStep;
+		pos[index] += wallAcc * sisPropD.timeStep * sisPropD.timeStep;
+		omega[index] += wallAlpha * sisPropD.timeStep;
+		theta[index] += wallAlpha * sisPropD.timeStep * sisPropD.timeStep;
+
 		pos[index].x = radius;
-		vel[index].x *= -partPropD[type[index]].boundaryDamping; }
+		vel[index].x *= -partPropD[type[index]].boundaryDamping;
+	}
 	if (pos[index].y > sisPropD.cubeDimension.y - radius) {
 		pos[index].y = sisPropD.cubeDimension.y - radius;
 		vel[index].y *= -partPropD[type[index]].boundaryDamping; }
-	if (pos[index].y < radius) {
+	if (pos[index].y < radius)
+	{
 		float2 wallAcc; float wallAlpha = 0.0f;
 		wallAcc = collideBoundary (pos[index], vel[index], omega[index], type[index],
 								   make_float2(pos[index].x, 0.0f), wallAlpha, pressure[index]);
@@ -623,7 +646,6 @@ void integrateSystemD(float2* pos, float2* vel, float2* acc,
 		pos[index].y = radius;
 		vel[index].y *= -partPropD[type[index]].boundaryDamping;
 	}
-#endif
 }
 
 #define colorbar_R(input) colorbar(input-0.25f)
