@@ -22,7 +22,7 @@
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary">0.5</damping>
+			<damping type="boundary">1</damping>
 			<friction>0.4</friction>
 			<attraction>10</attraction>
 		</particletype>
@@ -33,7 +33,7 @@
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary">0.5</damping>
+			<damping type="boundary">1</damping>
 			<friction>0.4</friction>
 			<attraction>10</attraction>
 		</particletype>
@@ -44,7 +44,7 @@
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary">0.5</damping>
+			<damping type="boundary">1</damping>
 			<friction>0.4</friction>
 			<attraction>0</attraction>
 		</particletype>
@@ -55,7 +55,7 @@
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary">0.5</damping>
+			<damping type="boundary">1</damping>
 			<friction>0.4</friction>
 			<attraction>0</attraction>
 		</particletype>
@@ -66,7 +66,7 @@
 			<stiffness dir="normal">1000</stiffness>
 			<stiffness dir="shear">1000</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary">0.5</damping>
+			<damping type="boundary">1</damping>
 			<friction>0.4</friction>
 			<attraction>0</attraction>
 		</particletype>
@@ -77,7 +77,7 @@
 			<stiffness dir="normal">1e20</stiffness>
 			<stiffness dir="shear">1e20</stiffness>
 			<damping>0.2</damping>
-			<damping type="boundary">0.5</damping>
+			<damping type="boundary">1</damping>
 			<friction>0.4</friction>
 			<attraction>0</attraction>
 		</particletype>

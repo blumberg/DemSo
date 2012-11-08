@@ -18,7 +18,7 @@
 			<radius>200e-3</radius>
 			<stiffness dir="normal">10000</stiffness>
 			<stiffness dir="shear">0</stiffness>
-			<damping>0</damping>
+			<damping>200</damping>
 			<damping type="boundary">1</damping>
 			<friction>0</friction>
 		</particletype>

@@ -26,7 +26,7 @@
 #include <vector>
 
 // Controle de Compilação
-#define USE_BIG_PARTICLE 1
+#define USE_BIG_PARTICLE 0
 #define USE_ATOMIC 0
 
 #define FPS 31.0f

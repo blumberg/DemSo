@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<simulation xmlns="http://fem.unicamp.br/ns/dsml">
+	<parameters>
+		<timestep>0.5e-4</timestep>
+		<simduration>0.5</simduration>
+		<imageheight>800</imageheight>
+	</parameters>
+
+	<environment>
+		<dimensions><x>5</x><y>5</y></dimensions>
+		<gravity><y>-9.81</y></gravity>
+		<stiffness dir="normal">1000</stiffness>
+		<stiffness dir="shear">250</stiffness>
+	</environment>
+
+	<properties>
+		<particletype id="1" color="0000ff">
+			<mass>0.0513e-3</mass>
+			<radius>0.2e-2</radius>
+			<stiffness dir="normal">1000</stiffness>
+			<stiffness dir="shear">250</stiffness>
+			<damping>0.774</damping>
+			<damping type="boundary">1</damping>
+			<friction>0.5</friction>
+		</particletype>
+	</properties>
+
+	<particles>
+		<rectangle particletype="1">
+			<start><x>0.002</x><y>0.002</y></start>
+			<end><x>4.998</x><y>0.256</y></end>
+			<num><x>1000</x><y>64</y></num>
+		</rectangle>
+	</particles>
+</simulation>
